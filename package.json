@@ -1,0 +1,49 @@
+{
+  "name": "@pilacorp/credential-sdk",
+  "version": "0.1.0",
+  "description": "Node.js port of pilacorp go-credential-sdk: issue & verify W3C Verifiable Credentials and Presentations (JSON-LD + JWT + SD-JWT)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist coverage",
+    "example": "ts-node examples/main.ts"
+  },
+  "keywords": [
+    "verifiable-credential",
+    "vc",
+    "vp",
+    "did",
+    "sd-jwt",
+    "jwt",
+    "secp256k1",
+    "w3c"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.6.0",
+    "@noble/hashes": "^1.5.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "jsonld": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.13",
+    "@types/jsonld": "^1.5.15",
+    "@types/node": "^20.16.5",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  }
+}
