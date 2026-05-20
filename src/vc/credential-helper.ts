@@ -172,7 +172,21 @@ export async function validateCredential(
   // Drop the proof field before validating — schemas typically don't include it.
   const validationDoc = copyExcept(copyMap, 'proof');
 
-  const ajv = new Ajv2020({ strict: false, allErrors: true });
+  // Mirror Go SDK's gojsonschema.NewReferenceLoader: identify each fetched
+  // schema by its URL and resolve any `$ref` (including cross/self refs)
+  // by re-fetching through the same loader.
+  const ajv = new Ajv2020({
+    strict: false,
+    allErrors: true,
+    loadSchema: async (uri: string) => {
+      const bytes = await loadSchemaBytes(uri, opts);
+      const json = JSON.parse(Buffer.from(bytes).toString('utf8'));
+      if (typeof json === 'object' && json !== null && !('$id' in json)) {
+        json.$id = uri;
+      }
+      return json;
+    },
+  });
   addFormats(ajv);
 
   for (const schema of schemaList) {
@@ -186,9 +200,12 @@ export async function validateCredential(
     }
     const schemaBytes = await loadSchemaBytes(id, opts);
     const schemaJSON = JSON.parse(Buffer.from(schemaBytes).toString('utf8'));
+    if (typeof schemaJSON === 'object' && schemaJSON !== null && !('$id' in schemaJSON)) {
+      schemaJSON.$id = id;
+    }
     let validator;
     try {
-      validator = ajv.compile(schemaJSON);
+      validator = ajv.getSchema(id) ?? (await ajv.compileAsync(schemaJSON));
     } catch (err) {
       throw new Error(
         `failed to compile schema: ${(err as Error).message}`,

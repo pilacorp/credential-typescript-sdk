@@ -135,7 +135,7 @@ async function main() {
   // ── Verify the JWT VC ───────────────────────────────────────
   console.log('Verifying JWT VC…');
   const parsedJWTVC = await vc.parseCredential(jwtVCToken);
-  await parsedJWTVC.verify({ resolver });
+  await parsedJWTVC.verify({ resolver, verifyProof: true , validateSchema: true});
   console.log('  ✓ JWT VC verified');
   console.log(
     '  subject.permissions[0].actions =',
@@ -151,6 +151,12 @@ async function main() {
       id: 'urn:uuid:json-vc-1',
       types: ['VerifiableCredential'],
       issuer: ISSUER_DID,
+      schemas: [
+        {
+          id: 'https://auth-dev.pila.vn/api/v1/schemas/e8429e35-5486-4f05-a06c-2bd211f99fc8',
+          type: 'JsonSchema',
+        },
+      ],
       validFrom: new Date('2024-01-01T00:00:00Z'),
       subject: [
         {
@@ -175,7 +181,7 @@ async function main() {
   // ── Verify the JSON-LD VC ───────────────────────────────────
   console.log('Verifying JSON-LD VC…');
   const parsedJSONVC = await vc.parseCredential(JSON.stringify(jsonVCDoc));
-  await parsedJSONVC.verify({ resolver });
+  await parsedJSONVC.verify({ resolver, verifyProof: true, validateSchema: true,  });
   console.log('  ✓ JSON-LD VC verified');
   console.log();
 
@@ -227,7 +233,7 @@ async function main() {
   // ── Verify the JSON-LD VP ───────────────────────────────────
   console.log('Verifying JSON-LD VP…');
   const parsedJSONVP = await vp.parsePresentation(JSON.stringify(jsonVPDoc));
-  await parsedJSONVP.verify({ resolver });
+  await parsedJSONVP.verify({ resolver , verifyProof: true });
   console.log('  ✓ JSON-LD VP verified');
   console.log();
 
