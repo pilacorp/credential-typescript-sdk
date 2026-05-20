@@ -1,4 +1,4 @@
-# @pilacorp/credential-sdk
+# credential-typescript-sdk
 
 Node.js / TypeScript port của [`go-credential-sdk`](https://github.com/pilacorp/go-credential-sdk).
 Hỗ trợ issue & verify W3C Verifiable Credentials (VC) và Verifiable Presentations (VP) ở cả 2 định dạng:
