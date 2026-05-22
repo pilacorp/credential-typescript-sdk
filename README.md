@@ -6,6 +6,18 @@ Hỗ trợ issue & verify W3C Verifiable Credentials (VC) và Verifiable Present
 - **JSON-LD** với `DataIntegrityProof` / cryptosuite `ecdsa-rdfc-2019` (URDNA2015 canonicalization + SHA-256 + secp256k1)
 - **JWT** ký bằng ES256K (secp256k1), kèm hỗ trợ **SD-JWT** (selective disclosure)
 
+Ngoài VC/VP, SDK hiện cũng đã có:
+
+- **DID** helpers:
+  - derive DID từ public key
+  - build DID Document
+  - tạo payload `issuer_did/document/transaction`
+  - generate DID + signed Layer2 registration transaction
+  - re-generate registration transaction từ private key
+- **DIDComm** core:
+  - derive shared secret bằng **secp256k1**
+  - encrypt / decrypt JWE theo shape SDK Go cũ
+
 Pipeline canonicalization đã được kiểm tra parity byte-for-byte với Go SDK — xem [`scripts/canonicalize-parity.ts`](scripts/canonicalize-parity.ts).
 
 ## Cài đặt
@@ -116,6 +128,69 @@ const incoming = await vp.parsePresentation(vpToken);
 await incoming.verify();
 ```
 
+### DID helpers
+
+```ts
+import { did } from '@pilacorp/credential-sdk';
+
+const parsed = did.parsePublicKeyToDid(publicKeyHex);
+// => { curve, address, did, publicKeyHex }
+
+const created = did.createDidFromPublicKey(publicKeyHex, {
+  didType: 'people',
+});
+// => { did, address, curve, document }
+
+const payload = did.createDidFromPublicKeyWithTransaction(publicKeyHex, {
+  issuerDid: 'did:nda:testnet:0xissuer',
+  didIdentifier: 'did:nda:testnet:0xholder',
+  didType: 'people',
+  transaction: { txHash: '0x...', txHex: '0x...' },
+});
+// => { did, document, registration: { issuer_did, document, transaction } }
+```
+
+Generate DID + signed transaction giống flow SDK Go:
+
+```ts
+const generator = new did.DIDGenerator({
+  rpc: 'https://rpc-testnet.pila.vn',
+  chainId: 6789,
+  didAddress: '0x0000000000000000000000000000000000018888',
+  method: 'did:nda',
+});
+
+const generated = await generator.generateDID({
+  type: 'people',
+  metadata: { name: 'User 1' },
+});
+// => { did, secret.privateKeyHex, document, transaction }
+
+const regeneratedTx = await generator.reGenerateDIDTX(
+  generated.secret.privateKeyHex,
+  generated.document.didDocumentMetadata ?? {},
+);
+```
+
+### DIDComm helpers
+
+```ts
+import { didcomm } from '@pilacorp/credential-sdk';
+
+const message = didcomm.encrypt(
+  JSON.stringify({ hello: 'world' }),
+  receiverPublicKeyHex,
+  senderPrivateKeyHex,
+);
+
+const decrypted = didcomm.decrypt(
+  message,
+  senderPublicKeyHex,
+  receiverPrivateKeyHex,
+);
+// => { protected, plaintext, json }
+```
+
 ### Multi verification-method support
 
 Một DID Document có thể có nhiều verification method (`key-1`, `key-2`, …). Truyền `verificationMethodKey` để chọn key cụ thể; nếu bỏ qua, SDK tự resolve VM mới nhất còn active cho purpose tương ứng (`assertionMethod` cho VC, `authentication` cho VP).
@@ -190,6 +265,8 @@ await credential.addProofByProvider(new VaultSigner());
 | `sdjwt` | `buildDisclosures`, `reconstruct`, `parse`, `buildSDJWTPresentation`, `isSDJWT`, `hashDisclosure`, `parseDisclosures` |
 | `verificationMethod` | `HTTPResolver`, `newHTTPResolver`, `ResolverProvider`, `selectLatestActiveVMForPurpose`, `resolveVerificationMethodURL`, `normalizeVerificationMethodURL`, … |
 | `credentialStatus` | `isRevoked`, `fetchAndCheckRevocation`, `StatusListClient` |
+| `did` | `parsePublicKeyToDid`, `buildDidDocument`, `createDidFromPublicKey`, `createDidFromPublicKeyWithTransaction`, `submitDidRegistration`, `DIDGenerator` |
+| `didcomm` | `getSharedSecret`, `encrypt`, `decrypt`, `encryptJWE`, `decryptJWE` |
 | `jsoncanonicalizer` | `transform` (RFC 8785 JCS) |
 | top-level | `SignerProvider`, `DefaultProvider`, `Proof` |
 

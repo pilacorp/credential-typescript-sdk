@@ -1,0 +1,417 @@
+import { randomBytes } from 'node:crypto';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { p256 } from '@noble/curves/nist';
+import { keccak_256 } from '@noble/hashes/sha3';
+import { sha256 } from '@noble/hashes/sha256';
+import {
+  Interface,
+  JsonRpcProvider,
+  Wallet,
+  getAddress,
+  getBytes,
+  hexlify,
+  id,
+  keccak256,
+  toUtf8Bytes,
+  zeroPadValue,
+} from 'ethers';
+import type { DIDDocument } from '../common/verification-method';
+import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
+import type {
+  CreateDID,
+  CreateDidFromPublicKeyOptions,
+  CreateDidFromPublicKeyWithTransactionOptions,
+  CreateDidRegistrationPayloadOptions,
+  CreatedDidFromPublicKey,
+  CreatedDidRegistration,
+  DIDGeneratorConfig,
+  DIDType,
+  GeneratedDID,
+  DidRegistrationPayload,
+  ParsedDidPublicKey,
+  SubmitDidTx,
+  SubmitDidRegistrationOptions,
+  SubmitDidRegistrationResult,
+} from './types';
+
+const DEFAULT_DID_METHOD = 'did:nda:testnet';
+const DEFAULT_DID_TYPE = 'people';
+const DID_REGISTER_PATH = '/did/register';
+const DEFAULT_RPC = 'https://rpc-testnet.pila.vn';
+const DEFAULT_CHAIN_ID = 6789;
+const DEFAULT_DID_ADDRESS = '0x0000000000000000000000000000000000018888';
+const ATTRIBUTE_NAME = 'type';
+const ATTRIBUTE_VALIDITY_SECONDS = 86400n;
+const FALLBACK_GAS_LIMIT = 80_000n;
+const DID_REGISTRY_ABI = [
+  'function setAttribute(address identity, bytes32 name, bytes value, uint256 validity)',
+];
+
+export function parsePublicKeyToDid(
+  publicKeyHex: string,
+  didMethod = DEFAULT_DID_METHOD,
+): ParsedDidPublicKey {
+  const clean = normalizeHex(publicKeyHex).toLowerCase();
+  const bytes = hexToBytes(clean);
+
+  let curve: ParsedDidPublicKey['curve'];
+  let address: string;
+
+  switch (bytes.length) {
+    case 32: {
+      curve = 'hash';
+      address = computeHashAddress(bytes);
+      break;
+    }
+    case 33: {
+      const secp = tryDecodeSecp256k1(bytes);
+      if (secp !== null) {
+        curve = 'secp256k1';
+        address = computeEthereumAddress(secp);
+        break;
+      }
+
+      const p256Point = tryDecodeP256(bytes);
+      if (p256Point !== null) {
+        curve = 'p256';
+        address = computeSha256Address(p256Point.toRawBytes(false));
+        break;
+      }
+
+      throw new Error('failed to decompress public key on secp256k1 or P-256');
+    }
+    case 64: {
+      const secp = tryDecodeSecp256k1(new Uint8Array([0x04, ...bytes]));
+      if (secp !== null) {
+        curve = 'secp256k1';
+        address = computeEthereumAddress(secp);
+        break;
+      }
+
+      const p256Point = tryDecodeP256(new Uint8Array([0x04, ...bytes]));
+      if (p256Point !== null) {
+        curve = 'p256';
+        address = computeSha256Address(p256Point.toRawBytes(false));
+        break;
+      }
+
+      throw new Error('failed to parse 64-byte public key on secp256k1 or P-256');
+    }
+    case 65: {
+      if (bytes[0] !== 0x04) {
+        throw new Error('invalid uncompressed public key: must start with 0x04');
+      }
+
+      const secp = tryDecodeSecp256k1(bytes);
+      if (secp !== null) {
+        curve = 'secp256k1';
+        address = computeEthereumAddress(secp);
+        break;
+      }
+
+      const p256Point = tryDecodeP256(bytes);
+      if (p256Point !== null) {
+        curve = 'p256';
+        address = computeSha256Address(bytes);
+        break;
+      }
+
+      throw new Error('failed to unmarshal 65-byte public key on secp256k1 or P-256');
+    }
+    default:
+      throw new Error(
+        `invalid public key length: got ${bytes.length} bytes, expected 32, 33, 64, or 65`,
+      );
+  }
+
+  return {
+    curve,
+    address,
+    did: `${didMethod}:${address}`.toLowerCase(),
+    publicKeyHex: `0x${clean}`,
+  };
+}
+
+export function buildDidDocument(
+  publicKeyHex: string,
+  didIdentifier: string,
+  didType = DEFAULT_DID_TYPE,
+): DIDDocument {
+  const clean = normalizeHex(publicKeyHex).toLowerCase();
+
+  return {
+    '@context': ['https://w3id.org/security/v1', 'https://www.w3.org/ns/did/v1'],
+    id: didIdentifier,
+    controller: didIdentifier,
+    verificationMethod: [
+      {
+        id: `${didIdentifier}#key-1`,
+        type: 'EcdsaSecp256k1VerificationKey2019',
+        controller: didIdentifier,
+        publicKeyHex: `0x${clean}`,
+      },
+    ],
+    authentication: [`${didIdentifier}#key-1`],
+    assertionMethod: [`${didIdentifier}#key-1`],
+    didDocumentMetadata: {
+      type: didType,
+      hash: '',
+    },
+  };
+}
+
+export function createDidFromPublicKey(
+  publicKeyHex: string,
+  options: CreateDidFromPublicKeyOptions = {},
+): CreatedDidFromPublicKey {
+  const parsed = parsePublicKeyToDid(
+    publicKeyHex,
+    options.didMethod ?? DEFAULT_DID_METHOD,
+  );
+
+  return {
+    ...parsed,
+    document: buildDidDocument(
+      parsed.publicKeyHex,
+      options.didIdentifier ?? parsed.did,
+      options.didType ?? DEFAULT_DID_TYPE,
+    ),
+    did: (options.didIdentifier ?? parsed.did).toLowerCase(),
+  };
+}
+
+export function createDidRegistrationPayload(
+  publicKeyHex: string,
+  options: CreateDidRegistrationPayloadOptions,
+): CreatedDidRegistration {
+  const created = createDidFromPublicKey(publicKeyHex, options);
+  return {
+    did: created.did,
+    curve: created.curve,
+    address: created.address,
+    document: created.document,
+    registration: {
+      issuer_did: options.issuerDid,
+      document: created.document,
+      transaction: options.transaction,
+    },
+  };
+}
+
+export function createDidFromPublicKeyWithTransaction(
+  publicKeyHex: string,
+  options: CreateDidFromPublicKeyWithTransactionOptions,
+): CreatedDidRegistration {
+  return createDidRegistrationPayload(publicKeyHex, options);
+}
+
+export async function submitDidRegistration(
+  options: SubmitDidRegistrationOptions,
+): Promise<SubmitDidRegistrationResult> {
+  const fetcher = options.fetcher ?? fetch;
+  const url = new URL(DID_REGISTER_PATH, options.apiURL).toString();
+  const response = await fetcher(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json',
+      'x-api-key': options.apiKey,
+    },
+    body: JSON.stringify(options.payload),
+    signal: options.signal,
+  });
+
+  const body = await response.text();
+  if (response.status === 409) {
+    throw new Error(`API conflict ${response.status}: ${body}`);
+  }
+  if (!response.ok) {
+    throw new Error(`API error ${response.status}: ${body}`);
+  }
+
+  return { status: response.status, body };
+}
+
+export class DIDGenerator {
+  private readonly config: Required<DIDGeneratorConfig>;
+  private readonly contractInterface = new Interface(DID_REGISTRY_ABI);
+
+  constructor(config: DIDGeneratorConfig = {}) {
+    this.config = {
+      rpc: config.rpc ?? DEFAULT_RPC,
+      chainId: config.chainId ?? DEFAULT_CHAIN_ID,
+      didAddress: config.didAddress ?? DEFAULT_DID_ADDRESS,
+      method: config.method ?? 'did:nda',
+    };
+  }
+
+  async generateDID(createDID: CreateDID): Promise<GeneratedDID> {
+    const privateKey = randomPrivateKeyHex();
+    const wallet = new Wallet(privateKey);
+    const address = wallet.address.toLowerCase();
+    const publicKeyHex = hexlify(secp256k1.getPublicKey(getBytes(privateKey), true)).toLowerCase();
+    const did = `${this.config.method}:${address}`.toLowerCase();
+    const document = buildDidDocument(publicKeyHex, did, createDID.type);
+
+    if (createDID.metadata && Object.keys(createDID.metadata).length > 0) {
+      document.didDocumentMetadata = {
+        ...createDID.metadata,
+        type: createDID.type,
+        hash: createDID.hash ?? '',
+      };
+    }
+
+    const transaction = await this.generateSetAttributeTx(
+      privateKey,
+      address,
+      createDID.type,
+    );
+
+    return {
+      did,
+      secret: { privateKeyHex: privateKey.toLowerCase() },
+      document,
+      transaction,
+    };
+  }
+
+  async reGenerateDIDTX(
+    privateKeyHex: string,
+    didMetadata: Record<string, unknown>,
+  ): Promise<SubmitDidTx> {
+    const didType = didMetadata.type;
+    if (typeof didType !== 'string' || didType.length === 0) {
+      throw new Error('did type is required');
+    }
+
+    const wallet = new Wallet(withHexPrefix(privateKeyHex));
+    return this.reGenerateSetAttributeTx(wallet.privateKey, didType as DIDType);
+  }
+
+  async generateSetAttributeTx(
+    privateKeyHex: string,
+    address: string,
+    value: string,
+  ): Promise<SubmitDidTx> {
+    const wallet = new Wallet(withHexPrefix(privateKeyHex));
+    const data = this.contractInterface.encodeFunctionData('setAttribute', [
+      getAddress(address),
+      this.prepareAttributeName(ATTRIBUTE_NAME),
+      toUtf8Bytes(value),
+      ATTRIBUTE_VALIDITY_SECONDS,
+    ]);
+
+    const signed = await wallet.signTransaction({
+      to: this.config.didAddress,
+      chainId: this.config.chainId,
+      nonce: 0,
+      gasLimit: FALLBACK_GAS_LIMIT,
+      gasPrice: 0n,
+      value: 0,
+      data,
+    });
+
+    return {
+      txHex: stripHexPrefix(signed),
+      txHash: keccak256(signed),
+    };
+  }
+
+  async reGenerateSetAttributeTx(
+    privateKeyHex: string,
+    value: string,
+  ): Promise<SubmitDidTx> {
+    const wallet = new Wallet(withHexPrefix(privateKeyHex));
+    const provider = new JsonRpcProvider(this.config.rpc, this.config.chainId);
+    const nonce = await provider.getTransactionCount(wallet.address, 'pending');
+    const feeData = await provider.getFeeData();
+    const gasPrice = feeData.gasPrice ?? 0n;
+    const data = this.contractInterface.encodeFunctionData('setAttribute', [
+      getAddress(wallet.address),
+      this.prepareAttributeName(ATTRIBUTE_NAME),
+      toUtf8Bytes(value),
+      ATTRIBUTE_VALIDITY_SECONDS,
+    ]);
+
+    let gasLimit = FALLBACK_GAS_LIMIT;
+    try {
+      gasLimit = await provider.estimateGas({
+        from: wallet.address,
+        to: this.config.didAddress,
+        data,
+        value: 0n,
+      });
+    } catch {
+      gasLimit = FALLBACK_GAS_LIMIT;
+    }
+
+    const signed = await wallet.signTransaction({
+      to: this.config.didAddress,
+      chainId: this.config.chainId,
+      nonce,
+      gasLimit,
+      gasPrice,
+      value: 0,
+      data,
+    });
+
+    return {
+      txHex: stripHexPrefix(signed),
+      txHash: keccak256(signed),
+    };
+  }
+
+  private prepareAttributeName(name: string) {
+    if (name.length === 0) {
+      throw new Error('name is empty');
+    }
+    if (name.length > 32) {
+      throw new Error('name exceeds 32 bytes');
+    }
+    return zeroPadValue(hexlify(toUtf8Bytes(name)), 32);
+  }
+}
+
+function tryDecodeSecp256k1(bytes: Uint8Array) {
+  try {
+    return secp256k1.ProjectivePoint.fromHex(bytes);
+  } catch {
+    return null;
+  }
+}
+
+function tryDecodeP256(bytes: Uint8Array) {
+  try {
+    return p256.ProjectivePoint.fromHex(bytes);
+  } catch {
+    return null;
+  }
+}
+
+function computeEthereumAddress(point: { toRawBytes: (isCompressed?: boolean) => Uint8Array }) {
+  const uncompressed = point.toRawBytes(false);
+  const hash = keccak_256(uncompressed.subarray(1));
+  return `0x${bytesToHex(hash.subarray(12))}`.toLowerCase();
+}
+
+function computeSha256Address(bytes: Uint8Array) {
+  const hash = sha256(bytes);
+  return `0x${bytesToHex(hash.subarray(12))}`.toLowerCase();
+}
+
+function computeHashAddress(bytes: Uint8Array) {
+  const hash = keccak_256(bytes);
+  return `0x${bytesToHex(hash.subarray(12))}`.toLowerCase();
+}
+
+function randomPrivateKeyHex() {
+  return withHexPrefix(bytesToHex(randomBytes(32)));
+}
+
+function withHexPrefix(value: string) {
+  return value.startsWith('0x') ? value : `0x${value}`;
+}
+
+function stripHexPrefix(value: string) {
+  return value.startsWith('0x') ? value.slice(2) : value;
+}

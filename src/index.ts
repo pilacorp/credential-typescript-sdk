@@ -10,6 +10,8 @@
  */
 export * as vc from './vc/credential';
 export * as vp from './vp/presentation';
+export * as did from './did';
+export * as didcomm from './didcomm';
 export * as sdjwt from './common/sdjwt';
 export * as verificationMethod from './common/verification-method';
 export * as credentialStatus from './common/credential-status';

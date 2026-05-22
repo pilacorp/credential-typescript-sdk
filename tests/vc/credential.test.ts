@@ -3,6 +3,7 @@
  * Uses a stub DID resolver so tests don't hit the network.
  */
 import { secp256k1 } from '@noble/curves/secp256k1';
+import { compressToBase64URL } from '../../src/common/util/compress';
 import { bytesToHex, hexToBytes } from '../../src/common/crypto/hex';
 import {
   DIDDocument,
@@ -15,6 +16,8 @@ import { JSONCredential } from '../../src/vc/json-credential';
 const PRIV_HEX = '4646464646464646464646464646464646464646464646464646464646464646';
 const ISSUER = 'did:example:issuer';
 const SUBJECT = 'did:example:subject';
+const STATUS_LIST_URL =
+  'https://auth-dev.pila.vn/api/v1/issuers/did:pila:testnet:0xedf82c5366eeffcbef566b2edffab102d140f212/credentials/status/366';
 
 class StaticResolver implements ResolverProvider {
   constructor(private readonly doc: DIDDocument) {}
@@ -41,6 +44,42 @@ function buildDID(): DIDDocument {
     assertionMethod: [`${ISSUER}#key-1`],
   };
 }
+
+beforeAll(() => {
+  jest.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    if (url === STATUS_LIST_URL) {
+      return new Response(
+        JSON.stringify({
+          data: {
+            '@context': ['https://www.w3.org/ns/credentials/status/v1'],
+            credentialSubject: {
+              encodedList: compressToBase64URL(new Uint8Array(121)),
+              id: `${STATUS_LIST_URL}#list`,
+              statusPurpose: 'revocation',
+              type: 'BitstringStatusList',
+            },
+            id: STATUS_LIST_URL,
+            issuer: ISSUER,
+            proof: {},
+            type: ['VerifiableCredential', 'BitstringStatusListCredential'],
+            validFrom: '2024-01-01T00:00:00Z',
+            validUntil: '2099-01-01T00:00:00Z',
+          },
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+    }
+    return new Response('not found', { status: 404 });
+  });
+});
+
+afterAll(() => {
+  jest.restoreAllMocks();
+});
 
 describe('parseCredential', () => {
   it('parses a JSON credential', async () => {
@@ -178,8 +217,7 @@ describe('verify with all credential options', () => {
     type: 'BitstringStatusListEntry',
     statusPurpose: 'revocation',
     statusListIndex: '965',
-    statusListCredential:
-      'https://auth-dev.pila.vn/api/v1/issuers/did:pila:testnet:0xedf82c5366eeffcbef566b2edffab102d140f212/credentials/status/366',
+    statusListCredential: STATUS_LIST_URL,
   };
 
   const schemaLoader = jest.fn(async (id: string) => {
