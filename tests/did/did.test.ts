@@ -154,10 +154,76 @@ describe('submitDidRegistration', () => {
         headers: expect.objectContaining({
           'x-api-key': 'secret',
         }),
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          transaction: {
+            TxHex: payload.transaction.txHex,
+            TxHash: payload.transaction.txHash,
+          },
+        }),
       }),
     );
     expect(result).toEqual({ status: 200, body: '{"ok":true}' });
+  });
+
+  it('uses a custom register path when provided', async () => {
+    const fetcher = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '{"ok":true}',
+    })) as unknown as typeof fetch;
+
+    const payload = createDidFromPublicKeyWithTransaction(
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      {
+        issuerDid: 'did:nda:testnet:issuer',
+        didIdentifier: 'did:nda:testnet:0xholder',
+        transaction: { txHash: '0xhash', txHex: '0xhex' },
+      },
+    ).registration;
+
+    await submitDidRegistration({
+      apiURL: 'https://layer2.example',
+      registerPath: '/v2/did/register',
+      apiKey: 'secret',
+      payload,
+      fetcher,
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://layer2.example/v2/did/register',
+      expect.anything(),
+    );
+  });
+
+  it('preserves API base paths like /api/v1 when joining the register route', async () => {
+    const fetcher = jest.fn(async () => ({
+      ok: true,
+      status: 200,
+      text: async () => '{"ok":true}',
+    })) as unknown as typeof fetch;
+
+    const payload = createDidFromPublicKeyWithTransaction(
+      'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      {
+        issuerDid: 'did:nda:testnet:issuer',
+        didIdentifier: 'did:nda:testnet:0xholder',
+        transaction: { txHash: '0xhash', txHex: '0xhex' },
+      },
+    ).registration;
+
+    await submitDidRegistration({
+      apiURL: 'https://auth-dev.pila.vn/api/v1',
+      registerPath: '/did/register',
+      apiKey: 'secret',
+      payload,
+      fetcher,
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      'https://auth-dev.pila.vn/api/v1/did/register',
+      expect.anything(),
+    );
   });
 });
 

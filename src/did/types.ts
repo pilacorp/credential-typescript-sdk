@@ -52,6 +52,7 @@ export interface SubmitDidRegistrationOptions {
   apiURL: string;
   apiKey: string;
   payload: DidRegistrationPayload;
+  registerPath?: string;
   fetcher?: typeof fetch;
   signal?: AbortSignal;
 }

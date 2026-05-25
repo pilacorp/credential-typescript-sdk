@@ -209,7 +209,16 @@ export async function submitDidRegistration(
   options: SubmitDidRegistrationOptions,
 ): Promise<SubmitDidRegistrationResult> {
   const fetcher = options.fetcher ?? fetch;
-  const url = new URL(DID_REGISTER_PATH, options.apiURL).toString();
+  const base = options.apiURL.replace(/\/+$/, '');
+  const path = (options.registerPath ?? DID_REGISTER_PATH).replace(/^\/+/, '');
+  const url = `${base}/${path}`;
+  const bodyPayload = {
+    ...options.payload,
+    transaction: {
+      TxHex: options.payload.transaction.txHex,
+      TxHash: options.payload.transaction.txHash,
+    },
+  };
   const response = await fetcher(url, {
     method: 'POST',
     headers: {
@@ -217,7 +226,7 @@ export async function submitDidRegistration(
       accept: 'application/json',
       'x-api-key': options.apiKey,
     },
-    body: JSON.stringify(options.payload),
+    body: JSON.stringify(bodyPayload),
     signal: options.signal,
   });
 
@@ -241,7 +250,7 @@ export class DIDGenerator {
       rpc: config.rpc ?? DEFAULT_RPC,
       chainId: config.chainId ?? DEFAULT_CHAIN_ID,
       didAddress: config.didAddress ?? DEFAULT_DID_ADDRESS,
-      method: config.method ?? 'did:nda',
+      method: config.method ?? DEFAULT_DID_METHOD,
     };
   }
 
@@ -302,6 +311,7 @@ export class DIDGenerator {
     ]);
 
     const signed = await wallet.signTransaction({
+      type: 0,
       to: this.config.didAddress,
       chainId: this.config.chainId,
       nonce: 0,
@@ -346,6 +356,7 @@ export class DIDGenerator {
     }
 
     const signed = await wallet.signTransaction({
+      type: 0,
       to: this.config.didAddress,
       chainId: this.config.chainId,
       nonce,
