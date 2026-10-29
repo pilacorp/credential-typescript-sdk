@@ -9,6 +9,7 @@ export interface ResolvedCredentialOptions extends Required<
     | 'verifyProof'
     | 'checkExpiration'
     | 'checkRevocation'
+    | 'clockSkewLeewayMs'
     | 'verificationMethodKey'
     | 'sdShuffle'
   >
@@ -29,6 +30,7 @@ export function getOptions(opts: CredentialOptions = {}): ResolvedCredentialOpti
     verifyProof: opts.verifyProof ?? false,
     checkExpiration: opts.checkExpiration ?? false,
     checkRevocation: opts.checkRevocation ?? false,
+    clockSkewLeewayMs: Math.max(opts.clockSkewLeewayMs ?? 0, 0),
     didBaseURL,
     verificationMethodKey: opts.verificationMethodKey ?? '',
     sdDisclosures: opts.sdDisclosures ?? [],

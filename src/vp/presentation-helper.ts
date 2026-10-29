@@ -3,7 +3,7 @@
  */
 import { JSONMap } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
-import { serializeContexts, serializeTypes } from '../common/util/vc';
+import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
 import { parseCredential } from '../vc/credential';
 import type { Credential } from '../vc/types';
 import type { PresentationContents, PresentationData } from './types';
@@ -17,22 +17,11 @@ export function parseStringField(obj: PresentationData, fieldName: string): stri
   return v;
 }
 
-export function checkExpiration(p: PresentationData): void {
-  const validFrom = parseStringField(p, 'validFrom');
-  if (validFrom) {
-    const t = new Date(validFrom);
-    if (isNaN(t.getTime())) throw new Error('failed to parse validFrom');
-    if (Date.now() < t.getTime()) throw new Error('presentation is not valid yet');
-  }
-  const validUntil = parseStringField(p, 'validUntil');
-  if (validUntil) {
-    const t = new Date(validUntil);
-    if (isNaN(t.getTime())) throw new Error('failed to parse validUntil');
-    if (Date.now() > t.getTime()) throw new Error('presentation is expired');
-  }
+export function checkExpiration(p: PresentationData, leewayMs = 0): void {
+  checkValidityPeriod(p, 'presentation', leewayMs);
 }
 
-export async function verifyCredentials(jsonPresentation: PresentationData): Promise<void> {
+export async function verifyCredentials(jsonPresentation: PresentationData, clockSkewLeewayMs = 0): Promise<void> {
   const contents = await parsePresentationContents(jsonPresentation);
   const vcs = contents.verifiableCredentials ?? [];
   if (vcs.length === 0) throw new Error('credential input is empty');
@@ -40,7 +29,7 @@ export async function verifyCredentials(jsonPresentation: PresentationData): Pro
     const v = vcs[i];
     if (!v) throw new Error(`credential at index ${i} is nil`);
     try {
-      await v.verify({ validateSchema: true });
+      await v.verify({ validateSchema: true, clockSkewLeewayMs });
     } catch (err) {
       throw new Error(`failed to verify credential at index ${i}: ${(err as Error).message}`);
     }

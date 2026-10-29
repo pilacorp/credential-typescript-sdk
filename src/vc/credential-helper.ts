@@ -9,7 +9,7 @@ import addFormats from 'ajv-formats';
 import { fetchAndCheckRevocation } from '../common/credential-status';
 import { copyExcept, JSONMap, shallowCopyObj, splitJSONObj } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
-import { serializeContexts, serializeTypes } from '../common/util/vc';
+import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
 import type { ResolvedCredentialOptions } from './options';
 import type {
   CredentialContents,
@@ -242,19 +242,8 @@ async function loadSchemaBytes(
 
 // ---- Expiration ----
 
-export function checkExpiration(c: CredentialData): void {
-  const validFrom = parseStringField(c, 'validFrom');
-  if (validFrom) {
-    const t = new Date(validFrom);
-    if (isNaN(t.getTime())) throw new Error(`failed to parse validFrom`);
-    if (Date.now() < t.getTime()) throw new Error('credential is not valid yet');
-  }
-  const validUntil = parseStringField(c, 'validUntil');
-  if (validUntil) {
-    const t = new Date(validUntil);
-    if (isNaN(t.getTime())) throw new Error(`failed to parse validUntil`);
-    if (Date.now() > t.getTime()) throw new Error('credential is expired');
-  }
+export function checkExpiration(c: CredentialData, leewayMs = 0): void {
+  checkValidityPeriod(c, 'credential', leewayMs);
 }
 
 // ---- Revocation ----

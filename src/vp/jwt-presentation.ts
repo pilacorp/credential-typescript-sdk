@@ -156,10 +156,10 @@ export class JWTPresentation implements Presentation {
   async executeOptions(opts: PresentationOptions = {}): Promise<void> {
     const options = getOptions(opts);
     if (options.validateVC) {
-      await verifyCredentials(this.payloadData);
+      await verifyCredentials(this.payloadData, options.clockSkewLeewayMs);
     }
     if (options.checkExpiration) {
-      checkExpiration(this.payloadData);
+      checkExpiration(this.payloadData, options.clockSkewLeewayMs);
     }
     if (options.verifyProof) {
       const serialized = await this.serialize();

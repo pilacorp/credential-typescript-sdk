@@ -7,6 +7,7 @@ import type { SignerProvider } from '../common/signer/signer';
 import type { Proof } from '../common/dto/proof';
 import {
   buildDisclosures,
+  isJWT,
   isSDJWT,
   parse as parseSDJWT,
   reconstruct,
@@ -103,7 +104,7 @@ export class JWTCredential implements Credential {
       kid = normalizeVerificationMethodURL(vcc.issuer, kid);
     }
 
-    const header = { typ: 'JWT', alg: 'ES256K', kid };
+    const header = { typ: disclosures.length > 0 ? 'vc+sd-jwt' : 'JWT', alg: 'ES256K', kid };
     const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
     const payloadEncoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 
@@ -125,10 +126,15 @@ export class JWTCredential implements Credential {
 
     let issuerJWT: string;
     let disclosures: string[] = [];
+    let sdJwtEnvelope = false;
     if (isSDJWT(trimmed)) {
+      const segments = trimmed.split('~');
+      const tail = segments[segments.length - 1];
+      if (tail && isJWT(tail)) throw new Error('key binding JWT is not supported');
       const parsed = parseSDJWT(trimmed);
       issuerJWT = parsed.baseJWT;
       disclosures = parsed.disclosures;
+      sdJwtEnvelope = true;
     } else {
       if (!isJWTCredentialString(trimmed)) {
         throw new Error('invalid JWT or SD-JWT format');
@@ -142,13 +148,16 @@ export class JWTCredential implements Credential {
     const signature = parts.length === 3 ? parts[2] : '';
 
     let payloadMap: JSONMap;
+    let headerMap: JSONMap;
     try {
+      headerMap = JSON.parse(Buffer.from(headerEncoded, 'base64url').toString('utf8'));
       payloadMap = JSON.parse(
         Buffer.from(payloadEncoded, 'base64url').toString('utf8'),
       );
     } catch (err) {
       throw new Error(`failed to decode payload: ${(err as Error).message}`);
     }
+    sdJwtEnvelope ||= headerMap.typ === 'vc+sd-jwt';
     const vcData = payloadMap.vc;
     if (vcData === undefined) {
       throw new Error('vc claim not found in JWT payload');
@@ -158,9 +167,7 @@ export class JWTCredential implements Credential {
     }
     let vcMap = vcData as JSONMap;
 
-    if (disclosures.length > 0) {
-      vcMap = reconstruct(vcMap, disclosures, true);
-    }
+    if (sdJwtEnvelope) vcMap = reconstruct(vcMap, disclosures, true);
 
     const cred = new JWTCredential(
       headerEncoded + '.' + payloadEncoded,
@@ -338,7 +345,7 @@ export class JWTCredential implements Credential {
 
     if (options.checkExpiration) {
       try {
-        checkExpiration(this.payloadData);
+        checkExpiration(this.payloadData, options.clockSkewLeewayMs);
       } catch (err) {
         throw new Error(`failed to check expiration: ${(err as Error).message}`);
       }

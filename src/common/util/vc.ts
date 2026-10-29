@@ -10,6 +10,33 @@ export function serializeTypes(types: string[]): unknown {
   return [...types];
 }
 
+/** Checks VC/VP validity dates and JWT nbf/exp claims against the current clock. */
+export function checkValidityPeriod(
+  data: JSONMap,
+  entity: 'credential' | 'presentation',
+  leewayMs = 0,
+): void {
+  const now = Date.now();
+  const leeway = Math.max(leewayMs, 0);
+  for (const [field, kind] of [['validFrom', 'start'], ['validUntil', 'end']] as const) {
+    const value = data[field];
+    if (value === undefined || value === null || value === '') continue;
+    if (typeof value !== 'string') throw new Error(`field "${field}" must be a string`);
+    const time = new Date(value).getTime();
+    if (Number.isNaN(time)) throw new Error(`failed to parse ${field}`);
+    if (kind === 'start' && now + leeway < time) throw new Error(`${entity} is not valid yet`);
+    if (kind === 'end' && now - leeway > time) throw new Error(`${entity} is expired`);
+  }
+  for (const [claim, kind] of [['nbf', 'start'], ['exp', 'end']] as const) {
+    const value = data[claim];
+    if (value === undefined) continue;
+    if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`invalid JWT ${claim} claim`);
+    const time = value * 1000;
+    if (kind === 'start' && now + leeway < time) throw new Error('JWT is not valid yet');
+    if (kind === 'end' && now - leeway > time) throw new Error('JWT is expired');
+  }
+}
+
 export function serializeContexts(contexts: unknown[]): unknown[] {
   const validated: unknown[] = [];
   for (let i = 0; i < contexts.length; i++) {

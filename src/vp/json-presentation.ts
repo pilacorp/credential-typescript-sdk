@@ -100,7 +100,10 @@ export class JSONPresentation implements Presentation {
 
   async addCustomProof(proof: Proof, opts: PresentationOptions = {}): Promise<void> {
     if (!proof) throw new Error('proof cannot be nil');
-    await this.executeOptions(opts);
+    await this.executeOptions({
+      ...opts,
+      verifyProof: opts.verifyProof || Boolean(this.presentationData.proof),
+    });
     addCustomProof(this.presentationData, proof);
   }
 
@@ -126,10 +129,10 @@ export class JSONPresentation implements Presentation {
   async executeOptions(opts: PresentationOptions = {}): Promise<void> {
     const options = getOptions(opts);
     if (options.validateVC) {
-      await verifyCredentials(this.presentationData);
+      await verifyCredentials(this.presentationData, options.clockSkewLeewayMs);
     }
     if (options.checkExpiration) {
-      checkExpiration(this.presentationData);
+      checkExpiration(this.presentationData, options.clockSkewLeewayMs);
     }
     if (options.verifyProof) {
       const ok = await verifyProof(this.presentationData, options.resolver);

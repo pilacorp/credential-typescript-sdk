@@ -102,7 +102,10 @@ export class JSONCredential implements Credential {
 
   async addCustomProof(proof: Proof, opts: CredentialOptions = {}): Promise<void> {
     if (!proof) throw new Error('proof cannot be nil');
-    await this.executeOptions(opts);
+    await this.executeOptions({
+      ...opts,
+      verifyProof: opts.verifyProof || Boolean(this.credentialData.proof),
+    });
     addCustomProof(this.credentialData, proof);
   }
 
@@ -185,7 +188,7 @@ export class JSONCredential implements Credential {
 
     if (options.checkExpiration) {
       try {
-        checkExpiration(this.credentialData);
+        checkExpiration(this.credentialData, options.clockSkewLeewayMs);
       } catch (err) {
         throw new Error(`failed to check expiration: ${(err as Error).message}`);
       }

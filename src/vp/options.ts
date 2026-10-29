@@ -6,6 +6,7 @@ export interface ResolvedPresentationOptions {
   validateVC: boolean;
   verifyProof: boolean;
   checkExpiration: boolean;
+  clockSkewLeewayMs: number;
   didBaseURL: string;
   verificationMethodKey: string;
   resolver: ResolverProvider;
@@ -17,6 +18,7 @@ export function getOptions(opts: PresentationOptions = {}): ResolvedPresentation
     validateVC: opts.validateVC ?? false,
     verifyProof: opts.verifyProof ?? false,
     checkExpiration: opts.checkExpiration ?? false,
+    clockSkewLeewayMs: Math.max(opts.clockSkewLeewayMs ?? 0, 0),
     didBaseURL,
     verificationMethodKey: opts.verificationMethodKey ?? '',
     resolver: opts.resolver ?? newHTTPResolver(didBaseURL),

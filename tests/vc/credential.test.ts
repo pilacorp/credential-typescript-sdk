@@ -160,10 +160,42 @@ describe('JWTCredential.create + verify roundtrip', () => {
     });
     // Reconstructed payload re-exposes the hidden claim
     expect(parsed.extractField('credentialSubject.secret')).toBe('s3cr3t');
+
+    const base = token.slice(0, token.indexOf('~'));
+    const unrevealed = await JWTCredential.parse(base, {
+      resolver: new StaticResolver(buildDID()),
+    });
+    expect(unrevealed.extractField('credentialSubject.secret')).toBeNull();
+    expect(unrevealed.extractField('credentialSubject.name')).toBe('Bob');
+
+    const fake = Buffer.from(JSON.stringify(['fake-salt', 'credentialSubject.fake', 'x']), 'utf8')
+      .toString('base64url');
+    await expect(JWTCredential.parse(`${base}~${fake}~`, {
+      resolver: new StaticResolver(buildDID()),
+    })).rejects.toThrow(/matches nothing/);
   });
 });
 
 describe('JSONCredential.create + verify roundtrip', () => {
+  it('rejects custom-proof replacement when the existing proof is invalid', async () => {
+    const resolver = new StaticResolver(buildDID());
+    const cred = await JSONCredential.create(
+      { context: ['https://www.w3.org/ns/credentials/v2'], id: 'urn:uuid:replace', types: ['VerifiableCredential'], issuer: ISSUER, subject: [{ id: SUBJECT }] },
+      { verificationMethodKey: 'key-1', resolver },
+    );
+    await cred.addProof(PRIV_HEX, { verificationMethodKey: 'key-1', resolver });
+    const invalidExisting = cred.getInternalData().proof as Record<string, unknown>;
+    invalidExisting.proofValue = '00';
+
+    await expect(cred.addCustomProof({
+      type: 'DataIntegrityProof',
+      created: '2024-01-01T00:00:00Z',
+      verificationMethod: `${ISSUER}#key-1`,
+      proofPurpose: 'assertionMethod',
+      proofValue: 'replacement',
+    }, { resolver })).rejects.toThrow();
+  });
+
   it('attaches a DataIntegrityProof and verifies it', async () => {
     const resolver = new StaticResolver(buildDID());
     const cred = await JSONCredential.create(

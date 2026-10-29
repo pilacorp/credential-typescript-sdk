@@ -135,6 +135,26 @@ describe('JWTPresentation roundtrip', () => {
 });
 
 describe('JSONPresentation roundtrip', () => {
+  it('rejects custom-proof replacement when the existing proof is invalid', async () => {
+    const resolver = new StaticResolver(docsByDID);
+    const vp = await JSONPresentation.create(
+      { context: ['https://www.w3.org/ns/credentials/v2'], id: 'urn:uuid:replace', types: ['VerifiablePresentation'], holder: HOLDER },
+      { verificationMethodKey: 'key-1', resolver },
+    );
+    await vp.addProof(HOLDER_PRIV, { verificationMethodKey: 'key-1', resolver });
+    const serialized = await vp.serialize();
+    (serialized.proof as Record<string, unknown>).proofValue = '00';
+    const invalidVP = await JSONPresentation.parse(JSON.stringify(serialized));
+
+    await expect(invalidVP.addCustomProof({
+      type: 'DataIntegrityProof',
+      created: '2024-01-01T00:00:00Z',
+      verificationMethod: `${HOLDER}#key-1`,
+      proofPurpose: 'authentication',
+      proofValue: 'replacement',
+    }, { resolver })).rejects.toThrow();
+  });
+
   it('attaches an ECDSA proof and verifies it', async () => {
     const resolver = new StaticResolver(docsByDID);
 

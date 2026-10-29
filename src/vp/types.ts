@@ -20,6 +20,8 @@ export interface PresentationOptions {
   validateVC?: boolean;
   verifyProof?: boolean;
   checkExpiration?: boolean;
+  /** Clock skew tolerance in milliseconds when checking dates and JWT time claims. */
+  clockSkewLeewayMs?: number;
   didBaseURL?: string;
   verificationMethodKey?: string;
   resolver?: ResolverProvider;

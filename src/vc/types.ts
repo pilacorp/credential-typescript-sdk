@@ -50,6 +50,8 @@ export interface CredentialOptions {
   verifyProof?: boolean;
   /** Check validFrom/validUntil against the current clock. */
   checkExpiration?: boolean;
+  /** Clock skew tolerance in milliseconds when checking dates and JWT time claims. */
+  clockSkewLeewayMs?: number;
   /** Check the credentialStatus list bit. */
   checkRevocation?: boolean;
   /** DID base URL — used to construct the default HTTPResolver when no
