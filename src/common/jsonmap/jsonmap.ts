@@ -13,6 +13,7 @@ import { p256 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { ecdsaVerifySignature, verifyJSONSignature } from '../crypto/crypto';
+import { hashForJWSAlg, p256PubFromJwk, verifyES256, verifyRSAJWS } from '../crypto/jws-2020';
 import { bytesToHex, hexToBytes, keyToBytes } from '../crypto/hex';
 import { verifyJwtProof } from '../crypto/jwt-proof-2020';
 import { canonicalizeDocument, computeDigest } from '../processor/processor';
@@ -41,6 +42,8 @@ export const DataIntegrityProof = 'DataIntegrityProof';
 export const ECDSARDFC2019 = 'ecdsa-rdfc-2019';
 export const ECDSASD2023 = 'ecdsa-sd-2023';
 export const ECDSASECPKEY = 'EcdsaSecp256k1VerificationKey2019';
+export const JsonWebSignature2020 = 'JsonWebSignature2020';
+export const JsonWebKey2020 = 'JsonWebKey2020';
 const DATA_INTEGRITY_V2_CONTEXT = 'https://w3id.org/security/data-integrity/v2';
 
 export function toJSON(m: JSONMap): Uint8Array {
@@ -290,7 +293,73 @@ export async function verifyProof(
   if (proof.type === DataIntegrityProof && proof.cryptosuite === ECDSASD2023) {
     return verifyECDSASDProof(m, doc, proof);
   }
+  if (proof.type === JsonWebSignature2020) {
+    return verifyJWSProof(m, doc, proof);
+  }
   throw new Error(`unsupported proof type: ${proof.type}`);
+}
+
+async function verifyJWSProof(m: JSONMap, doc: DIDDocument, proof: Proof): Promise<boolean> {
+  const vm = findVerificationMethod(doc, proof.verificationMethod);
+  if (vm.type !== JsonWebKey2020) {
+    throw new Error(`expected ${JsonWebKey2020} VM, got ${vm.type}`);
+  }
+  if (!vm.publicKeyJwk) {
+    throw new Error(`verification method '${vm.id}' has no publicKeyJwk`);
+  }
+  const split = splitDetachedJWS(proof.jws ?? '');
+  if (!split) throw new Error('malformed detached JWS');
+  const alg = detachedJWSAlg(split.header);
+  const payload = await canonicalize(m);
+  const signingInput = Buffer.concat([
+    Buffer.from(split.header, 'utf8'),
+    Buffer.from('.', 'utf8'),
+    Buffer.from(payload),
+  ]);
+  const sig = Buffer.from(split.sig, 'base64url');
+  if (alg === 'ES256') {
+    const pub = p256PubFromJwk(vm.publicKeyJwk);
+    const digest = hashForJWSAlg(alg, new Uint8Array(signingInput));
+    if (!verifyES256(pub, digest, new Uint8Array(sig))) {
+      throw new Error('JsonWebSignature2020 ES256 signature verification failed');
+    }
+  } else if (
+    alg === 'RS256' ||
+    alg === 'RS384' ||
+    alg === 'RS512' ||
+    alg === 'PS256' ||
+    alg === 'PS384' ||
+    alg === 'PS512'
+  ) {
+    verifyRSAJWS(alg, vm.publicKeyJwk, new Uint8Array(signingInput), new Uint8Array(sig));
+  } else {
+    throw new Error(`unsupported JsonWebSignature2020 alg: ${JSON.stringify(alg)}`);
+  }
+  strictPurposeCheck(doc, vm, proof.proofPurpose, proof.created);
+  return true;
+}
+
+function splitDetachedJWS(jws: string): { header: string; sig: string } | null {
+  const idx = jws.indexOf('..');
+  if (idx <= 0) return null;
+  const header = jws.slice(0, idx);
+  const sig = jws.slice(idx + 2);
+  if (!header || !sig) return null;
+  return { header, sig };
+}
+
+function detachedJWSAlg(encHeader: string): string {
+  const hdr = JSON.parse(Buffer.from(encHeader, 'base64url').toString('utf8')) as {
+    alg?: string;
+    b64?: unknown;
+    crit?: string[];
+  };
+  if (hdr.b64 !== false) throw new Error('jws header b64 must be false');
+  if (!Array.isArray(hdr.crit) || !hdr.crit.includes('b64')) {
+    throw new Error('jws header crit must include b64');
+  }
+  if (!hdr.alg) throw new Error('jws header missing alg');
+  return hdr.alg;
 }
 
 async function verifyJWTProofImpl(
@@ -398,6 +467,7 @@ export function parseRawToProof(proof: unknown): Proof {
   if (typeof p.cryptosuite === 'string') result.cryptosuite = p.cryptosuite;
   if (typeof p.challenge === 'string') result.challenge = p.challenge;
   if (typeof p.domain === 'string') result.domain = p.domain;
+  if (typeof p.jws === 'string') result.jws = p.jws;
   return result;
 }
 

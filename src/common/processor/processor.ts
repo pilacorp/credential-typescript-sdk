@@ -17,6 +17,10 @@ const rdfCanonize = require('rdf-canonize');
 import w3cV2 from './w3c.credential.v2.json';
 import w3cExamplesV2 from './w3c.credential.examples.v2.json';
 import dataIntegrityV2 from './w3c.security.data-integrity.v2.json';
+import w3cV1 from './w3c.credential.v1.json';
+import securityV1 from './w3c.security.v1.json';
+import securityV2 from './w3c.security.v2.json';
+import secp256k1Suite from './w3c.security.secp256k1-2019.v1.json';
 
 type RemoteDocument = {
   contextUrl: string | null;
@@ -25,21 +29,50 @@ type RemoteDocument = {
 };
 
 const wellKnownContexts: Record<string, unknown> = {
+  'https://www.w3.org/2018/credentials/v1': w3cV1,
+  'https://www.w3.org/2018/credentials/v1.jsonld': w3cV1,
   'https://www.w3.org/ns/credentials/v2': w3cV2,
   'https://www.w3.org/ns/credentials/v2.jsonld': w3cV2,
   'https://www.w3.org/ns/credentials/examples/v2': w3cExamplesV2,
   'https://www.w3.org/ns/credentials/examples/v2.jsonld': w3cExamplesV2,
   'https://w3id.org/security/data-integrity/v2': dataIntegrityV2,
   'https://w3id.org/security/data-integrity/v2.jsonld': dataIntegrityV2,
+  'https://w3id.org/security/v1': securityV1,
+  'https://w3id.org/security/v2': securityV2,
+  'https://w3id.org/security/suites/secp256k1-2019/v1': secp256k1Suite,
 };
+
+export type DocumentLoader = (url: string) => Promise<RemoteDocument> | RemoteDocument;
+
+const extraContexts: Record<string, unknown> = {};
+let injectedLoader: DocumentLoader | null = null;
 
 const fallbackLoader = jsonld.documentLoaders.node({ secure: false });
 const documentCache = new Map<string, RemoteDocument>();
 
+export function registerContext(url: string, document: unknown): void {
+  extraContexts[url] = document;
+}
+
+export function withDocumentLoader(loader: DocumentLoader | null): void {
+  injectedLoader = loader;
+}
+
+export function bundledContextUrls(): string[] {
+  return Object.keys(wellKnownContexts);
+}
+
 async function documentLoader(url: string): Promise<RemoteDocument> {
+  const extra = extraContexts[url];
+  if (extra) {
+    return { contextUrl: null, document: extra, documentUrl: url };
+  }
   const local = wellKnownContexts[url];
   if (local) {
     return { contextUrl: null, document: local, documentUrl: url };
+  }
+  if (injectedLoader) {
+    return injectedLoader(url);
   }
   if (documentCache.has(url)) {
     return documentCache.get(url)!;

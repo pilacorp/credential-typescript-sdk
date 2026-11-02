@@ -30,6 +30,7 @@ export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
 export function jwkToHex(jwk: JWK): string {
   if (jwk.kty !== 'EC') throw new Error(`unsupported key type: ${jwk.kty}`);
   if (jwk.crv !== 'secp256k1') throw new Error(`unsupported curve: ${jwk.crv}`);
+  if (!jwk.x || !jwk.y) throw new Error('JWK x/y are required');
 
   const x = Buffer.from(jwk.x, 'base64url');
   const y = Buffer.from(jwk.y, 'base64url');

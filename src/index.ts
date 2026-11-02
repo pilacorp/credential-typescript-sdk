@@ -16,6 +16,7 @@ export * as sdjwt from './common/sdjwt';
 export * as verificationMethod from './common/verification-method';
 export * as credentialStatus from './common/credential-status';
 export * as jsoncanonicalizer from './common/jsoncanonicalizer/jsoncanonicalizer';
+export * as processor from './common/processor/processor';
 
 // Convenience re-exports for the common DTO / signer interfaces.
 export type { Proof } from './common/dto/proof';
@@ -34,4 +35,21 @@ export {
   generateDualCurveKeyPair,
   generateP256KeyPair,
   validateDidDocument,
+  addVerificationMethod,
+  rotateVerificationMethod,
+  revokeVerificationMethod,
+  addVerificationMethodPurposes,
+  removeVerificationMethodPurposes,
 } from './did';
+export {
+  StatusListClient,
+  bitAt,
+  isRevoked,
+  isStatusSet,
+  newStatusListClient,
+} from './common/credential-status';
+export {
+  registerContext,
+  withDocumentLoader,
+  bundledContextUrls,
+} from './common/processor/processor';

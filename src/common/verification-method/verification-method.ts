@@ -5,9 +5,12 @@
 
 export interface JWK {
   kty: string;
-  crv: string;
-  x: string;
-  y: string;
+  crv?: string;
+  x?: string;
+  y?: string;
+  n?: string;
+  e?: string;
+  alg?: string;
 }
 
 export interface VerificationMethodEntry {

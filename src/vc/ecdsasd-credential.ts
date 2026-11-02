@@ -6,6 +6,7 @@ import {
   publicKeyHexFromVM,
   findVerificationMethod,
   normalizeVerificationMethodURL,
+  resolveVerificationMethodURL,
 } from '../common/verification-method';
 import { JSONCredential } from './json-credential';
 import { getOptions } from './options';
@@ -51,10 +52,9 @@ export class ECDSASDCredential {
     const issuer = data.issuer;
     if (typeof issuer !== 'string' || !issuer) throw new Error('issuer is missing or invalid');
     const options = getOptions(opts);
-    const resolved = normalizeVerificationMethodURL(
-      issuer,
-      options.verificationMethodKey || 'key-2',
-    );
+    const resolved = options.verificationMethodKey
+      ? normalizeVerificationMethodURL(issuer, options.verificationMethodKey)
+      : await resolveVerificationMethodURL(issuer, 'assertionMethod', options.resolver);
     const doc = await options.resolver.resolveDocument(issuer);
     const vm = findVerificationMethod(doc, resolved);
     const issuerPub = hexToBytes(publicKeyHexFromVM(vm));
@@ -79,6 +79,22 @@ export class ECDSASDCredential {
 
   serialize(): Promise<unknown> {
     return this.base.serialize();
+  }
+
+  getContents(): Uint8Array {
+    return this.base.getContents();
+  }
+
+  getType(): 'JSON' {
+    return this.base.getType();
+  }
+
+  extractField(path: string): unknown {
+    return this.base.extractField(path);
+  }
+
+  async hash(): Promise<string> {
+    return this.base.hash();
   }
 }
 

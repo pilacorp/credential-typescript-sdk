@@ -23,4 +23,24 @@ describe('Go interop canonical digest', () => {
       bytesToHex(computeDigest(await canonicalizeRDF({ ...unsigned }))),
     );
   });
+
+  it('canonicalizes numbers, arrays, and nested blank nodes stably', async () => {
+    const doc = {
+      '@context': [
+        'https://www.w3.org/ns/credentials/v2',
+        'https://www.w3.org/ns/credentials/examples/v2',
+      ],
+      type: ['VerifiableCredential'],
+      issuer: 'did:example:issuer',
+      credentialSubject: {
+        name: 'Alice',
+        tags: ['a', 'b'],
+        nested: { name: 'inner' },
+      },
+    };
+    const a = bytesToHex(computeDigest(await canonicalizeRDF(doc)));
+    const b = bytesToHex(computeDigest(await canonicalizeRDF({ ...doc })));
+    expect(a).toBe(b);
+    expect(a).toHaveLength(64);
+  });
 });

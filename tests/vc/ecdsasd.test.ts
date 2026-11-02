@@ -71,5 +71,43 @@ describe('ecdsa-sd-2023', () => {
     expect(JSON.stringify(derivedDoc)).toContain('Alice');
     expect(JSON.stringify(derivedDoc)).not.toContain('secret');
     await derived.verify({ resolver, verifyProof: true });
+    expect(cred.getType()).toBe('JSON');
+    expect(cred.extractField('issuer')).toBe(ISSUER);
+    expect(cred.getContents().length).toBeGreaterThan(0);
+    expect(await cred.hash()).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('defaults to the issuer active assertion method when no kid is given', async () => {
+    const doc: DIDDocument = {
+      '@context': ['https://www.w3.org/ns/did/v1', 'https://www.w3.org/ns/cid/v1'],
+      id: ISSUER,
+      verificationMethod: [
+        {
+          id: `${ISSUER}#key-1`,
+          type: 'Multikey',
+          controller: ISSUER,
+          publicKeyMultibase: encodeP256PublicMultibase(pub),
+        },
+      ],
+      authentication: [`${ISSUER}#key-1`],
+      assertionMethod: [`${ISSUER}#key-1`],
+    };
+    const resolver = new StaticResolver(doc);
+    const cred = await ECDSASDCredential.create(
+      {
+        context: [
+          'https://www.w3.org/ns/credentials/v2',
+          'https://www.w3.org/ns/credentials/examples/v2',
+        ],
+        types: ['VerifiableCredential'],
+        issuer: ISSUER,
+        subject: [{ id: 'did:example:subject' }],
+      },
+      { resolver },
+    );
+    await cred.addProofByProvider(new P256Provider(bytesToHex(priv)), ['/issuer'], { resolver });
+    const issued = (await cred.serialize()) as { proof: { verificationMethod: string } };
+    expect(issued.proof.verificationMethod).toBe(`${ISSUER}#key-1`);
+    await ECDSASDCredential.parse(JSON.stringify(issued), { resolver, verifyProof: true });
   });
 });

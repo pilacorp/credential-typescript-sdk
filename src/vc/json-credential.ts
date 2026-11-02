@@ -9,6 +9,9 @@ import {
   toMap,
   verifyProof,
 } from '../common/jsonmap/jsonmap';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '../common/crypto/hex';
+import { canonicalizeRDF, computeDigest } from '../common/processor/processor';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import {
@@ -131,6 +134,19 @@ export class JSONCredential implements Credential {
   extractField(path: string): unknown {
     if (!this.credentialData) return null;
     return extractFieldFromMap(this.credentialData, path);
+  }
+
+  async hash(): Promise<string> {
+    if (!this.credentialData.proof) {
+      throw new Error('credential must have proof before hashing');
+    }
+    const raw = this.credentialData.proof;
+    const first = (Array.isArray(raw) ? raw[0] : raw) as { proofValue?: string };
+    const pv = typeof first?.proofValue === 'string' ? first.proofValue : '';
+    if (pv.startsWith('z') || pv.startsWith('u')) {
+      return bytesToHex(computeDigest(await canonicalizeRDF(this.credentialData)));
+    }
+    return bytesToHex(sha256(Buffer.from(JSON.stringify(this.credentialData), 'utf8')));
   }
 
   async addSelectiveDisclosures(_selectivePaths: string[]): Promise<Credential> {

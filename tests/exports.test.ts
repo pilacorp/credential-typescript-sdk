@@ -17,5 +17,13 @@ describe('public exports', () => {
     expect(sdk.verificationMethod.encodeP256PublicMultibase).toBeDefined();
     expect(sdk.credentialStatus.StatusListClient).toBeDefined();
     expect(sdk.credentialStatus.bitAt).toBeDefined();
+    expect(sdk.StatusListClient).toBeDefined();
+    expect(sdk.bitAt).toBeDefined();
+    expect(sdk.addVerificationMethod).toBeDefined();
+    expect(sdk.rotateVerificationMethod).toBeDefined();
+    expect(sdk.revokeVerificationMethod).toBeDefined();
+    expect(sdk.bundledContextUrls().length).toBeGreaterThan(5);
+    expect(sdk.registerContext).toBeDefined();
+    expect(sdk.withDocumentLoader).toBeDefined();
   });
 });
