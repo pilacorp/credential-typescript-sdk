@@ -12,6 +12,33 @@
 import { normalizeVerificationMethodURL } from './resolve-vm-url';
 import { DIDDocument, VerificationMethodEntry } from './verification-method';
 
+/** When the document has exactly one VM, sign with it; otherwise the latest active VM for purpose. */
+export function selectDefaultSigningVM(
+  doc: DIDDocument | null,
+  purpose: string,
+): VerificationMethodEntry {
+  if (!doc) throw new Error('did document is nil');
+  if (doc.verificationMethod.length === 1) return doc.verificationMethod[0];
+  return selectLatestActiveVMForPurpose(doc, purpose);
+}
+
+export function ensureVMAuthorizedForPurpose(
+  doc: DIDDocument | null,
+  vmID: string,
+  purpose: string,
+): void {
+  if (!doc) throw new Error('did document is nil');
+  let arr: string[];
+  if (purpose === 'authentication') arr = doc.authentication;
+  else if (purpose === 'assertionMethod') arr = doc.assertionMethod;
+  else throw new Error(`unsupported purpose '${purpose}'`);
+  if (!idInPurposeArray(vmID, doc.id, arr)) {
+    throw new Error(
+      `verification method '${vmID}' is not granted purpose '${purpose}' on DID '${doc.id}'`,
+    );
+  }
+}
+
 export function selectLatestActiveVMForPurpose(
   doc: DIDDocument | null,
   purpose: string,

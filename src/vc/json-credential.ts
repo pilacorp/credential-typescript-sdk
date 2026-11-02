@@ -14,10 +14,7 @@ import { bytesToHex } from '../common/crypto/hex';
 import { canonicalizeRDF, computeDigest } from '../common/processor/processor';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
-import {
-  normalizeVerificationMethodURL,
-  resolveVerificationMethodURL,
-} from '../common/verification-method';
+import { resolveSigningVM } from '../common/verification-method';
 import { getOptions } from './options';
 import {
   checkExpiration,
@@ -90,13 +87,14 @@ export class JSONCredential implements Credential {
     const options = getOptions(opts);
     let vmKey = this.verificationMethodKey;
     if (options.verificationMethodKey) vmKey = options.verificationMethodKey;
-    if (!vmKey) {
-      vmKey = await resolveVerificationMethodURL(issuer, 'assertionMethod', options.resolver);
-    } else {
-      vmKey = normalizeVerificationMethodURL(issuer, vmKey);
-    }
+    const { url: vmURL } = await resolveSigningVM(
+      issuer,
+      'assertionMethod',
+      vmKey,
+      options.resolver,
+    );
 
-    await addECDSAProof(this.credentialData, signer, vmKey, 'assertionMethod');
+    await addECDSAProof(this.credentialData, signer, vmURL, 'assertionMethod');
   }
 
   async getSigningInput(): Promise<Uint8Array> {

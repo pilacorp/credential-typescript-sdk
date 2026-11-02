@@ -20,10 +20,7 @@ import {
   reconstruct,
 } from '../common/sdjwt';
 import type { DecodedDisclosure } from '../common/sdjwt';
-import {
-  normalizeVerificationMethodURL,
-  resolveVerificationMethodURL,
-} from '../common/verification-method';
+import { resolveSigningVM } from '../common/verification-method';
 import { JSONMap } from '../common/util/json';
 import { getOptions } from './options';
 import {
@@ -133,17 +130,13 @@ export class JOSECredential implements Credential {
     delete vcMap.vc;
     delete vcMap.vp;
 
-    let kid = options.verificationMethodKey;
-    if (!kid) {
-      if (!vcc.issuer) throw new Error('issuer is required to resolve VM');
-      kid = await resolveVerificationMethodURL(
-        vcc.issuer,
-        'assertionMethod',
-        options.resolver,
-      );
-    } else if (vcc.issuer) {
-      kid = normalizeVerificationMethodURL(vcc.issuer, kid);
-    }
+    if (!vcc.issuer) throw new Error('issuer is required to resolve VM');
+    const { url: kid } = await resolveSigningVM(
+      vcc.issuer,
+      'assertionMethod',
+      options.verificationMethodKey,
+      options.resolver,
+    );
 
     const disclosable = '_sd_alg' in vcMap;
     const header = {
@@ -219,6 +212,21 @@ export class JOSECredential implements Credential {
     opts: CredentialOptions = {},
   ): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
+    if (opts.resolver || opts.verificationMethodKey) {
+      const options = getOptions(opts);
+      const issuer = this.payloadData.issuer;
+      if (typeof issuer === 'string' && issuer) {
+        const header = JSON.parse(
+          Buffer.from(this.signingInput.split('.')[0], 'base64url').toString('utf8'),
+        ) as JSONMap;
+        await resolveSigningVM(
+          issuer,
+          'assertionMethod',
+          options.verificationMethodKey || (typeof header.kid === 'string' ? header.kid : ''),
+          options.resolver,
+        );
+      }
+    }
     if (signer instanceof P256Provider) {
       const parts = this.signingInput.split('.');
       const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8')) as JSONMap;

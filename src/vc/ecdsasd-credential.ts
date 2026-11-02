@@ -2,12 +2,7 @@ import { addECDSASDBaseProof, deriveECDSASD } from '../common/jsonmap/jsonmap';
 import { P256Provider } from '../common/signer/p256-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import { hexToBytes } from '../common/crypto/hex';
-import {
-  publicKeyHexFromVM,
-  findVerificationMethod,
-  normalizeVerificationMethodURL,
-  resolveVerificationMethodURL,
-} from '../common/verification-method';
+import { publicKeyHexFromVM, resolveSigningVM } from '../common/verification-method';
 import { JSONCredential } from './json-credential';
 import { getOptions } from './options';
 import type { Credential, CredentialContents, CredentialOptions } from './types';
@@ -52,11 +47,12 @@ export class ECDSASDCredential {
     const issuer = data.issuer;
     if (typeof issuer !== 'string' || !issuer) throw new Error('issuer is missing or invalid');
     const options = getOptions(opts);
-    const resolved = options.verificationMethodKey
-      ? normalizeVerificationMethodURL(issuer, options.verificationMethodKey)
-      : await resolveVerificationMethodURL(issuer, 'assertionMethod', options.resolver);
-    const doc = await options.resolver.resolveDocument(issuer);
-    const vm = findVerificationMethod(doc, resolved);
+    const { vm, url: resolved } = await resolveSigningVM(
+      issuer,
+      'assertionMethod',
+      options.verificationMethodKey,
+      options.resolver,
+    );
     const issuerPub = hexToBytes(publicKeyHexFromVM(vm));
     await addECDSASDBaseProof(
       data,

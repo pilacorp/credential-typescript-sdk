@@ -6,10 +6,7 @@ import { JWTVerifier, newJWTSigner } from '../common/jwt';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import { JSONMap } from '../common/util/json';
-import {
-  normalizeVerificationMethodURL,
-  resolveVerificationMethodURL,
-} from '../common/verification-method';
+import { resolveSigningVM } from '../common/verification-method';
 import { getOptions } from './options';
 import { checkAudience, checkChallenge } from './audience';
 import {
@@ -62,13 +59,13 @@ export class JWTPresentation implements Presentation {
     const payload: JSONMap = { vp: m, ...otherClaims };
 
     const options = getOptions(opts);
-    let kid = options.verificationMethodKey;
-    if (!kid) {
-      if (!vpc.holder) throw new Error('holder is required to resolve VM');
-      kid = await resolveVerificationMethodURL(vpc.holder, 'authentication', options.resolver);
-    } else if (vpc.holder) {
-      kid = normalizeVerificationMethodURL(vpc.holder, kid);
-    }
+    if (!vpc.holder) throw new Error('holder is required to resolve VM');
+    const { url: kid } = await resolveSigningVM(
+      vpc.holder,
+      'authentication',
+      options.verificationMethodKey,
+      options.resolver,
+    );
 
     const header = { typ: 'JWT', alg: 'ES256K', kid };
     const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
@@ -124,6 +121,19 @@ export class JWTPresentation implements Presentation {
   ): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
     const options = getOptions(opts);
+    if (opts.resolver || opts.verificationMethodKey) {
+      const holder = this.payloadData.holder;
+      if (typeof holder === 'string' && holder) {
+        const headerPart = this.signingInput.split('.')[0];
+        const header = JSON.parse(Buffer.from(headerPart, 'base64url').toString('utf8')) as JSONMap;
+        await resolveSigningVM(
+          holder,
+          'authentication',
+          options.verificationMethodKey || (typeof header.kid === 'string' ? header.kid : ''),
+          options.resolver,
+        );
+      }
+    }
     if (options.challenge || options.domain) {
       const { payload, header } = this.extractPayload();
       if (options.challenge) payload.nonce = options.challenge;

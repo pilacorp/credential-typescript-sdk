@@ -12,10 +12,7 @@ import {
   parse as parseSDJWT,
   reconstruct,
 } from '../common/sdjwt';
-import {
-  normalizeVerificationMethodURL,
-  resolveVerificationMethodURL,
-} from '../common/verification-method';
+import { resolveSigningVM } from '../common/verification-method';
 import { JSONMap } from '../common/util/json';
 import { getOptions } from './options';
 import {
@@ -93,17 +90,13 @@ export class JWTCredential implements Credential {
 
     const payload: JSONMap = { vc: vcMap, ...otherClaims };
 
-    let kid = options.verificationMethodKey;
-    if (!kid) {
-      if (!vcc.issuer) throw new Error('issuer is required to resolve VM');
-      kid = await resolveVerificationMethodURL(
-        vcc.issuer,
-        'assertionMethod',
-        options.resolver,
-      );
-    } else if (vcc.issuer) {
-      kid = normalizeVerificationMethodURL(vcc.issuer, kid);
-    }
+    if (!vcc.issuer) throw new Error('issuer is required to resolve VM');
+    const { url: kid } = await resolveSigningVM(
+      vcc.issuer,
+      'assertionMethod',
+      options.verificationMethodKey,
+      options.resolver,
+    );
 
     const header = { typ: disclosures.length > 0 ? 'vc+sd-jwt' : 'JWT', alg: 'ES256K', kid };
     const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
@@ -190,6 +183,21 @@ export class JWTCredential implements Credential {
     opts: CredentialOptions = {},
   ): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
+    if (opts.resolver || opts.verificationMethodKey) {
+      const options = getOptions(opts);
+      const issuer = this.payloadData.issuer;
+      if (typeof issuer === 'string' && issuer) {
+        const header = JSON.parse(
+          Buffer.from(this.signingInput.split('.')[0], 'base64url').toString('utf8'),
+        ) as JSONMap;
+        await resolveSigningVM(
+          issuer,
+          'assertionMethod',
+          options.verificationMethodKey || (typeof header.kid === 'string' ? header.kid : ''),
+          options.resolver,
+        );
+      }
+    }
     const jwtSigner = newJWTSigner(signer);
     const signature = await jwtSigner.signString(this.signingInput);
     await this.executeOptions(opts);

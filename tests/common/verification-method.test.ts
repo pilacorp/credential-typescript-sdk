@@ -1,5 +1,9 @@
 import { selectVMForPurpose, selectLatestActiveVMForPurpose } from '../../src/common/verification-method/selector';
-import { normalizeVerificationMethodURL, resolveVerificationMethodURL } from '../../src/common/verification-method/resolve-vm-url';
+import {
+  normalizeVerificationMethodURL,
+  resolveSigningVM,
+  resolveVerificationMethodURL,
+} from '../../src/common/verification-method/resolve-vm-url';
 import { ResolverProvider } from '../../src/common/verification-method/provider';
 import { DIDDocument } from '../../src/common/verification-method/verification-method';
 
@@ -110,5 +114,67 @@ describe('resolveVerificationMethodURL', () => {
     await expect(
       resolveVerificationMethodURL(did, 'keyAgreement', new StubResolver(doc)),
     ).rejects.toThrow(/unsupported purpose/);
+  });
+});
+
+describe('resolveSigningVM', () => {
+  const revoked = new Date(Date.UTC(2026, 0, 1));
+  const doc: DIDDocument = {
+    '@context': [],
+    id: did,
+    verificationMethod: [
+      {
+        id: `${did}#key-1`,
+        type: 'EcdsaSecp256k1VerificationKey2019',
+        controller: did,
+        revoked,
+      },
+      { id: `${did}#key-2`, type: 'EcdsaSecp256k1VerificationKey2019', controller: did },
+    ],
+    authentication: [`${did}#key-1`, `${did}#key-2`],
+    assertionMethod: [`${did}#key-1`, `${did}#key-2`],
+  };
+
+  it('rejects a pinned revoked kid', async () => {
+    await expect(
+      resolveSigningVM(did, 'assertionMethod', 'key-1', new StubResolver(doc)),
+    ).rejects.toThrow(/was revoked at 2026-01-01T00:00:00Z/);
+  });
+
+  it('rejects a hard revocation reason even without a timestamp', async () => {
+    const hard: DIDDocument = {
+      ...doc,
+      verificationMethod: [
+        {
+          id: `${did}#key-1`,
+          type: 'EcdsaSecp256k1VerificationKey2019',
+          controller: did,
+          revocationReason: 'keyCompromise',
+        },
+      ],
+      assertionMethod: [`${did}#key-1`],
+    };
+    await expect(
+      resolveSigningVM(did, 'assertionMethod', 'key-1', new StubResolver(hard)),
+    ).rejects.toThrow(/hard reason 'keyCompromise'/);
+  });
+
+  it('accepts a pinned active kid', async () => {
+    const { url } = await resolveSigningVM(did, 'assertionMethod', 'key-2', new StubResolver(doc));
+    expect(url).toBe(`${did}#key-2`);
+  });
+
+  it('rejects a kid not granted the purpose', async () => {
+    const narrowed: DIDDocument = {
+      ...doc,
+      verificationMethod: [
+        { id: `${did}#key-1`, type: 'EcdsaSecp256k1VerificationKey2019', controller: did },
+        { id: `${did}#key-2`, type: 'EcdsaSecp256k1VerificationKey2019', controller: did },
+      ],
+      assertionMethod: [`${did}#key-2`],
+    };
+    await expect(
+      resolveSigningVM(did, 'assertionMethod', 'key-1', new StubResolver(narrowed)),
+    ).rejects.toThrow(/not granted purpose 'assertionMethod'/);
   });
 });
