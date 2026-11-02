@@ -13,6 +13,7 @@ import {
 import { getOptions } from './options';
 import {
   checkExpiration,
+  checkJwtTimeClaims,
   isJWTPresentation,
   serializePresentationContents,
   verifyCredentials,
@@ -153,12 +154,26 @@ export class JWTPresentation implements Presentation {
     return 'JWT';
   }
 
+  private extractPayload(): { payload: JSONMap; header: string } {
+    const parts = this.signingInput.split('.');
+    if (parts.length !== 2) throw new Error('invalid signing input format');
+    let payload: JSONMap;
+    try {
+      payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    } catch (err) {
+      throw new Error(`failed to decode payload: ${(err as Error).message}`);
+    }
+    return { payload, header: parts[0] };
+  }
+
   async executeOptions(opts: PresentationOptions = {}): Promise<void> {
     const options = getOptions(opts);
     if (options.validateVC) {
       await verifyCredentials(this.payloadData, options.clockSkewLeewayMs);
     }
     if (options.checkExpiration) {
+      const { payload } = this.extractPayload();
+      checkJwtTimeClaims(payload, options.clockSkewLeewayMs);
       checkExpiration(this.payloadData, options.clockSkewLeewayMs);
     }
     if (options.verifyProof) {

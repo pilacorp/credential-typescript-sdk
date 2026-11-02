@@ -20,6 +20,7 @@ import { JSONMap } from '../common/util/json';
 import { getOptions } from './options';
 import {
   checkExpiration,
+  checkJwtTimeClaims,
   checkRevocation,
   extractFieldFromMap,
   normalizeCredentialData,
@@ -345,6 +346,8 @@ export class JWTCredential implements Credential {
 
     if (options.checkExpiration) {
       try {
+        const { payload } = this.extractPayload();
+        checkJwtTimeClaims(payload, options.clockSkewLeewayMs);
         checkExpiration(this.payloadData, options.clockSkewLeewayMs);
       } catch (err) {
         throw new Error(`failed to check expiration: ${(err as Error).message}`);

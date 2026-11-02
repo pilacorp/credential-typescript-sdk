@@ -3,7 +3,7 @@
  */
 import { JSONMap } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
-import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
+import { checkJwtTimeClaims, checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
 import { parseCredential } from '../vc/credential';
 import type { Credential } from '../vc/types';
 import type { PresentationContents, PresentationData } from './types';
@@ -20,6 +20,8 @@ export function parseStringField(obj: PresentationData, fieldName: string): stri
 export function checkExpiration(p: PresentationData, leewayMs = 0): void {
   checkValidityPeriod(p, 'presentation', leewayMs);
 }
+
+export { checkJwtTimeClaims };
 
 export async function verifyCredentials(jsonPresentation: PresentationData, clockSkewLeewayMs = 0): Promise<void> {
   const contents = await parsePresentationContents(jsonPresentation);

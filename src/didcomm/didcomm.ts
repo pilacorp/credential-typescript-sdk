@@ -61,6 +61,9 @@ export function decryptJWE(
   );
   const ciphertext = base64UrlDecode(message.ciphertext);
   const authTag = base64UrlDecode(message.tag);
+  if (authTag.length !== 16) {
+    throw new Error(`JWE auth tag must be 16 bytes, got ${authTag.length}`);
+  }
   let plaintext: Buffer;
   try {
     decipher.setAuthTag(authTag);

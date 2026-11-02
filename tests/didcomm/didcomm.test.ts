@@ -105,5 +105,11 @@ describe('didcomm', () => {
 
     message.tag = Buffer.from(tag.map((byte, index) => index === 0 ? byte ^ 1 : byte)).toString('base64url');
     expect(() => decryptJWE(message, secret)).toThrow();
+
+    const truncatedTagMessage = {
+      ...encryptJWE('authenticated', secret),
+    };
+    truncatedTagMessage.tag = Buffer.from(tag.subarray(0, 4)).toString('base64url');
+    expect(() => decryptJWE(truncatedTagMessage, secret)).toThrow(/16 bytes/);
   });
 });

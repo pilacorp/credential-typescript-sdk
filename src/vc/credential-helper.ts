@@ -246,6 +246,8 @@ export function checkExpiration(c: CredentialData, leewayMs = 0): void {
   checkValidityPeriod(c, 'credential', leewayMs);
 }
 
+export { checkJwtTimeClaims } from '../common/util/vc';
+
 // ---- Revocation ----
 
 export async function checkRevocation(c: CredentialData): Promise<void> {
