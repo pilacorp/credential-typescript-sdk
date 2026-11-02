@@ -16,6 +16,7 @@ import {
   resolveVerificationMethodURL,
 } from '../common/verification-method';
 import { getOptions } from './options';
+import { checkAudience, checkChallenge } from './audience';
 import {
   checkExpiration,
   serializePresentationContents,
@@ -91,7 +92,10 @@ export class JSONPresentation implements Presentation {
     } else {
       vmKey = normalizeVerificationMethodURL(holder, vmKey);
     }
-    await addECDSAProof(this.presentationData, signer, vmKey, 'authentication');
+    await addECDSAProof(this.presentationData, signer, vmKey, 'authentication', {
+      challenge: options.challenge || undefined,
+      domain: options.domain || undefined,
+    });
   }
 
   async getSigningInput(): Promise<Uint8Array> {
@@ -137,6 +141,12 @@ export class JSONPresentation implements Presentation {
     if (options.verifyProof) {
       const ok = await verifyProof(this.presentationData, options.resolver);
       if (!ok) throw new Error('invalid proof');
+    }
+    if (options.expectedChallenge || options.expectedDomain || options.requireAudience) {
+      const raw = this.presentationData.proof;
+      const proof = (Array.isArray(raw) ? raw[0] : raw) as Proof | undefined;
+      checkChallenge(proof?.challenge, options.expectedChallenge);
+      checkAudience(proof?.domain, options);
     }
   }
 }

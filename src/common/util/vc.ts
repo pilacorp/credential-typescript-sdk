@@ -107,6 +107,9 @@ export function serializeProofs(proofs: Proof[]): unknown {
     if (proof.proofPurpose) out.proofPurpose = proof.proofPurpose;
     if (proof.proofValue) out.proofValue = proof.proofValue;
     if (proof.cryptosuite) out.cryptosuite = proof.cryptosuite;
+    if (proof.challenge) out.challenge = proof.challenge;
+    if (proof.domain) out.domain = proof.domain;
+    if (proof.jws) out.jws = proof.jws;
     return out;
   });
   if (result.length === 1) return result[0];

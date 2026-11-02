@@ -12,8 +12,11 @@
 import { sha256 } from '@noble/hashes/sha256';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const jsonld = require('jsonld');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const rdfCanonize = require('rdf-canonize');
 import w3cV2 from './w3c.credential.v2.json';
 import w3cExamplesV2 from './w3c.credential.examples.v2.json';
+import dataIntegrityV2 from './w3c.security.data-integrity.v2.json';
 
 type RemoteDocument = {
   contextUrl: string | null;
@@ -26,6 +29,8 @@ const wellKnownContexts: Record<string, unknown> = {
   'https://www.w3.org/ns/credentials/v2.jsonld': w3cV2,
   'https://www.w3.org/ns/credentials/examples/v2': w3cExamplesV2,
   'https://www.w3.org/ns/credentials/examples/v2.jsonld': w3cExamplesV2,
+  'https://w3id.org/security/data-integrity/v2': dataIntegrityV2,
+  'https://w3id.org/security/data-integrity/v2.jsonld': dataIntegrityV2,
 };
 
 const fallbackLoader = jsonld.documentLoaders.node({ secure: false });
@@ -129,4 +134,122 @@ function numberToCanonicalString(n: number): string {
   // floats (default format). JavaScript already drops trailing zeros for
   // integer-valued floats — covers 2023, 2023.5, etc.
   return String(n);
+}
+
+export function splitNQuadsKeepNL(s: string): string[] {
+  return s.split(/(?<=\n)/).filter((p) => p.trim() !== '');
+}
+
+const ldOpts = { documentLoader, safe: true };
+
+export async function expandJSONLD(doc: Record<string, unknown>): Promise<unknown[]> {
+  if (!doc) throw new Error('expand: document is nil');
+  const out = (await jsonld.expand(doc, ldOpts)) as unknown[];
+  checkExpandedTypes(out);
+  rejectRelativeIDs(out);
+  return out;
+}
+
+export async function compactJSONLD(
+  expanded: unknown,
+  ctx: unknown,
+): Promise<Record<string, unknown>> {
+  return jsonld.compact(expanded, ctx, { documentLoader }) as Promise<Record<string, unknown>>;
+}
+
+export async function toRDFNQuads(doc: unknown): Promise<string[]> {
+  const nq = (await jsonld.toRDF(doc, {
+    ...ldOpts,
+    format: 'application/n-quads',
+  })) as string;
+  return splitNQuadsKeepNL(nq);
+}
+
+/** Go Canonicalize: native JSON types, fail on empty / undefined terms. */
+export async function canonicalizeRDF(doc: Record<string, unknown>): Promise<Uint8Array> {
+  const nquads = await canonicalizeNQuads(doc);
+  const canonical = Buffer.from(nquads.join(''), 'utf8');
+  if (canonical.length === 0) {
+    throw new Error(
+      'canonicalization produced no N-Quads; the document has no @context or no JSON-LD terms',
+    );
+  }
+  return new Uint8Array(canonical);
+}
+
+export async function canonicalizeNQuads(doc: Record<string, unknown>): Promise<string[]> {
+  const [nquads] = await canonicalizeWithIdMap(doc);
+  return nquads;
+}
+
+export async function canonicalizeWithIdMap(
+  doc: Record<string, unknown>,
+): Promise<[string[], Map<string, string>]> {
+  if (!doc) throw new Error('canonicalize: document is nil');
+  const dataset = await jsonld.toRDF(doc, ldOpts);
+  return canonicalizeDatasetWithIdMap(dataset);
+}
+
+export async function canonicalizeNQuadsWithIdMap(
+  nquads: string[],
+): Promise<[string[], Map<string, string>]> {
+  const dataset = rdfCanonize.NQuads.parse(nquads.join(''));
+  return canonicalizeDatasetWithIdMap(dataset);
+}
+
+async function canonicalizeDatasetWithIdMap(
+  dataset: unknown,
+): Promise<[string[], Map<string, string>]> {
+  const canonicalIdMap = new Map<string, string>();
+  const nqStr: string = await rdfCanonize.canonize(dataset, {
+    algorithm: 'URDNA2015',
+    canonicalIdMap,
+  });
+  const idMap = new Map<string, string>();
+  for (const [k, v] of canonicalIdMap.entries()) {
+    const key = k.startsWith('_:') ? k : `_:${k}`;
+    const val = String(v).startsWith('_:') ? String(v) : `_:${v}`;
+    idMap.set(key, val);
+  }
+  return [splitNQuadsKeepNL(nqStr), idMap];
+}
+
+function isAbsoluteIri(s: string): boolean {
+  return /^[A-Za-z][A-Za-z0-9+.-]*:/.test(s);
+}
+
+function relativeKeywordValues(v: unknown, keyword: string, out: string[] = []): string[] {
+  if (Array.isArray(v)) {
+    for (const item of v) relativeKeywordValues(item, keyword, out);
+    return out;
+  }
+  if (v && typeof v === 'object') {
+    const obj = v as Record<string, unknown>;
+    for (const [k, val] of Object.entries(obj)) {
+      if (k === keyword && typeof val === 'string') {
+        if (val !== keyword && !val.startsWith('_:') && !isAbsoluteIri(val)) out.push(val);
+      } else {
+        relativeKeywordValues(val, keyword, out);
+      }
+    }
+  }
+  return out;
+}
+
+function checkExpandedTypes(expanded: unknown): void {
+  const dropped = relativeKeywordValues(expanded, '@type');
+  if (dropped.length > 0) {
+    throw new Error(
+      `json-ld: type ${JSON.stringify(dropped[0])} is not defined by @context and would be dropped, leaving it unsigned`,
+    );
+  }
+}
+
+function rejectRelativeIDs(expanded: unknown): void {
+  const dropped = relativeKeywordValues(expanded, '@id');
+  if (dropped.length > 0) {
+    throw new Error(
+      `json-ld: id ${JSON.stringify(dropped[0])} is not an absolute IRI and would be dropped, leaving the node unsigned`,
+    );
+  }
 }

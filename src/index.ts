@@ -22,3 +22,16 @@ export type { Proof } from './common/dto/proof';
 export type { SignerProvider } from './common/signer/signer';
 export { DefaultProvider } from './common/signer/default-provider';
 export { P256Provider } from './common/signer/p256-provider';
+export { CredentialError, ErrorCode } from './common/errors';
+export * as ecdsasd from './common/ecdsasd';
+export {
+  JOSECredential,
+  TypeVCJWT,
+  TypeVCSDJWT,
+} from './vc/jose-credential';
+export { ECDSASDCredential } from './vc/ecdsasd-credential';
+export {
+  generateDualCurveKeyPair,
+  generateP256KeyPair,
+  validateDidDocument,
+} from './did';

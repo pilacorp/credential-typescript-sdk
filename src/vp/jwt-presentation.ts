@@ -11,6 +11,7 @@ import {
   resolveVerificationMethodURL,
 } from '../common/verification-method';
 import { getOptions } from './options';
+import { checkAudience, checkChallenge } from './audience';
 import {
   checkExpiration,
   checkJwtTimeClaims,
@@ -54,6 +55,9 @@ export class JWTPresentation implements Presentation {
       otherClaims.nbf = iat;
     }
     if (vpc.id) otherClaims.jti = vpc.id;
+    const bind = getOptions(opts);
+    if (bind.challenge) otherClaims.nonce = bind.challenge;
+    if (bind.domain) otherClaims.aud = bind.domain;
 
     const payload: JSONMap = { vp: m, ...otherClaims };
 
@@ -119,6 +123,14 @@ export class JWTPresentation implements Presentation {
     opts: PresentationOptions = {},
   ): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
+    const options = getOptions(opts);
+    if (options.challenge || options.domain) {
+      const { payload, header } = this.extractPayload();
+      if (options.challenge) payload.nonce = options.challenge;
+      if (options.domain) payload.aud = options.domain;
+      const payloadEncoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+      this.signingInput = header + '.' + payloadEncoded;
+    }
     const jwtSigner = newJWTSigner(signer);
     const signature = await jwtSigner.signString(this.signingInput);
     await this.executeOptions(opts);
@@ -180,6 +192,11 @@ export class JWTPresentation implements Presentation {
       const serialized = await this.serialize();
       const verifier = new JWTVerifier(options.resolver);
       await verifier.verifyJWT(serialized);
+    }
+    if (options.expectedChallenge || options.expectedDomain || options.requireAudience) {
+      const { payload } = this.extractPayload();
+      checkChallenge(payload.nonce, options.expectedChallenge);
+      checkAudience(payload.aud, options);
     }
   }
 }

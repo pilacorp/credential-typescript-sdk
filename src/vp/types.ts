@@ -25,6 +25,16 @@ export interface PresentationOptions {
   didBaseURL?: string;
   verificationMethodKey?: string;
   resolver?: ResolverProvider;
+  /** Signing: JWT `nonce` / JSON-LD `proof.challenge`. */
+  challenge?: string;
+  /** Signing: JWT `aud` / JSON-LD `proof.domain`. */
+  domain?: string;
+  /** Verifying: required nonce/challenge. Implies verifyProof. */
+  expectedChallenge?: string;
+  /** Verifying: required aud/domain. Implies verifyProof. */
+  expectedDomain?: string;
+  /** Verifying: reject presentations with no audience unless expectedDomain is set. */
+  requireAudience?: boolean;
 }
 
 export interface Presentation {

@@ -16,6 +16,7 @@ import { ecdsaVerifySignature, verifyJSONSignature } from '../crypto/crypto';
 import { bytesToHex, hexToBytes, keyToBytes } from '../crypto/hex';
 import { verifyJwtProof } from '../crypto/jwt-proof-2020';
 import { canonicalizeDocument, computeDigest } from '../processor/processor';
+import { createBaseProof, deriveProof, verifyProof as verifyEcdsaSd } from '../ecdsasd';
 import { P256Provider } from '../signer/p256-provider';
 import { SignerProvider, validateSignatureLength } from '../signer/signer';
 import type { Proof } from '../dto/proof';
@@ -38,6 +39,7 @@ export const JwtProof2020 = 'JwtProof2020';
 export const EcdsaSecp256k1Signature2019 = 'EcdsaSecp256k1Signature2019';
 export const DataIntegrityProof = 'DataIntegrityProof';
 export const ECDSARDFC2019 = 'ecdsa-rdfc-2019';
+export const ECDSASD2023 = 'ecdsa-sd-2023';
 export const ECDSASECPKEY = 'EcdsaSecp256k1VerificationKey2019';
 const DATA_INTEGRITY_V2_CONTEXT = 'https://w3id.org/security/data-integrity/v2';
 
@@ -67,6 +69,7 @@ export async function addECDSAProof(
   signer: SignerProvider,
   verificationMethod: string,
   proofPurpose: string,
+  extras: { challenge?: string; domain?: string } = {},
 ): Promise<void> {
   if (!m) throw new Error('jsonmap: JSONMap is nil');
   if (!signer) throw new Error('jsonmap: signer provider cannot be nil');
@@ -80,6 +83,8 @@ export async function addECDSAProof(
     proofPurpose,
     cryptosuite: ECDSARDFC2019,
   };
+  if (extras.challenge) proof.challenge = extras.challenge;
+  if (extras.domain) proof.domain = extras.domain;
 
   if (signer instanceof P256Provider) {
     ensureDataIntegrityContext(m);
@@ -168,6 +173,91 @@ function coversDataIntegrity(ctx: string): boolean {
   );
 }
 
+export async function addECDSASDBaseProof(
+  m: JSONMap,
+  signerProvider: SignerProvider,
+  verificationMethod: string,
+  proofPurpose: string,
+  mandatoryPointers: string[],
+  issuerPub?: Uint8Array,
+): Promise<void> {
+  if (!m) throw new Error('jsonmap: JSONMap is nil');
+  if (!signerProvider) throw new Error('jsonmap: signer provider cannot be nil');
+  if (!verificationMethod) throw new Error('jsonmap: verification method is required');
+  if (!proofPurpose) throw new Error('jsonmap: proof purpose is required');
+  if (m[PROOF_FIELD]) {
+    throw new Error(
+      'jsonmap: the document already carries a proof; an ecdsa-sd-2023 base proof replaces the proof set, so remove the existing proof first if that is intended',
+    );
+  }
+  ensureDataIntegrityContext(m);
+  const proof: Proof = {
+    type: DataIntegrityProof,
+    cryptosuite: ECDSASD2023,
+    created: formatRFC3339(new Date()),
+    verificationMethod,
+    proofPurpose,
+  };
+  const docNoProof: JSONMap = {};
+  for (const [k, v] of Object.entries(m)) {
+    if (k !== PROOF_FIELD) docNoProof[k] = v;
+  }
+  proof.proofValue = await createBaseProof(
+    docNoProof,
+    ecdsaProofConfig(m, proof),
+    mandatoryPointers,
+    signerProvider,
+    issuerPub,
+  );
+  m[PROOF_FIELD] = serializeProofs([proof]);
+}
+
+export async function deriveECDSASD(m: JSONMap, selectivePointers: string[]): Promise<JSONMap> {
+  if (!m) throw new Error('jsonmap: JSONMap is nil');
+  const baseProof = parseRawToProof(getFirstProof(m));
+  if (baseProof.type !== DataIntegrityProof || baseProof.cryptosuite !== ECDSASD2023 || !baseProof.proofValue) {
+    throw new Error('jsonmap: credential has no ecdsa-sd-2023 proof to derive from');
+  }
+  const docNoProof: JSONMap = {};
+  for (const [k, v] of Object.entries(m)) {
+    if (k !== PROOF_FIELD) docNoProof[k] = v;
+  }
+  const { revealDoc, proofValue } = await deriveProof(docNoProof, baseProof.proofValue, selectivePointers);
+  const derived: JSONMap = { ...revealDoc };
+  derived[PROOF_FIELD] = serializeProofs([{ ...baseProof, proofValue }]);
+  return derived;
+}
+
+function ecdsaProofConfig(m: JSONMap, proof: Proof): JSONMap {
+  const ctx = m['@context'];
+  if (ctx === undefined || ctx === null) {
+    throw new Error('document is missing the @context needed to canonicalize the proof configuration');
+  }
+  const cfg: JSONMap = {
+    type: proof.type,
+    created: proof.created,
+    verificationMethod: proof.verificationMethod,
+    proofPurpose: proof.proofPurpose,
+    '@context': ctx,
+  };
+  if (proof.cryptosuite) cfg.cryptosuite = proof.cryptosuite;
+  if (proof.challenge) cfg.challenge = proof.challenge;
+  if (proof.domain) cfg.domain = proof.domain;
+  return cfg;
+}
+
+async function verifyECDSASDProof(m: JSONMap, doc: DIDDocument, proof: Proof): Promise<boolean> {
+  const vm = findVerificationMethod(doc, proof.verificationMethod);
+  const publicKey = publicKeyHexFromVM(vm);
+  const docNoProof: JSONMap = {};
+  for (const [k, v] of Object.entries(m)) {
+    if (k !== PROOF_FIELD) docNoProof[k] = v;
+  }
+  await verifyEcdsaSd(docNoProof, ecdsaProofConfig(m, proof), proof.proofValue ?? '', hexToBytes(publicKey));
+  strictPurposeCheck(doc, vm, proof.proofPurpose, proof.created);
+  return true;
+}
+
 export function addCustomProof(m: JSONMap, proof: Proof | null): void {
   if (!m) throw new Error('JSONMap is nil');
   if (!proof) throw new Error('proof is nil');
@@ -196,6 +286,9 @@ export async function verifyProof(
   }
   if (proof.type === DataIntegrityProof && proof.cryptosuite === ECDSARDFC2019) {
     return verifyDataIntegrityProof(m, doc, proof);
+  }
+  if (proof.type === DataIntegrityProof && proof.cryptosuite === ECDSASD2023) {
+    return verifyECDSASDProof(m, doc, proof);
   }
   throw new Error(`unsupported proof type: ${proof.type}`);
 }
@@ -303,6 +396,8 @@ export function parseRawToProof(proof: unknown): Proof {
   };
   if (typeof p.proofValue === 'string') result.proofValue = p.proofValue;
   if (typeof p.cryptosuite === 'string') result.cryptosuite = p.cryptosuite;
+  if (typeof p.challenge === 'string') result.challenge = p.challenge;
+  if (typeof p.domain === 'string') result.domain = p.domain;
   return result;
 }
 

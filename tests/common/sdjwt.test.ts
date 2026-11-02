@@ -69,8 +69,8 @@ describe('buildSDJWTPresentation', () => {
   it('skips empty disclosures', () => {
     expect(buildSDJWTPresentation('a.b.c', ['d1', '', 'd2'])).toBe('a.b.c~d1~d2~');
   });
-  it('emits bare JWT when no disclosures supplied', () => {
-    expect(buildSDJWTPresentation('a.b.c', [])).toBe('a.b.c');
+  it('always terminates with ~ like Go BuildSDJWTPresentation', () => {
+    expect(buildSDJWTPresentation('a.b.c', [])).toBe('a.b.c~');
   });
 });
 

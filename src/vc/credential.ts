@@ -20,6 +20,7 @@ export * from './types';
 export { JWTCredential } from './jwt-credential';
 export { JSONCredential } from './json-credential';
 export { JOSECredential, TypeVCJWT, TypeVCSDJWT, isJOSECredentialTyp } from './jose-credential';
+export { ECDSASDCredential, dotPathsToPointers } from './ecdsasd-credential';
 
 export async function parseCredential(
   rawCredential: Uint8Array | string,

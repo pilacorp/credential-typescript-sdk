@@ -31,7 +31,7 @@ export async function verifyCredentials(jsonPresentation: PresentationData, cloc
     const v = vcs[i];
     if (!v) throw new Error(`credential at index ${i} is nil`);
     try {
-      await v.verify({ validateSchema: true, clockSkewLeewayMs });
+      await v.verify({ validateSchema: true, checkExpiration: true, clockSkewLeewayMs });
     } catch (err) {
       throw new Error(`failed to verify credential at index ${i}: ${(err as Error).message}`);
     }

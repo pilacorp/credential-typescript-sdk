@@ -7,13 +7,19 @@ import { DefaultProvider } from '../common/signer/default-provider';
 import { P256Provider } from '../common/signer/p256-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import type { Proof } from '../common/dto/proof';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '../common/crypto/hex';
+import { CredentialError, ErrorCode } from '../common/errors';
 import {
   buildDisclosures,
+  buildSDJWTPresentation,
+  decodeDisclosures,
   isJWT,
   isSDJWT,
   parse as parseSDJWT,
   reconstruct,
 } from '../common/sdjwt';
+import type { DecodedDisclosure } from '../common/sdjwt';
 import {
   normalizeVerificationMethodURL,
   resolveVerificationMethodURL,
@@ -245,10 +251,10 @@ export class JOSECredential implements Credential {
 
   async serialize(): Promise<string> {
     let base = this.signingInput;
-    if (this.signature || this.disclosures.length > 0) {
+    if (this.signature || this.disclosures.length > 0 || this.isDisclosable()) {
       base = base + '.' + this.signature;
     }
-    if (this.disclosures.length === 0) return base;
+    if (!this.isDisclosable() && this.disclosures.length === 0) return base;
     let out = base;
     for (const d of this.disclosures) {
       if (!d) continue;
@@ -275,6 +281,40 @@ export class JOSECredential implements Credential {
     throw new Error('use JOSECredential.create with sdSelectivePaths');
   }
 
+  decodedDisclosures(): DecodedDisclosure[] {
+    return decodeDisclosures(this.disclosures);
+  }
+
+  isDisclosable(): boolean {
+    const typ = peekJwtTyp(this.signingInput);
+    return typ === TypeVCSDJWT || typ === `application/${TypeVCSDJWT}`;
+  }
+
+  async present(selectedDisclosures: string[]): Promise<JOSECredential> {
+    if (!this.signature) {
+      throw new CredentialError(ErrorCode.Unsigned, 'cannot present an unsigned credential');
+    }
+    if (!this.isDisclosable()) {
+      throw new CredentialError(
+        ErrorCode.NoDisclosures,
+        'credential carries no disclosures; nothing to present selectively',
+      );
+    }
+    const issuerJWT = `${this.signingInput}.${this.signature}`;
+    return JOSECredential.parse(buildSDJWTPresentation(issuerJWT, selectedDisclosures));
+  }
+
+  async hash(): Promise<string> {
+    if (!this.signature) {
+      throw new CredentialError(ErrorCode.Unsigned, 'credential must be signed before hashing');
+    }
+    const serialized = await this.serialize();
+    if (typeof serialized !== 'string') {
+      throw new Error(`unexpected serialized credential type ${typeof serialized}`);
+    }
+    return bytesToHex(sha256(Buffer.from(serialized, 'utf8')));
+  }
+
   async executeOptions(opts: CredentialOptions = {}): Promise<void> {
     const options = getOptions(opts);
     const tasks: Promise<void>[] = [];
@@ -297,10 +337,10 @@ export class JOSECredential implements Credential {
     if (options.verifyProof) {
       tasks.push(
         (async () => {
-          const serialized = await this.serialize();
+          const baseJWS = `${this.signingInput}.${this.signature}`;
           const verifier = new JWTVerifier(options.resolver);
           try {
-            await verifier.verifyJWT(serialized);
+            await verifier.verifyJWT(baseJWS);
           } catch (err) {
             throw new Error(`verify proof: ${(err as Error).message}`);
           }

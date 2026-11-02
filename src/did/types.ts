@@ -78,7 +78,10 @@ export interface CreateDID {
 }
 
 export interface Secret {
+  /** secp256k1 private key. With withP256 this is the shared P-256/secp256k1 scalar (Go GenerateDualCurveKeyPair). */
   privateKeyHex: string;
+  /** Same scalar as privateKeyHex when a P-256 VM was published; omitted otherwise. */
+  p256PrivateKeyHex?: string;
 }
 
 export interface GeneratedDID {

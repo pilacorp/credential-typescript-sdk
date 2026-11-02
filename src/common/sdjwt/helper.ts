@@ -70,14 +70,15 @@ export function buildSDJWTPresentation(
   selectedDisclosures: string[],
 ): string {
   let out = issuerSignedJWT;
-  let hasDisclosure = false;
   for (const sel of selectedDisclosures) {
     if (!sel) continue;
     out += '~' + sel;
-    hasDisclosure = true;
   }
-  if (hasDisclosure) out += '~';
-  return out;
+  return out + '~';
+}
+
+export function decodeDisclosures(disclosures: string[]): DecodedDisclosure[] {
+  return parseDisclosures(disclosures);
 }
 
 export function parseDisclosures(disclosures: string[]): DecodedDisclosure[] {

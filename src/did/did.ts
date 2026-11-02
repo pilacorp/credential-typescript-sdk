@@ -17,7 +17,7 @@ import {
 } from 'ethers';
 import type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
 import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
-import { encodeP256PublicMultibase } from '../common/verification-method/multikey';
+import { decodeP256PublicMultibase, encodeP256PublicMultibase } from '../common/verification-method/multikey';
 import type {
   CreateDID,
   CreateDidFromPublicKeyOptions,
@@ -146,11 +146,14 @@ export function generateDualCurveKeyPair(): {
   secp256k1: { privateKeyHex: string; publicKeyHex: string };
   p256: { privateKeyHex: string; publicKeyHex: string };
 } {
-  const secpPriv = randomPrivateKeyHex();
-  const secpPub = hexlify(secp256k1.getPublicKey(getBytes(secpPriv), false));
+  // Go GenerateDualCurveKeyPair: one P-256 scalar, reused on secp256k1 (n(P-256) < n(secp256k1)).
+  const p256Pair = generateP256KeyPair();
+  const scalar = hexToBytes(normalizeHex(p256Pair.privateKeyHex));
+  const secpPub = hexlify(secp256k1.getPublicKey(scalar, false)).toLowerCase();
+  const priv = p256Pair.privateKeyHex.toLowerCase();
   return {
-    secp256k1: { privateKeyHex: secpPriv.toLowerCase(), publicKeyHex: secpPub.toLowerCase() },
-    p256: generateP256KeyPair(),
+    secp256k1: { privateKeyHex: priv, publicKeyHex: secpPub },
+    p256: { privateKeyHex: priv, publicKeyHex: p256Pair.publicKeyHex.toLowerCase() },
   };
 }
 
@@ -335,15 +338,18 @@ export class DIDGenerator {
   }
 
   async generateDID(createDID: CreateDID): Promise<GeneratedDID> {
-    const privateKey = randomPrivateKeyHex();
+    const dual = createDID.withP256 ? generateDualCurveKeyPair() : null;
+    const privateKey = dual ? dual.secp256k1.privateKeyHex : randomPrivateKeyHex();
     const wallet = new Wallet(privateKey);
     const address = wallet.address.toLowerCase();
-    const publicKeyHex = hexlify(secp256k1.getPublicKey(getBytes(privateKey), true)).toLowerCase();
+    const publicKeyHex = dual
+      ? dual.secp256k1.publicKeyHex
+      : hexlify(secp256k1.getPublicKey(getBytes(privateKey), true)).toLowerCase();
     const did = `${this.config.method}:${address}`.toLowerCase();
-    const document = createDID.withP256
+    const document = dual
       ? buildMixedCurveDidDocument(
           publicKeyHex,
-          generateP256KeyPair().publicKeyHex,
+          dual.p256.publicKeyHex,
           did,
           createDID.type,
         )
@@ -363,9 +369,14 @@ export class DIDGenerator {
       createDID.type,
     );
 
+    const secret = {
+      privateKeyHex: privateKey.toLowerCase(),
+      ...(dual ? { p256PrivateKeyHex: dual.p256.privateKeyHex } : {}),
+    };
+
     return {
       did,
-      secret: { privateKeyHex: privateKey.toLowerCase() },
+      secret,
       document,
       transaction,
     };
@@ -508,6 +519,73 @@ function randomPrivateKeyHex() {
 
 function withHexPrefix(value: string) {
   return value.startsWith('0x') ? value : `0x${value}`;
+}
+
+function canonicalVmId(did: string, idOrFragment: string): string {
+  return idOrFragment.startsWith('#') ? `${did}${idOrFragment}` : idOrFragment;
+}
+
+function vmTypeFor(vm: VerificationMethodEntry): string {
+  if (vm.publicKeyJwk) {
+    throw new Error(
+      'publicKeyJwk is not supported: publish secp256k1 as publicKeyHex or P-256 as publicKeyMultibase',
+    );
+  }
+  const hasHex = Boolean(vm.publicKeyHex);
+  const hasMultibase = Boolean(vm.publicKeyMultibase);
+  if (hasHex && hasMultibase) {
+    throw new Error('verification method must have publicKeyHex or publicKeyMultibase, not both');
+  }
+  if (hasHex) return SECP256K1_VM_TYPE;
+  if (hasMultibase) return MULTIKEY_VM_TYPE;
+  throw new Error('verification method must have either publicKeyHex or publicKeyMultibase');
+}
+
+/** Rejects empty/duplicate VM ids, type/material mismatch, and dangling purpose refs. */
+export function validateDidDocument(doc: DIDDocument | null | undefined): void {
+  if (!doc) throw new Error('DID document is nil');
+  const seen = new Set<string>();
+  doc.verificationMethod.forEach((vm, i) => {
+    if (!vm.id) throw new Error(`verificationMethod[${i}]: id is empty`);
+    if (seen.has(vm.id)) {
+      throw new Error(`verificationMethod: duplicate id ${vm.id}`);
+    }
+    seen.add(vm.id);
+    const expected = vmTypeFor(vm);
+    if (vm.type !== expected) {
+      throw new Error(
+        `verificationMethod[${i}] (${vm.id}): type ${JSON.stringify(vm.type)} does not match its key material: expected ${expected}`,
+      );
+    }
+    if (vm.publicKeyHex) {
+      const bytes = hexToBytes(normalizeHex(vm.publicKeyHex));
+      if (![33, 64, 65].includes(bytes.length)) {
+        throw new Error(`verificationMethod[${i}] (${vm.id}): invalid publicKeyHex length ${bytes.length}`);
+      }
+    }
+    if (vm.publicKeyMultibase) {
+      try {
+        decodeP256PublicMultibase(vm.publicKeyMultibase);
+      } catch (err) {
+        throw new Error(
+          `verificationMethod[${i}] (${vm.id}): invalid publicKeyMultibase: ${(err as Error).message}`,
+        );
+      }
+    }
+    if (vm.controller && doc.id && vm.controller !== doc.id) {
+      throw new Error(`verificationMethod[${i}] (${vm.id}): controller ${vm.controller} does not match document id`);
+    }
+  });
+  for (const [name, refs] of [
+    ['authentication', doc.authentication ?? []],
+    ['assertionMethod', doc.assertionMethod ?? []],
+  ] as const) {
+    for (const ref of refs) {
+      if (!seen.has(canonicalVmId(doc.id, ref))) {
+        throw new Error(`${name} references unknown verification method ${JSON.stringify(ref)}`);
+      }
+    }
+  }
 }
 
 function stripHexPrefix(value: string) {
