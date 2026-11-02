@@ -25,5 +25,12 @@ describe('public exports', () => {
     expect(sdk.bundledContextUrls().length).toBeGreaterThan(5);
     expect(sdk.registerContext).toBeDefined();
     expect(sdk.withDocumentLoader).toBeDefined();
+    expect(sdk.digitalcredential.parse).toBeDefined();
+    expect(sdk.digitalcredential.issue).toBeDefined();
+    expect(sdk.digitalcredential.TypDCSDJWT).toBe('dc+sd-jwt');
+    expect(sdk.digitalcredential.statuslist.List).toBeDefined();
+    expect(sdk.digitalcredential.issuermeta.metadataURL).toBeDefined();
+    expect(sdk.digitalcredential.typemeta.staticResolver).toBeDefined();
+    expect(sdk.digitalcredential.Code.Revoked).toBe('REVOKED');
   });
 });

@@ -17,6 +17,7 @@ export * as verificationMethod from './common/verification-method';
 export * as credentialStatus from './common/credential-status';
 export * as jsoncanonicalizer from './common/jsoncanonicalizer/jsoncanonicalizer';
 export * as processor from './common/processor/processor';
+export * as digitalcredential from './digitalcredential';
 
 // Convenience re-exports for the common DTO / signer interfaces.
 export type { Proof } from './common/dto/proof';
