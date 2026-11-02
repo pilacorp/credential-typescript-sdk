@@ -73,6 +73,8 @@ export interface CreateDID {
   type: DIDType;
   metadata?: Record<string, unknown>;
   hash?: string;
+  /** When true, also publish a P-256 Multikey at #key-2 (Go didv2 WithP256VerificationMethod). */
+  withP256?: boolean;
 }
 
 export interface Secret {

@@ -4,6 +4,8 @@ import { p256 } from '@noble/curves/nist';
 import {
   DIDGenerator,
   buildDidDocument,
+  buildMixedCurveDidDocument,
+  generateP256KeyPair,
   createDidFromPublicKey,
   createDidFromPublicKeyWithTransaction,
   parsePublicKeyToDid,
@@ -83,6 +85,34 @@ describe('DID document helpers', () => {
       type: 'people',
       hash: '',
     });
+  });
+
+  it('uses Multikey publicKeyMultibase when the input is a P-256 public key', () => {
+    const priv = hexToBytes(
+      '1111111111111111111111111111111111111111111111111111111111111111',
+    );
+    const pub = Buffer.from(p256.getPublicKey(priv, false)).toString('hex');
+    const did = 'did:nda:testnet:0xp256';
+    const document = buildDidDocument(pub, did, 'people');
+    expect(document.verificationMethod[0].type).toBe('Multikey');
+    expect(document.verificationMethod[0].publicKeyMultibase?.startsWith('z')).toBe(true);
+    expect(document.verificationMethod[0].publicKeyHex).toBeUndefined();
+    expect(document['@context']).toContain('https://www.w3.org/ns/cid/v1');
+  });
+
+  it('builds a mixed-curve DID document like Go didv2', () => {
+    const secpPriv = hexToBytes(
+      '4646464646464646464646464646464646464646464646464646464646464646',
+    );
+    const secpPub = Buffer.from(secp256k1.getPublicKey(secpPriv, false)).toString('hex');
+    const p256Pair = generateP256KeyPair();
+    const did = 'did:nda:testnet:0xmixed';
+    const document = buildMixedCurveDidDocument(secpPub, p256Pair.publicKeyHex, did, 'people');
+    expect(document.verificationMethod).toHaveLength(2);
+    expect(document.verificationMethod[0].type).toBe('EcdsaSecp256k1VerificationKey2019');
+    expect(document.verificationMethod[1].type).toBe('Multikey');
+    expect(document.verificationMethod[1].id).toBe(`${did}#key-2`);
+    expect(document.authentication).toEqual([`${did}#key-1`, `${did}#key-2`]);
   });
 
   it('supports caller-provided DID identifiers for registration parity', () => {

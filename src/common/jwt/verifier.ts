@@ -7,6 +7,7 @@
  *   2. Strict-purpose check (vc → assertionMethod, vp → authentication)
  *   3. Revocation check (hard reason short-circuits; soft reason compares iat)
  */
+import { p256 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { hexToBytes } from '../crypto/hex';
@@ -35,7 +36,9 @@ export class JWTVerifier {
     }
 
     const alg = header.alg;
-    if (alg !== 'ES256K') throw new Error(`unsupported algorithm: ${alg}`);
+    if (alg !== 'ES256K' && alg !== 'ES256') {
+      throw new Error(`unsupported algorithm: ${alg}`);
+    }
 
     const kid = header.kid;
     if (typeof kid !== 'string') throw new Error('kid not found in header');
@@ -47,7 +50,6 @@ export class JWTVerifier {
     const vm = findVerificationMethod(doc, kid);
     const publicKeyHex = publicKeyHexFromVM(vm);
 
-    const publicKey = decodeSecp256k1PublicKey(publicKeyHex);
     const signingString = parts[0] + '.' + parts[1];
     const signature = new Uint8Array(Buffer.from(parts[2], 'base64url'));
     if (signature.length !== 64 && signature.length !== 65) {
@@ -55,7 +57,11 @@ export class JWTVerifier {
     }
     const rs = signature.length === 65 ? signature.subarray(0, 64) : signature;
     const hash = sha256(Buffer.from(signingString, 'utf8'));
-    if (!secp256k1.verify(rs, hash, publicKey, { lowS: false })) {
+    const ok =
+      alg === 'ES256'
+        ? p256.verify(rs, hash, hexToBytes(publicKeyHex.replace(/^0x/i, '')), { lowS: false })
+        : secp256k1.verify(rs, hash, decodeSecp256k1PublicKey(publicKeyHex), { lowS: false });
+    if (!ok) {
       throw new Error('signature verification failed');
     }
 
@@ -91,16 +97,24 @@ function decodeSecp256k1PublicKey(publicKeyHex: string): Uint8Array {
 
 function jwtIssuer(payloadB64: string): string {
   const body = decodePayload(payloadB64);
-  if (typeof body.iss !== 'string' || !body.iss) {
-    throw new Error('JWT body is missing required `iss` claim');
+  if (typeof body.iss === 'string' && body.iss) return body.iss;
+  const issuer = body.issuer;
+  if (typeof issuer === 'string' && issuer) return issuer;
+  if (issuer && typeof issuer === 'object' && !Array.isArray(issuer)) {
+    const id = (issuer as Record<string, unknown>).id;
+    if (typeof id === 'string' && id) return id;
   }
-  return body.iss;
+  throw new Error('JWT body is missing required `iss` claim');
 }
 
 function jwtProofPurpose(payloadB64: string): string {
   const body = decodePayload(payloadB64);
   if (body.vc !== undefined) return 'assertionMethod';
   if (body.vp !== undefined) return 'authentication';
+  const types = body.type;
+  const names = Array.isArray(types) ? types : types ? [types] : [];
+  if (names.includes('VerifiablePresentation')) return 'authentication';
+  if (names.includes('VerifiableCredential')) return 'assertionMethod';
   throw new Error('JWT body has neither vc nor vp claim; cannot determine proofPurpose');
 }
 

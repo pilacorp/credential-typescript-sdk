@@ -15,8 +15,9 @@ import {
   toUtf8Bytes,
   zeroPadValue,
 } from 'ethers';
-import type { DIDDocument } from '../common/verification-method';
+import type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
 import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
+import { encodeP256PublicMultibase } from '../common/verification-method/multikey';
 import type {
   CreateDID,
   CreateDidFromPublicKeyOptions,
@@ -36,6 +37,9 @@ import type {
 
 const DEFAULT_DID_METHOD = 'did:nda:testnet';
 const DEFAULT_DID_TYPE = 'people';
+const CID_CONTEXT = 'https://www.w3.org/ns/cid/v1';
+const SECP256K1_VM_TYPE = 'EcdsaSecp256k1VerificationKey2019';
+const MULTIKEY_VM_TYPE = 'Multikey';
 const DID_REGISTER_PATH = '/did/register';
 const DEFAULT_RPC = 'https://rpc-testnet.pila.vn';
 const DEFAULT_CHAIN_ID = 6789;
@@ -132,27 +136,103 @@ export function parsePublicKeyToDid(
   };
 }
 
+export function generateP256KeyPair(): { privateKeyHex: string; publicKeyHex: string } {
+  const privateKey = p256.utils.randomPrivateKey();
+  const publicKeyHex = bytesToHex(p256.getPublicKey(privateKey, false));
+  return { privateKeyHex: `0x${bytesToHex(privateKey)}`, publicKeyHex: `0x${publicKeyHex}` };
+}
+
+export function generateDualCurveKeyPair(): {
+  secp256k1: { privateKeyHex: string; publicKeyHex: string };
+  p256: { privateKeyHex: string; publicKeyHex: string };
+} {
+  const secpPriv = randomPrivateKeyHex();
+  const secpPub = hexlify(secp256k1.getPublicKey(getBytes(secpPriv), false));
+  return {
+    secp256k1: { privateKeyHex: secpPriv.toLowerCase(), publicKeyHex: secpPub.toLowerCase() },
+    p256: generateP256KeyPair(),
+  };
+}
+
+export function newP256MultikeyVM(
+  didIdentifier: string,
+  fragment: string,
+  publicKeyHex: string,
+): VerificationMethodEntry {
+  const frag = fragment.startsWith('#') ? fragment : `#${fragment}`;
+  return {
+    id: `${didIdentifier}${frag}`,
+    type: MULTIKEY_VM_TYPE,
+    controller: didIdentifier,
+    publicKeyMultibase: encodeP256PublicMultibase(hexToBytes(normalizeHex(publicKeyHex))),
+  };
+}
+
 export function buildDidDocument(
   publicKeyHex: string,
   didIdentifier: string,
   didType = DEFAULT_DID_TYPE,
 ): DIDDocument {
   const clean = normalizeHex(publicKeyHex).toLowerCase();
+  let curve: ParsedDidPublicKey['curve'] | null = null;
+  try {
+    curve = parsePublicKeyToDid(clean).curve;
+  } catch {
+    curve = null;
+  }
+
+  const vm: VerificationMethodEntry =
+    curve === 'p256'
+      ? newP256MultikeyVM(didIdentifier, '#key-1', clean)
+      : {
+          id: `${didIdentifier}#key-1`,
+          type: SECP256K1_VM_TYPE,
+          controller: didIdentifier,
+          publicKeyHex: `0x${clean}`,
+        };
+
+  const contexts = ['https://w3id.org/security/v1', 'https://www.w3.org/ns/did/v1'];
+  if (vm.type === MULTIKEY_VM_TYPE) contexts.push(CID_CONTEXT);
 
   return {
-    '@context': ['https://w3id.org/security/v1', 'https://www.w3.org/ns/did/v1'],
+    '@context': contexts,
     id: didIdentifier,
     controller: didIdentifier,
-    verificationMethod: [
-      {
-        id: `${didIdentifier}#key-1`,
-        type: 'EcdsaSecp256k1VerificationKey2019',
-        controller: didIdentifier,
-        publicKeyHex: `0x${clean}`,
-      },
+    verificationMethod: [vm],
+    authentication: [vm.id],
+    assertionMethod: [vm.id],
+    didDocumentMetadata: {
+      type: didType,
+      hash: '',
+    },
+  };
+}
+
+export function buildMixedCurveDidDocument(
+  secp256k1PublicKeyHex: string,
+  p256PublicKeyHex: string,
+  didIdentifier: string,
+  didType = DEFAULT_DID_TYPE,
+): DIDDocument {
+  const secp = normalizeHex(secp256k1PublicKeyHex).toLowerCase();
+  const key1: VerificationMethodEntry = {
+    id: `${didIdentifier}#key-1`,
+    type: SECP256K1_VM_TYPE,
+    controller: didIdentifier,
+    publicKeyHex: `0x${secp}`,
+  };
+  const key2 = newP256MultikeyVM(didIdentifier, '#key-2', p256PublicKeyHex);
+  return {
+    '@context': [
+      'https://www.w3.org/ns/did/v1',
+      'https://w3id.org/security/v1',
+      CID_CONTEXT,
     ],
-    authentication: [`${didIdentifier}#key-1`],
-    assertionMethod: [`${didIdentifier}#key-1`],
+    id: didIdentifier,
+    controller: didIdentifier,
+    verificationMethod: [key1, key2],
+    authentication: [key1.id, key2.id],
+    assertionMethod: [key1.id, key2.id],
     didDocumentMetadata: {
       type: didType,
       hash: '',
@@ -260,7 +340,14 @@ export class DIDGenerator {
     const address = wallet.address.toLowerCase();
     const publicKeyHex = hexlify(secp256k1.getPublicKey(getBytes(privateKey), true)).toLowerCase();
     const did = `${this.config.method}:${address}`.toLowerCase();
-    const document = buildDidDocument(publicKeyHex, did, createDID.type);
+    const document = createDID.withP256
+      ? buildMixedCurveDidDocument(
+          publicKeyHex,
+          generateP256KeyPair().publicKeyHex,
+          did,
+          createDID.type,
+        )
+      : buildDidDocument(publicKeyHex, did, createDID.type);
 
     if (createDID.metadata && Object.keys(createDID.metadata).length > 0) {
       document.didDocumentMetadata = {

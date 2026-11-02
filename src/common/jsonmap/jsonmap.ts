@@ -9,12 +9,17 @@
  *  - VerifyProof: dispatch JwtProof2020 / DataIntegrityProof / legacy ECDSA
  *    with strict purpose & revocation checks.
  */
+import { p256 } from '@noble/curves/nist';
+import { secp256k1 } from '@noble/curves/secp256k1';
+import { sha256 } from '@noble/hashes/sha256';
 import { ecdsaVerifySignature, verifyJSONSignature } from '../crypto/crypto';
 import { bytesToHex, hexToBytes, keyToBytes } from '../crypto/hex';
 import { verifyJwtProof } from '../crypto/jwt-proof-2020';
 import { canonicalizeDocument, computeDigest } from '../processor/processor';
+import { P256Provider } from '../signer/p256-provider';
 import { SignerProvider, validateSignatureLength } from '../signer/signer';
 import type { Proof } from '../dto/proof';
+import { decodeBase58Btc, encodeBase58Btc } from '../util/multibase';
 import {
   DIDDocument,
   findVerificationMethod,
@@ -34,6 +39,7 @@ export const EcdsaSecp256k1Signature2019 = 'EcdsaSecp256k1Signature2019';
 export const DataIntegrityProof = 'DataIntegrityProof';
 export const ECDSARDFC2019 = 'ecdsa-rdfc-2019';
 export const ECDSASECPKEY = 'EcdsaSecp256k1VerificationKey2019';
+const DATA_INTEGRITY_V2_CONTEXT = 'https://w3id.org/security/data-integrity/v2';
 
 export function toJSON(m: JSONMap): Uint8Array {
   return new Uint8Array(Buffer.from(JSON.stringify(m), 'utf8'));
@@ -75,6 +81,21 @@ export async function addECDSAProof(
     cryptosuite: ECDSARDFC2019,
   };
 
+  if (signer instanceof P256Provider) {
+    ensureDataIntegrityContext(m);
+    const hashData = await ecdsaHashData(m, proof);
+    const digest = sha256(hashData);
+    const signature = await signer.sign(digest);
+    if (signature.length !== 64) {
+      throw new Error(
+        `jsonmap: ecdsa-rdfc-2019 expects a 64-byte P-256 signature (r||s) but the signer returned ${signature.length} bytes`,
+      );
+    }
+    proof.proofValue = encodeBase58Btc(signature);
+    m[PROOF_FIELD] = serializeProofs([proof]);
+    return;
+  }
+
   const signData = await canonicalize(m);
   if (signData.length !== 32) {
     throw new Error(
@@ -86,6 +107,65 @@ export async function addECDSAProof(
   proof.proofValue = bytesToHex(signature);
 
   m[PROOF_FIELD] = serializeProofs([proof]);
+}
+
+export async function ecdsaHashData(m: JSONMap, proof: Proof): Promise<Uint8Array> {
+  const docHash = await canonicalize(m);
+  return proofHashData(m, docHash, proof);
+}
+
+export async function proofHashData(
+  m: JSONMap,
+  docHash: Uint8Array,
+  proof: Proof,
+): Promise<Uint8Array> {
+  if (docHash.length !== 32) {
+    throw new Error(`document digest must be 32 bytes, got ${docHash.length}`);
+  }
+  const ctx = m['@context'];
+  if (ctx === undefined || ctx === null) {
+    throw new Error('document is missing the @context needed to canonicalize the proof configuration');
+  }
+  const cfg: JSONMap = {
+    type: proof.type,
+    created: proof.created,
+    verificationMethod: proof.verificationMethod,
+    proofPurpose: proof.proofPurpose,
+    '@context': ctx,
+  };
+  if (proof.cryptosuite) cfg.cryptosuite = proof.cryptosuite;
+  if (proof.challenge) cfg.challenge = proof.challenge;
+  if (proof.domain) cfg.domain = proof.domain;
+  const cfgCanonical = await canonicalizeDocument(cfg);
+  const cfgHash = computeDigest(cfgCanonical);
+  const hashData = new Uint8Array(64);
+  hashData.set(cfgHash, 0);
+  hashData.set(docHash, 32);
+  return hashData;
+}
+
+function ensureDataIntegrityContext(m: JSONMap): void {
+  const ctx = m['@context'];
+  if (ctx === undefined || ctx === null) {
+    m['@context'] = [DATA_INTEGRITY_V2_CONTEXT];
+    return;
+  }
+  if (typeof ctx === 'string') {
+    if (!coversDataIntegrity(ctx)) m['@context'] = [ctx, DATA_INTEGRITY_V2_CONTEXT];
+    return;
+  }
+  if (Array.isArray(ctx)) {
+    if (ctx.some((e) => typeof e === 'string' && coversDataIntegrity(e))) return;
+    m['@context'] = [...ctx, DATA_INTEGRITY_V2_CONTEXT];
+  }
+}
+
+function coversDataIntegrity(ctx: string): boolean {
+  return (
+    ctx.includes('data-integrity') ||
+    ctx.includes('/ns/credentials/v2') ||
+    ctx.includes('credentials/v2')
+  );
 }
 
 export function addCustomProof(m: JSONMap, proof: Proof | null): void {
@@ -143,12 +223,38 @@ async function verifyDataIntegrityProof(
   const vm = findVerificationMethod(doc, proof.verificationMethod);
   const publicKey = publicKeyHexFromVM(vm);
 
-  const digest = await canonicalize(m);
   if (!proof.proofValue) return false;
-  const ok = ecdsaVerifySignature(publicKey, proof.proofValue, digest);
+  let ok: boolean;
+  if (proof.proofValue.startsWith('z')) {
+    const signature = decodeBase58Btc(proof.proofValue);
+    if (signature.length !== 64) {
+      throw new Error(
+        `ecdsa-rdfc-2019 proofValue decodes to ${signature.length} bytes, want 64 (r||s)`,
+      );
+    }
+    const hashData = await ecdsaHashData(m, proof);
+    const digest = sha256(hashData);
+    ok = verifyRawEcdsa(publicKey, digest, signature);
+  } else {
+    const digest = await canonicalize(m);
+    ok = ecdsaVerifySignature(publicKey, proof.proofValue, digest);
+  }
   if (!ok) return false;
   strictPurposeCheck(doc, vm, proof.proofPurpose, proof.created);
   return true;
+}
+
+function verifyRawEcdsa(publicKeyHex: string, digest: Uint8Array, signature: Uint8Array): boolean {
+  const pubBytes = hexToBytes(publicKeyHex);
+  try {
+    return p256.verify(signature, digest, pubBytes, { lowS: false });
+  } catch {
+    try {
+      return secp256k1.verify(signature, digest, pubBytes, { lowS: false });
+    } catch {
+      return false;
+    }
+  }
 }
 
 function verifyEcdsaProofLegacy(m: JSONMap): boolean {

@@ -16,6 +16,7 @@ export interface VerificationMethodEntry {
   controller: string;
   publicKeyHex?: string;
   publicKeyJwk?: JWK;
+  publicKeyMultibase?: string;
   revoked?: Date;
   revocationReason?: string;
 }
@@ -42,6 +43,7 @@ export function parseDIDDocument(raw: Record<string, unknown>): DIDDocument {
     };
     if (typeof e.publicKeyHex === 'string') out.publicKeyHex = e.publicKeyHex;
     if (e.publicKeyJwk) out.publicKeyJwk = e.publicKeyJwk as JWK;
+    if (typeof e.publicKeyMultibase === 'string') out.publicKeyMultibase = e.publicKeyMultibase;
     if (typeof e.revoked === 'string') {
       const d = new Date(e.revoked);
       if (!isNaN(d.getTime())) out.revoked = d;

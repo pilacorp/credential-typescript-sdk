@@ -8,12 +8,18 @@
 import { isSDJWT } from '../common/sdjwt';
 import { isJWTCredentialString, JWTCredential } from './jwt-credential';
 import { JSONCredential } from './json-credential';
-import type { Credential, CredentialOptions } from './types';
+import {
+  isJOSECredentialTyp,
+  JOSECredential,
+  peekJwtTyp,
+} from './jose-credential';
+import type { Credential, CredentialContents, CredentialOptions } from './types';
 
 export { init } from './config';
 export * from './types';
 export { JWTCredential } from './jwt-credential';
 export { JSONCredential } from './json-credential';
+export { JOSECredential, TypeVCJWT, TypeVCSDJWT, isJOSECredentialTyp } from './jose-credential';
 
 export async function parseCredential(
   rawCredential: Uint8Array | string,
@@ -32,6 +38,15 @@ export async function parseCredential(
   }
 
   if (isSDJWT(asString) || isJWTCredentialString(asString)) {
+    const typ = peekJwtTyp(asString);
+    if (typ && typ.endsWith('+sd-jwt') && !isJOSECredentialTyp(typ)) {
+      throw new Error(
+        `failed to parse credential: unsupported SD-JWT typ "${typ}": only vc+sd-jwt is read`,
+      );
+    }
+    if (isJOSECredentialTyp(typ)) {
+      return JOSECredential.parse(asString, opts);
+    }
     return JWTCredential.parse(asString, opts);
   }
 
@@ -55,10 +70,17 @@ export async function newJWTCredential(
 }
 
 export async function newJSONCredential(
-  vcc: import('./types').CredentialContents,
+  vcc: CredentialContents,
   opts: CredentialOptions = {},
 ): Promise<JSONCredential> {
   return JSONCredential.create(vcc, opts);
+}
+
+export async function newJOSECredential(
+  vcc: CredentialContents,
+  opts: CredentialOptions = {},
+): Promise<JOSECredential> {
+  return JOSECredential.create(vcc, opts);
 }
 
 function isJSONCredential(s: string): boolean {

@@ -5,14 +5,21 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex } from '../crypto/hex';
 import type { JWK, VerificationMethodEntry } from './verification-method';
+import { decodeP256PublicMultibase } from './multikey';
 
 export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
   if (!vm) throw new Error('verification method is nil');
   if (vm.publicKeyHex) {
+    if (vm.type && vm.type !== 'EcdsaSecp256k1VerificationKey2019') {
+      throw new Error(`publicKeyHex is only valid for secp256k1 verification methods, got type ${vm.type}`);
+    }
     return vm.publicKeyHex.replace(/^0x/i, '');
   }
   if (vm.publicKeyJwk) {
     return jwkToHex(vm.publicKeyJwk);
+  }
+  if (vm.publicKeyMultibase) {
+    return bytesToHex(decodeP256PublicMultibase(vm.publicKeyMultibase));
   }
   throw new Error(`verification method '${vm.id}' has no public key material`);
 }

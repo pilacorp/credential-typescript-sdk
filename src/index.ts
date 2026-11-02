@@ -21,3 +21,4 @@ export * as jsoncanonicalizer from './common/jsoncanonicalizer/jsoncanonicalizer
 export type { Proof } from './common/dto/proof';
 export type { SignerProvider } from './common/signer/signer';
 export { DefaultProvider } from './common/signer/default-provider';
+export { P256Provider } from './common/signer/p256-provider';

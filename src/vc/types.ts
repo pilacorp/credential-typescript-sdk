@@ -84,7 +84,7 @@ export interface Credential {
   verify(opts?: CredentialOptions): Promise<void>;
   serialize(): Promise<unknown>;
   getContents(): Uint8Array;
-  getType(): 'JWT' | 'JSON';
+  getType(): 'JWT' | 'JSON' | 'JOSE';
   extractField(path: string): unknown;
   addSelectiveDisclosures(selectivePaths: string[]): Promise<Credential>;
 }
