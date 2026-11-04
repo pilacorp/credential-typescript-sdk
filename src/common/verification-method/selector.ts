@@ -10,7 +10,39 @@
  * timestamp checks are applied by the caller.
  */
 import { normalizeVerificationMethodURL } from './resolve-vm-url';
+import { isP256PublicMultibase } from './multikey';
 import { DIDDocument, VerificationMethodEntry } from './verification-method';
+
+/** The key type a verification method holds, used to pick the signing suite. */
+export type KeyKind = 'secp256k1' | 'P-256' | 'RSA';
+
+/** secp256k1: an EC secp256k1 JWK, or a publicKeyHex (EcdsaSecp256k1VerificationKey2019). */
+export function vmIsSecp256k1(vm: VerificationMethodEntry | null): boolean {
+  if (!vm) return false;
+  if (vm.publicKeyJwk) return vm.publicKeyJwk.kty === 'EC' && vm.publicKeyJwk.crv === 'secp256k1';
+  return Boolean(vm.publicKeyHex);
+}
+
+/** P-256: an EC P-256 JWK, or a P-256 Multikey (publicKeyMultibase). */
+export function vmIsP256(vm: VerificationMethodEntry | null): boolean {
+  if (!vm) return false;
+  if (vm.publicKeyJwk) return vm.publicKeyJwk.kty === 'EC' && vm.publicKeyJwk.crv === 'P-256';
+  if (vm.publicKeyMultibase) return isP256PublicMultibase(vm.publicKeyMultibase);
+  return false;
+}
+
+/** RSA: an RSA JWK. */
+export function vmIsRSA(vm: VerificationMethodEntry | null): boolean {
+  return Boolean(vm && vm.publicKeyJwk && vm.publicKeyJwk.kty === 'RSA');
+}
+
+/** Reports the key kind a verification method holds, or null if unrecognized. */
+export function vmKeyKind(vm: VerificationMethodEntry | null): KeyKind | null {
+  if (vmIsSecp256k1(vm)) return 'secp256k1';
+  if (vmIsP256(vm)) return 'P-256';
+  if (vmIsRSA(vm)) return 'RSA';
+  return null;
+}
 
 /** When the document has exactly one VM, sign with it; otherwise the latest active VM for purpose. */
 export function selectDefaultSigningVM(

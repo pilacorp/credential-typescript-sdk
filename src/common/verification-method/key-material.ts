@@ -2,6 +2,7 @@
  * Public key material helpers — Node port of
  * credential/common/verification-method/key_material.go
  */
+import { p256 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex } from '../crypto/hex';
 import type { JWK, VerificationMethodEntry } from './verification-method';
@@ -25,11 +26,13 @@ export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
 }
 
 /**
- * Convert a secp256k1 JWK to uncompressed hex (0x04 || X || Y).
+ * Convert an EC JWK (secp256k1 or P-256) to uncompressed hex (0x04 || X || Y).
  */
 export function jwkToHex(jwk: JWK): string {
   if (jwk.kty !== 'EC') throw new Error(`unsupported key type: ${jwk.kty}`);
-  if (jwk.crv !== 'secp256k1') throw new Error(`unsupported curve: ${jwk.crv}`);
+  if (jwk.crv !== 'secp256k1' && jwk.crv !== 'P-256') {
+    throw new Error(`unsupported curve: ${jwk.crv}`);
+  }
   if (!jwk.x || !jwk.y) throw new Error('JWK x/y are required');
 
   const x = Buffer.from(jwk.x, 'base64url');
@@ -43,7 +46,8 @@ export function jwkToHex(jwk: JWK): string {
   uncompressed[0] = 0x04;
   uncompressed.set(x, 1);
   uncompressed.set(y, 33);
-  // Sanity-check against curve order via @noble (will throw if invalid)
-  secp256k1.ProjectivePoint.fromHex(uncompressed);
+  // Sanity-check against the curve (throws if the point is invalid).
+  if (jwk.crv === 'P-256') p256.ProjectivePoint.fromHex(uncompressed);
+  else secp256k1.ProjectivePoint.fromHex(uncompressed);
   return bytesToHex(uncompressed);
 }

@@ -45,5 +45,5 @@ export interface Presentation {
   verify(opts?: PresentationOptions): Promise<void>;
   serialize(): Promise<unknown>;
   getContents(): Uint8Array;
-  getType(): 'JWT' | 'JSON';
+  getType(): 'JWT' | 'JSON' | 'JOSE';
 }

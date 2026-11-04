@@ -4,12 +4,14 @@
 import { isJSONPresentationBytes, isJWTPresentation } from './presentation-helper';
 import { JSONPresentation } from './json-presentation';
 import { JWTPresentation } from './jwt-presentation';
+import { JOSEPresentation, isJOSEPresentationTyp } from './jose-presentation';
 import type { Presentation, PresentationContents, PresentationOptions } from './types';
 
 export { init } from './config';
 export * from './types';
 export { JWTPresentation } from './jwt-presentation';
 export { JSONPresentation } from './json-presentation';
+export { JOSEPresentation, TypeVPJWT } from './jose-presentation';
 
 export async function parsePresentation(
   rawPresentation: Uint8Array | string,
@@ -30,8 +32,14 @@ export async function parsePresentation(
   if (isJSONPresentationBytes(asString)) {
     return JSONPresentation.parse(asString, opts);
   }
-  if (isJWTPresentation(asString)) {
-    return JWTPresentation.parse(asString, opts);
+  const valStr = asString.trim().replace(/^"|"$/g, '');
+  if (isJWTPresentation(valStr)) {
+    // vp+jwt (vc-jose-cose) must verify through the JWT verifier (holder
+    // binding); route by the header typ, defaulting to the VC 1.1 JWT path.
+    if (isJOSEPresentationTyp(peekPresentationTyp(valStr))) {
+      return JOSEPresentation.parse(valStr, opts);
+    }
+    return JWTPresentation.parse(valStr, opts);
   }
   throw new Error('failed to parse presentation');
 }
@@ -57,4 +65,23 @@ export async function newJSONPresentation(
   opts: PresentationOptions = {},
 ): Promise<JSONPresentation> {
   return JSONPresentation.create(vpc, opts);
+}
+
+export async function newJOSEPresentation(
+  vpc: PresentationContents,
+  opts: PresentationOptions = {},
+): Promise<JOSEPresentation> {
+  return JOSEPresentation.create(vpc, opts);
+}
+
+/** Decode the JWS header's `typ` claim, or undefined if unreadable. */
+function peekPresentationTyp(valStr: string): string | undefined {
+  const parts = valStr.split('.');
+  if (parts.length < 2) return undefined;
+  try {
+    const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+    return typeof header.typ === 'string' ? header.typ : undefined;
+  } catch {
+    return undefined;
+  }
 }

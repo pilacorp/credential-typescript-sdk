@@ -20,6 +20,21 @@ export function formatRFC3339(date: Date): string {
   );
 }
 
+/**
+ * Format a date the way Go's time.Time.MarshalJSON does (RFC3339Nano): UTC "Z",
+ * with trailing zeros trimmed from the fractional seconds and the dot dropped
+ * when there is no fraction. Matches the bytes Go hashes, unlike Date.toISOString
+ * which always emits exactly ".sssZ". JS Date is millisecond-precision, so this
+ * cannot reproduce sub-millisecond nanoseconds a Go document might carry.
+ */
+export function formatRFC3339Nano(date: Date): string {
+  const iso = date.toISOString(); // YYYY-MM-DDTHH:mm:ss.sssZ
+  const m = iso.match(/^(.*)\.(\d+)Z$/);
+  if (!m) return iso;
+  const frac = m[2].replace(/0+$/, '');
+  return frac ? `${m[1]}.${frac}Z` : `${m[1]}Z`;
+}
+
 /** Parse an RFC3339 string. Throws if invalid. */
 export function parseRFC3339(value: string): Date {
   const date = new Date(value);

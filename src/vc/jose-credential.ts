@@ -42,6 +42,7 @@ import { isJWTCredentialString } from './jwt-credential';
 
 export const TypeVCJWT = 'vc+jwt';
 export const TypeVCSDJWT = 'vc+sd-jwt';
+export const TypeEnvelopedVC = 'EnvelopedVerifiableCredential';
 const CREDENTIALS_V2_CONTEXT = 'https://www.w3.org/ns/credentials/v2';
 
 export function isJOSECredentialTyp(typ: string | undefined): boolean {

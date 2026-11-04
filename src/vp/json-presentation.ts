@@ -5,13 +5,14 @@ import type { Proof } from '../common/dto/proof';
 import {
   addCustomProof,
   addECDSAProof,
-  canonicalize,
+  addEcdsaSecp256k1Proof,
+  documentDigest,
   toMap,
   verifyProof,
 } from '../common/jsonmap/jsonmap';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
-import { resolveSigningVM } from '../common/verification-method';
+import { resolveSigningVM, vmKeyKind } from '../common/verification-method';
 import { getOptions } from './options';
 import { checkAudience, checkChallenge } from './audience';
 import {
@@ -84,20 +85,28 @@ export class JSONPresentation implements Presentation {
     const options = getOptions(opts);
     let vmKey = this.verificationMethodKey;
     if (options.verificationMethodKey) vmKey = options.verificationMethodKey;
-    const { url: vmURL } = await resolveSigningVM(
+    const { vm, url: vmURL } = await resolveSigningVM(
       holder,
       'authentication',
       vmKey,
       options.resolver,
     );
-    await addECDSAProof(this.presentationData, signer, vmURL, 'authentication', {
+    const extras = {
       challenge: options.challenge || undefined,
       domain: options.domain || undefined,
-    });
+    };
+    const kind = vmKeyKind(vm);
+    if (kind === 'secp256k1') {
+      await addEcdsaSecp256k1Proof(this.presentationData, signer, vmURL, 'authentication', extras);
+    } else if (kind === 'P-256') {
+      await addECDSAProof(this.presentationData, signer, vmURL, 'authentication', extras);
+    } else {
+      throw new Error(`verification method '${vmURL}' has an unsupported key type for JSON-LD signing`);
+    }
   }
 
   async getSigningInput(): Promise<Uint8Array> {
-    return canonicalize(this.presentationData);
+    return documentDigest(this.presentationData);
   }
 
   async addCustomProof(proof: Proof, opts: PresentationOptions = {}): Promise<void> {

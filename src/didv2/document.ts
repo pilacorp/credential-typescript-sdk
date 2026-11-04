@@ -4,6 +4,7 @@ import { p256 } from '@noble/curves/nist';
 import { keccak_256 } from '@noble/hashes/sha3';
 import type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
 import { transform } from '../common/jsoncanonicalizer/jsoncanonicalizer';
+import { formatRFC3339Nano } from '../common/util/time';
 import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
 import { encodeP256PublicMultibase } from '../common/verification-method/multikey';
 import { generateDualCurveKeyPair } from '../did/did';
@@ -207,14 +208,17 @@ export function hashDIDDocument(doc: DIDDocument): string {
 }
 
 export function didDocumentJSON(doc: DIDDocument): Record<string, unknown> {
+  // Go's DIDDocument marshals none of these fields with omitempty, and a nil
+  // Go slice/map marshals as `null` (not `[]`/`{}`), so the hashed bytes carry
+  // `null` for an absent field. Mirror that exactly for a byte-identical DocHash.
   return {
-    '@context': doc['@context'],
+    '@context': doc['@context'] ?? null,
     id: doc.id,
     controller: doc.controller ?? '',
-    verificationMethod: doc.verificationMethod.map(vmJSON),
-    authentication: doc.authentication,
-    assertionMethod: doc.assertionMethod,
-    didDocumentMetadata: sortObject(doc.didDocumentMetadata ?? {}),
+    verificationMethod: doc.verificationMethod ? doc.verificationMethod.map(vmJSON) : null,
+    authentication: doc.authentication ?? null,
+    assertionMethod: doc.assertionMethod ?? null,
+    didDocumentMetadata: doc.didDocumentMetadata == null ? null : sortObject(doc.didDocumentMetadata),
   };
 }
 
@@ -227,7 +231,9 @@ function vmJSON(vm: VerificationMethodEntry): Record<string, unknown> {
   if (vm.publicKeyHex) out.publicKeyHex = vm.publicKeyHex;
   if (vm.publicKeyJwk) out.publicKeyJwk = vm.publicKeyJwk;
   if (vm.publicKeyMultibase) out.publicKeyMultibase = vm.publicKeyMultibase;
-  if (vm.revoked) out.revoked = vm.revoked.toISOString();
+  // Go marshals *time.Time as RFC3339Nano; toISOString always adds ".000Z",
+  // which would hash differently. Match Go so the DocHash is byte-identical.
+  if (vm.revoked) out.revoked = formatRFC3339Nano(vm.revoked);
   if (vm.revocationReason) out.revocationReason = vm.revocationReason;
   return out;
 }
@@ -235,10 +241,18 @@ function vmJSON(vm: VerificationMethodEntry): Record<string, unknown> {
 function sortObject(input: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const key of Object.keys(input).sort()) {
-    const v = input[key];
-    out[key] = v && typeof v === 'object' && !Array.isArray(v) ? sortObject(v as Record<string, unknown>) : v;
+    out[key] = sortValue(input[key]);
   }
   return out;
+}
+
+function sortValue(v: unknown): unknown {
+  // A Date in metadata must serialize as Go marshals time.Time (RFC3339Nano),
+  // not be flattened to {} by the object branch below.
+  if (v instanceof Date) return formatRFC3339Nano(v);
+  if (Array.isArray(v)) return v.map(sortValue);
+  if (v && typeof v === 'object') return sortObject(v as Record<string, unknown>);
+  return v;
 }
 
 export function addressFromPublicKeyHex(publicKeyHex: string): string {

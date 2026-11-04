@@ -143,7 +143,10 @@ describe('JSONPresentation roundtrip', () => {
     );
     await vp.addProof(HOLDER_PRIV, { verificationMethodKey: 'key-1', resolver });
     const serialized = await vp.serialize();
-    (serialized.proof as Record<string, unknown>).proofValue = '00';
+    // secp256k1 proofs carry the signature in `jws`; corrupt it so the existing
+    // proof fails re-verification when addCustomProof tries to replace it.
+    const existing = serialized.proof as Record<string, unknown>;
+    existing.jws = (existing.jws as string).slice(0, -4) + 'AAAA';
     const invalidVP = await JSONPresentation.parse(JSON.stringify(serialized));
 
     await expect(invalidVP.addCustomProof({

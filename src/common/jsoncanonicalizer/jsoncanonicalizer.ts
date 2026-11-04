@@ -82,15 +82,19 @@ const asciiEscapes: Record<number, string> = {
 
 function decorateString(raw: string): string {
   let out = '"';
-  const bytes = Buffer.from(raw, 'utf8');
-  for (let i = 0; i < bytes.length; i++) {
-    const c = bytes[i];
-    if (asciiEscapes[c]) {
-      out += asciiEscapes[c];
-    } else if (c < 0x20) {
-      out += '\\u' + c.toString(16).padStart(4, '0');
+  // Iterate by Unicode code point (RFC 8785 §3.2.2.2): the 7 named escapes and
+  // other control chars (< 0x20) are escaped, everything else — including
+  // non-ASCII — is emitted as-is and encoded to raw UTF-8 by the caller.
+  // (Iterating UTF-8 bytes and emitting String.fromCharCode per byte mangled
+  // every multi-byte character into mojibake, which then double-encoded.)
+  for (const ch of raw) {
+    const cp = ch.codePointAt(0) as number;
+    if (asciiEscapes[cp]) {
+      out += asciiEscapes[cp];
+    } else if (cp < 0x20) {
+      out += '\\u' + cp.toString(16).padStart(4, '0');
     } else {
-      out += String.fromCharCode(c);
+      out += ch;
     }
   }
   out += '"';

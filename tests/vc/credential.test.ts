@@ -184,8 +184,11 @@ describe('JSONCredential.create + verify roundtrip', () => {
       { verificationMethodKey: 'key-1', resolver },
     );
     await cred.addProof(PRIV_HEX, { verificationMethodKey: 'key-1', resolver });
+    // secp256k1 proofs carry the signature in `jws`; corrupt it so re-verifying
+    // the existing proof fails when addCustomProof tries to replace it.
     const invalidExisting = cred.getInternalData().proof as Record<string, unknown>;
-    invalidExisting.proofValue = '00';
+    const jws = invalidExisting.jws as string;
+    invalidExisting.jws = jws.slice(0, -4) + 'AAAA';
 
     await expect(cred.addCustomProof({
       type: 'DataIntegrityProof',
@@ -321,7 +324,10 @@ describe('verify with all credential options', () => {
         subject: [
           {
             id: SUBJECT,
-            customFields: { name: 'Bob', email: 'bob@example.com' },
+            // `name` is defined by the credentials/v2 context; an undefined term
+            // like `email` would be dropped by the (safe-mode) JSON-LD
+            // canonicalizer, so it cannot appear in a signed JSON-LD credential.
+            customFields: { name: 'Bob' },
           },
         ],
         schemas: [{ id: SCHEMA_ID, type: 'JsonSchema' }],

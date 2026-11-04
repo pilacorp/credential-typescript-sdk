@@ -12,14 +12,13 @@
 import { p256 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
-import { ecdsaVerifySignature, verifyJSONSignature } from '../crypto/crypto';
+import { ecdsaVerifySignature } from '../crypto/crypto';
 import { hashForJWSAlg, p256PubFromJwk, verifyES256, verifyRSAJWS } from '../crypto/jws-2020';
-import { bytesToHex, hexToBytes, keyToBytes } from '../crypto/hex';
+import { bytesToHex, hexToBytes } from '../crypto/hex';
 import { verifyJwtProof } from '../crypto/jwt-proof-2020';
-import { canonicalizeDocument, computeDigest } from '../processor/processor';
+import { canonicalizeDocument, canonicalizeRDF, computeDigest } from '../processor/processor';
 import { createBaseProof, deriveProof, verifyProof as verifyEcdsaSd } from '../ecdsasd';
-import { P256Provider } from '../signer/p256-provider';
-import { SignerProvider, validateSignatureLength } from '../signer/signer';
+import { SignerProvider } from '../signer/signer';
 import type { Proof } from '../dto/proof';
 import { decodeBase58Btc, encodeBase58Btc } from '../util/multibase';
 import {
@@ -29,6 +28,7 @@ import {
   publicKeyHexFromVM,
   ResolverProvider,
   VerificationMethodEntry,
+  vmIsSecp256k1,
 } from '../verification-method';
 import { serializeProofs } from '../util/vc';
 import { JSONMap } from '../util/json';
@@ -89,36 +89,190 @@ export async function addECDSAProof(
   if (extras.challenge) proof.challenge = extras.challenge;
   if (extras.domain) proof.domain = extras.domain;
 
-  if (signer instanceof P256Provider) {
-    ensureDataIntegrityContext(m);
-    const hashData = await ecdsaHashData(m, proof);
-    const digest = sha256(hashData);
-    const signature = await signer.sign(digest);
-    if (signature.length !== 64) {
-      throw new Error(
-        `jsonmap: ecdsa-rdfc-2019 expects a 64-byte P-256 signature (r||s) but the signer returned ${signature.length} bytes`,
-      );
-    }
-    proof.proofValue = encodeBase58Btc(signature);
-    m[PROOF_FIELD] = serializeProofs([proof]);
-    return;
-  }
-
-  const signData = await canonicalize(m);
-  if (signData.length !== 32) {
+  // ecdsa-rdfc-2019 is the Data Integrity suite for P-256 (and P-384, not
+  // implemented here). The signature is 64-byte r||s and goes into proofValue
+  // as multibase base58btc. secp256k1 keys have no Data Integrity cryptosuite;
+  // they sign under addEcdsaSecp256k1Proof, so a non-64-byte signature here is
+  // a misrouted signer and is rejected rather than issued as a hex proofValue.
+  ensureDataIntegrityContext(m);
+  const hashData = await ecdsaHashData(m, proof);
+  const digest = sha256(hashData);
+  const signature = await signer.sign(digest);
+  if (signature.length !== 64) {
     throw new Error(
-      `jsonmap: invalid signing digest length: got ${signData.length}, want 32`,
+      `jsonmap: ecdsa-rdfc-2019 expects a 64-byte P-256 signature (r||s) but the signer returned ${signature.length} bytes; the signer does not match the verification method`,
     );
   }
-  const signature = await signer.sign(signData);
-  validateSignatureLength(signature);
-  proof.proofValue = bytesToHex(signature);
-
+  proof.proofValue = encodeBase58Btc(signature);
   m[PROOF_FIELD] = serializeProofs([proof]);
 }
 
+// ===== EcdsaSecp256k1Signature2019 (Linked Data Signatures) =====
+//
+// secp256k1 has no Data Integrity cryptosuite (ecdsa-rdfc-2019 is P-256/P-384
+// only), so it signs under the pre-Data-Integrity EcdsaSecp256k1Signature2019
+// suite. The signature lives in `jws` as a detached JWS (RFC 7797, b64:false,
+// alg ES256K), not in proofValue. Port of jsonmap_secp256k1.go.
+const ALG_ES256K = 'ES256K';
+const SECP256K1_SUITE_CONTEXT_NARROW = 'https://w3id.org/security/suites/secp256k1-2019/v1';
+const SECP256K1_SUITE_CONTEXT_ACCEPTED = 'https://w3id.org/security/v2';
+const CREDENTIALS_V1_CONTEXT = 'https://www.w3.org/2018/credentials/v1';
+
+export async function addEcdsaSecp256k1Proof(
+  m: JSONMap,
+  signer: SignerProvider,
+  verificationMethod: string,
+  proofPurpose: string,
+  extras: { challenge?: string; domain?: string } = {},
+): Promise<void> {
+  if (!m) throw new Error('jsonmap: JSONMap is nil');
+  if (!signer) throw new Error('jsonmap: signer provider cannot be nil');
+  if (!verificationMethod) throw new Error('jsonmap: verification method is required');
+  if (!proofPurpose) throw new Error('jsonmap: proof purpose is required');
+
+  // Signing adds the suite @context before it knows it will succeed; restore
+  // the caller's document untouched on any failure.
+  const hadContext = Object.prototype.hasOwnProperty.call(m, '@context');
+  const prevContext = m['@context'];
+  try {
+    await addSuiteContextWithoutChangingMeaning(m);
+
+    const proof: Proof = {
+      type: EcdsaSecp256k1Signature2019,
+      created: formatRFC3339(new Date()),
+      verificationMethod,
+      proofPurpose,
+    };
+    if (extras.challenge) proof.challenge = extras.challenge;
+    if (extras.domain) proof.domain = extras.domain;
+
+    const encHeader = encodeDetachedJWSHeader(ALG_ES256K);
+    const hashData = await ecdsaHashData(m, proof);
+    const digest = sha256(jwsSigningInput(encHeader, hashData));
+
+    const rawSig = await signer.sign(digest);
+    const signature = joseSecp256k1Signature(rawSig);
+
+    proof.jws = `${encHeader}..${Buffer.from(signature).toString('base64url')}`;
+    m[PROOF_FIELD] = serializeProofs([proof]);
+  } catch (err) {
+    if (hadContext) m['@context'] = prevContext;
+    else delete m['@context'];
+    throw err;
+  }
+}
+
+// joseSecp256k1Signature normalizes a secp256k1 signature to the 64-byte r||s
+// form JOSE expects: a trailing recovery byte is dropped and s is folded into
+// the low half of the curve order.
+function joseSecp256k1Signature(sig: Uint8Array): Uint8Array {
+  let rs: Uint8Array;
+  if (sig.length === 65) rs = sig.subarray(0, 64);
+  else if (sig.length === 64) rs = sig;
+  else {
+    throw new Error(
+      `${EcdsaSecp256k1Signature2019} expects a 64-byte secp256k1 signature (r||s), got ${sig.length}; the signer does not match the verification method`,
+    );
+  }
+  const n = secp256k1.CURVE.n;
+  const s = BigInt('0x' + bytesToHex(rs.subarray(32)));
+  const lowS = s > n >> 1n ? n - s : s;
+  const out = new Uint8Array(64);
+  out.set(rs.subarray(0, 32), 0);
+  out.set(hexToBytes(lowS.toString(16).padStart(64, '0')), 32);
+  return out;
+}
+
+function encodeDetachedJWSHeader(alg: string): string {
+  // Key order alg,b64,crit matches Go's json.Marshal of the header map.
+  return Buffer.from(JSON.stringify({ alg, b64: false, crit: ['b64'] }), 'utf8').toString('base64url');
+}
+
+function jwsSigningInput(encHeader: string, payload: Uint8Array): Uint8Array {
+  return new Uint8Array(Buffer.concat([Buffer.from(encHeader + '.', 'utf8'), Buffer.from(payload)]));
+}
+
+// decodeBase64urlStrict rejects a non-canonical encoding (trailing bits set, or
+// characters that re-encode differently), matching Go's base64.RawURLEncoding.Strict().
+function decodeBase64urlStrict(s: string): Uint8Array {
+  const bytes = new Uint8Array(Buffer.from(s, 'base64url'));
+  if (Buffer.from(bytes).toString('base64url') !== s) {
+    throw new Error('non-canonical base64url');
+  }
+  return bytes;
+}
+
+// definesSecp256k1Suite reports whether @context already defines the suite.
+function definesSecp256k1Suite(m: JSONMap): boolean {
+  const defines = (s: string): boolean =>
+    s === CREDENTIALS_V1_CONTEXT ||
+    s === CREDENTIALS_V1_CONTEXT + '.jsonld' ||
+    s === SECP256K1_SUITE_CONTEXT_ACCEPTED ||
+    s === SECP256K1_SUITE_CONTEXT_NARROW;
+  const ctx = m['@context'];
+  if (typeof ctx === 'string') return defines(ctx);
+  if (Array.isArray(ctx)) return ctx.some((e) => typeof e === 'string' && defines(e));
+  return false;
+}
+
+function ensureSecp256k1SuiteContext(m: JSONMap): void {
+  if (definesSecp256k1Suite(m)) return;
+  const ctx = m['@context'];
+  if (ctx === undefined || ctx === null) {
+    throw new Error(
+      `document has no @context, so ${EcdsaSecp256k1Signature2019} cannot be expanded`,
+    );
+  }
+  if (typeof ctx === 'string') {
+    m['@context'] = [ctx, SECP256K1_SUITE_CONTEXT_NARROW];
+    return;
+  }
+  if (Array.isArray(ctx)) {
+    m['@context'] = [...ctx, SECP256K1_SUITE_CONTEXT_NARROW];
+    return;
+  }
+  throw new Error('document @context has unexpected type');
+}
+
+// addSuiteContextWithoutChangingMeaning adds the suite context and refuses if
+// doing so changed what the document says (the narrow context defines proof at
+// the root, which could redefine a term the document already uses).
+async function addSuiteContextWithoutChangingMeaning(m: JSONMap): Promise<void> {
+  if (definesSecp256k1Suite(m)) return;
+  const before = await documentDigest(m);
+  ensureSecp256k1SuiteContext(m);
+  let after: Uint8Array;
+  try {
+    after = await documentDigest(m);
+  } catch (err) {
+    throw new Error(
+      `adding ${SECP256K1_SUITE_CONTEXT_NARROW}, which ${EcdsaSecp256k1Signature2019} needs, stopped the document from canonicalizing: ${(err as Error).message}`,
+    );
+  }
+  if (bytesToHex(before) !== bytesToHex(after)) {
+    throw new Error(
+      `adding ${SECP256K1_SUITE_CONTEXT_NARROW}, which ${EcdsaSecp256k1Signature2019} needs, changed what the document says; rename the colliding term or define the suite in @context yourself`,
+    );
+  }
+}
+
+/**
+ * Native canonicalizer digest (preserves JSON number types) — Go DocumentDigest.
+ * New proofs (ecdsa-rdfc-2019, EcdsaSecp256k1Signature2019) hash through here so
+ * the signature commits to native numeric types; the legacy `canonicalize`
+ * (number-coercing) is kept only for verifying legacy hex / JWS proofs.
+ */
+export async function documentDigest(m: JSONMap): Promise<Uint8Array> {
+  const body: JSONMap = {};
+  for (const [k, v] of Object.entries(m)) {
+    if (k !== PROOF_FIELD) body[k] = v;
+  }
+  const canonical = await canonicalizeRDF(body);
+  return computeDigest(canonical);
+}
+
 export async function ecdsaHashData(m: JSONMap, proof: Proof): Promise<Uint8Array> {
-  const docHash = await canonicalize(m);
+  const docHash = await documentDigest(m);
   return proofHashData(m, docHash, proof);
 }
 
@@ -144,7 +298,7 @@ export async function proofHashData(
   if (proof.cryptosuite) cfg.cryptosuite = proof.cryptosuite;
   if (proof.challenge) cfg.challenge = proof.challenge;
   if (proof.domain) cfg.domain = proof.domain;
-  const cfgCanonical = await canonicalizeDocument(cfg);
+  const cfgCanonical = await canonicalizeRDF(cfg);
   const cfgHash = computeDigest(cfgCanonical);
   const hashData = new Uint8Array(64);
   hashData.set(cfgHash, 0);
@@ -281,11 +435,8 @@ export async function verifyProof(
   if (proof.type === JwtProof2020) {
     return verifyJWTProofImpl(m, doc, proof);
   }
-  if (
-    proof.type === EcdsaSecp256k1Signature2019 ||
-    proof.type === ECDSASECPKEY
-  ) {
-    return verifyEcdsaProofLegacy(m);
+  if (proof.type === EcdsaSecp256k1Signature2019) {
+    return verifyEcdsaSecp256k1Proof(m, doc, proof);
   }
   if (proof.type === DataIntegrityProof && proof.cryptosuite === ECDSARDFC2019) {
     return verifyDataIntegrityProof(m, doc, proof);
@@ -419,30 +570,57 @@ function verifyRawEcdsa(publicKeyHex: string, digest: Uint8Array, signature: Uin
   }
 }
 
-function verifyEcdsaProofLegacy(m: JSONMap): boolean {
-  const proofMap = getFirstProof(m);
-  if (!proofMap || typeof proofMap !== 'object') {
-    throw new Error('proof is missing or has unexpected format');
+// verifyEcdsaSecp256k1Proof verifies an EcdsaSecp256k1Signature2019 proof via
+// DID-document key lookup, rebuilding the detached-JWS signing input exactly as
+// the signer did. Port of verifyEcdsaSecp256k1Proof in jsonmap_secp256k1.go.
+async function verifyEcdsaSecp256k1Proof(
+  m: JSONMap,
+  doc: DIDDocument,
+  proof: Proof,
+): Promise<boolean> {
+  const vm = findVerificationMethod(doc, proof.verificationMethod);
+  // The suite binds the signature to a secp256k1 key; a P-256 VM under this
+  // type means suites were mixed, which this type exists to prevent.
+  if (!vmIsSecp256k1(vm)) {
+    throw new Error(
+      `${EcdsaSecp256k1Signature2019}: verification method '${proof.verificationMethod}' does not hold a secp256k1 key`,
+    );
   }
-  const proof = proofMap as JSONMap;
-  const proofValue = proof.proofValue;
-  if (typeof proofValue !== 'string' || !proofValue) {
-    throw new Error('proof value is missing or invalid in the request');
-  }
-  const publicKeyHex = proof.verificationMethod;
-  if (typeof publicKeyHex !== 'string' || !publicKeyHex) {
-    throw new Error('proof verificationMethod is missing or invalid in the request');
+  const pubHex = publicKeyHexFromVM(vm);
+
+  const split = splitDetachedJWS(proof.jws ?? '');
+  if (!split) throw new Error(`${EcdsaSecp256k1Signature2019}: malformed detached JWS`);
+  const alg = detachedJWSAlg(split.header);
+  if (alg !== ALG_ES256K) {
+    throw new Error(`${EcdsaSecp256k1Signature2019}: jws alg must be ${ALG_ES256K}, got "${alg}"`);
   }
 
-  const signatureBytes = hexToBytes(proofValue);
-
-  const reqCopy: JSONMap = {};
-  for (const [k, v] of Object.entries(m)) {
-    if (k !== PROOF_FIELD) reqCopy[k] = v;
+  const signature = decodeBase64urlStrict(split.sig);
+  // RFC 8812 §3.2: an ES256K JWS signature is exactly 64 bytes (r||s).
+  if (signature.length !== 64) {
+    throw new Error(
+      `${EcdsaSecp256k1Signature2019}: jws signature is ${signature.length} bytes, want 64 (r||s)`,
+    );
   }
-  const message = new Uint8Array(Buffer.from(JSON.stringify(reqCopy), 'utf8'));
-  const pubBytes = keyToBytes(publicKeyHex);
-  return verifyJSONSignature(pubBytes, message, signatureBytes);
+  // Low-S only: (r, s) and (r, n-s) both verify, so reject the high-S form.
+  const s = BigInt('0x' + bytesToHex(signature.subarray(32)));
+  if (s > secp256k1.CURVE.n >> 1n) {
+    throw new Error(`${EcdsaSecp256k1Signature2019}: jws signature is not low-S`);
+  }
+
+  const hashData = await ecdsaHashData(m, proof);
+  const digest = sha256(jwsSigningInput(split.header, hashData));
+
+  let ok: boolean;
+  try {
+    ok = secp256k1.verify(signature, digest, hexToBytes(pubHex), { lowS: false });
+  } catch {
+    ok = false;
+  }
+  if (!ok) throw new Error(`${EcdsaSecp256k1Signature2019} signature verification failed`);
+
+  strictPurposeCheck(doc, vm, proof.proofPurpose, proof.created);
+  return true;
 }
 
 function getFirstProof(m: JSONMap): unknown {

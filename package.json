@@ -14,7 +14,8 @@
     "test:watch": "jest --watch",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist coverage",
-    "example": "ts-node examples/main.ts"
+    "example": "ts-node examples/main.ts",
+    "issue:go-interop": "ts-node examples/issue-go-interop.ts"
   },
   "keywords": [
     "verifiable-credential",

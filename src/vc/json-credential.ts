@@ -5,7 +5,8 @@ import type { Proof } from '../common/dto/proof';
 import {
   addCustomProof,
   addECDSAProof,
-  canonicalize,
+  addEcdsaSecp256k1Proof,
+  documentDigest,
   toMap,
   verifyProof,
 } from '../common/jsonmap/jsonmap';
@@ -14,7 +15,7 @@ import { bytesToHex } from '../common/crypto/hex';
 import { canonicalizeRDF, computeDigest } from '../common/processor/processor';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
-import { resolveSigningVM } from '../common/verification-method';
+import { resolveSigningVM, vmKeyKind } from '../common/verification-method';
 import { getOptions } from './options';
 import {
   checkExpiration,
@@ -87,18 +88,27 @@ export class JSONCredential implements Credential {
     const options = getOptions(opts);
     let vmKey = this.verificationMethodKey;
     if (options.verificationMethodKey) vmKey = options.verificationMethodKey;
-    const { url: vmURL } = await resolveSigningVM(
+    const { vm, url: vmURL } = await resolveSigningVM(
       issuer,
       'assertionMethod',
       vmKey,
       options.resolver,
     );
 
-    await addECDSAProof(this.credentialData, signer, vmURL, 'assertionMethod');
+    // The suite follows the VM's key: P-256 → ecdsa-rdfc-2019, secp256k1 →
+    // EcdsaSecp256k1Signature2019. RSA (and anything unrecognized) is refused.
+    const kind = vmKeyKind(vm);
+    if (kind === 'secp256k1') {
+      await addEcdsaSecp256k1Proof(this.credentialData, signer, vmURL, 'assertionMethod');
+    } else if (kind === 'P-256') {
+      await addECDSAProof(this.credentialData, signer, vmURL, 'assertionMethod');
+    } else {
+      throw new Error(`verification method '${vmURL}' has an unsupported key type for JSON-LD signing`);
+    }
   }
 
   async getSigningInput(): Promise<Uint8Array> {
-    return canonicalize(this.credentialData);
+    return documentDigest(this.credentialData);
   }
 
   async addCustomProof(proof: Proof, opts: CredentialOptions = {}): Promise<void> {

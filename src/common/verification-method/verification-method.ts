@@ -49,7 +49,14 @@ export function parseDIDDocument(raw: Record<string, unknown>): DIDDocument {
     if (typeof e.publicKeyMultibase === 'string') out.publicKeyMultibase = e.publicKeyMultibase;
     if (typeof e.revoked === 'string') {
       const d = new Date(e.revoked);
-      if (!isNaN(d.getTime())) out.revoked = d;
+      // Go unmarshals `revoked` as a strict RFC3339 *time.Time and fails on a
+      // bad value; silently dropping it would treat a revoked key as active.
+      if (isNaN(d.getTime())) {
+        throw new Error(
+          `verification method '${out.id}' has an unparseable 'revoked' timestamp: ${JSON.stringify(e.revoked)}`,
+        );
+      }
+      out.revoked = d;
     }
     if (typeof e.revocationReason === 'string') out.revocationReason = e.revocationReason;
     return out;

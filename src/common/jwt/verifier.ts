@@ -45,9 +45,24 @@ export class JWTVerifier {
 
     if (!this.docResolver) throw new Error('document resolver is not configured');
 
-    const issuer = jwtIssuer(parts[1]);
-    const doc = await this.docResolver.resolveDocument(issuer);
+    // Which property names the signer depends on the kind: a credential is
+    // signed by its issuer, a presentation by its holder. The purpose is read
+    // before the signer, and both come from the payload — never from the
+    // attacker-chosen kid. Port of credential/common/jwt/verifier.go.
+    const body = decodePayload(parts[1]);
+    const purpose = jwtProofPurpose(header, body);
+    const signer = jwtSigner(body, purpose);
+
+    const doc = await this.docResolver.resolveDocument(signer);
     const vm = findVerificationMethod(doc, kid);
+
+    // The header must not claim an algorithm the VM key cannot produce.
+    const wantAlg = algForVM(vm);
+    if (alg !== wantAlg) {
+      throw new Error(
+        `JWT alg "${alg}" does not match verification method '${vm.id}', which holds a ${wantAlg === 'ES256' ? 'P-256' : 'secp256k1'} key`,
+      );
+    }
     const publicKeyHex = publicKeyHexFromVM(vm);
 
     const signingString = parts[0] + '.' + parts[1];
@@ -65,10 +80,22 @@ export class JWTVerifier {
       throw new Error('signature verification failed');
     }
 
-    const purpose = jwtProofPurpose(parts[1]);
     const issuedAt = jwtIssuedAt(parts[1]);
     strictPurposeCheck(doc, vm, purpose, issuedAt);
   }
+}
+
+/** JOSE algorithm the verification method's key can produce (go AlgForKeyKind). */
+function algForVM(vm: VerificationMethodEntry): string {
+  if (vm.publicKeyJwk) {
+    if (vm.publicKeyJwk.crv === 'P-256') return 'ES256';
+    if (vm.publicKeyJwk.crv === 'secp256k1') return 'ES256K';
+    throw new Error(`verification method '${vm.id}' has unsupported JWK curve ${vm.publicKeyJwk.crv}`);
+  }
+  if (vm.publicKeyMultibase) return 'ES256'; // P-256 Multikey
+  if (vm.publicKeyHex) return 'ES256K'; // secp256k1 only (see publicKeyHexFromVM)
+  if (vm.type === 'EcdsaSecp256k1VerificationKey2019') return 'ES256K';
+  throw new Error(`verification method '${vm.id}' has an unrecognized key type for JWT`);
 }
 
 export function newJWTVerifier(resolver: ResolverProvider): JWTVerifier {
@@ -95,27 +122,122 @@ function decodeSecp256k1PublicKey(publicKeyHex: string): Uint8Array {
   throw new Error('unsupported public key format');
 }
 
-function jwtIssuer(payloadB64: string): string {
-  const body = decodePayload(payloadB64);
-  if (typeof body.iss === 'string' && body.iss) return body.iss;
-  const issuer = body.issuer;
-  if (typeof issuer === 'string' && issuer) return issuer;
-  if (issuer && typeof issuer === 'object' && !Array.isArray(issuer)) {
-    const id = (issuer as Record<string, unknown>).id;
-    if (typeof id === 'string' && id) return id;
+/**
+ * Returns the DID whose key signed the JWT, refusing a token whose `iss`
+ * disagrees with the property that names the signer. A credential is signed by
+ * its issuer, a presentation by its holder — so the two are never crossed.
+ * Port of credential/common/jwt/verifier.go jwtSigner.
+ */
+function jwtSigner(body: Record<string, unknown>, purpose: string): string {
+  const field = purpose === 'assertionMethod' ? 'issuer' : 'holder';
+
+  // VC 1.1 nests the document under a vc/vp claim; read the property there when
+  // present so a nested issuer cannot disagree with iss unnoticed.
+  let doc = body;
+  if (isPlainObject(body.vc)) doc = body.vc as Record<string, unknown>;
+  else if (isPlainObject(body.vp)) doc = body.vp as Record<string, unknown>;
+
+  // A key that differs from `field` only by case would be read by a
+  // case-insensitive consumer but not here, letting a signer name the victim
+  // under a key this lookup never sees.
+  for (const k of Object.keys(doc)) {
+    if (k !== field && k.toLowerCase() === field.toLowerCase()) {
+      throw new Error(`JWT carries "${k}", which differs from ${field} only by case`);
+    }
   }
-  throw new Error('JWT body is missing required `iss` claim');
+
+  const present = Object.prototype.hasOwnProperty.call(doc, field);
+  const claimed = didFromClaim(doc[field]);
+  if (present && !claimed) {
+    throw new Error(`JWT ${field} must be a string or an object with a string id`);
+  }
+
+  const iss = typeof body.iss === 'string' ? body.iss : '';
+  if (iss && claimed && iss !== claimed) {
+    throw new Error(`JWT iss "${iss}" does not match ${field} "${claimed}"`);
+  }
+  if (iss) return iss;
+  if (claimed) return claimed;
+  throw new Error(`JWT names no signer: both iss and ${field} are absent`);
 }
 
-function jwtProofPurpose(payloadB64: string): string {
-  const body = decodePayload(payloadB64);
-  if (body.vc !== undefined) return 'assertionMethod';
-  if (body.vp !== undefined) return 'authentication';
-  const types = body.type;
-  const names = Array.isArray(types) ? types : types ? [types] : [];
-  if (names.includes('VerifiablePresentation')) return 'authentication';
-  if (names.includes('VerifiableCredential')) return 'assertionMethod';
-  throw new Error('JWT body has neither vc nor vp claim; cannot determine proofPurpose');
+function didFromClaim(v: unknown): string {
+  if (typeof v === 'string') return v;
+  if (isPlainObject(v)) {
+    const id = (v as Record<string, unknown>).id;
+    if (typeof id === 'string') return id;
+  }
+  return '';
+}
+
+function isPlainObject(v: unknown): boolean {
+  return typeof v === 'object' && v !== null && !Array.isArray(v);
+}
+
+/**
+ * Resolves the proofPurpose from the header typ and the payload, refusing a typ
+ * that contradicts the payload or a payload whose kind is ambiguous.
+ * Port of credential/common/jwt/verifier.go jwtProofPurpose.
+ */
+function jwtProofPurpose(header: Record<string, unknown>, body: Record<string, unknown>): string {
+  const carried = purposeFromBody(body);
+  const declared = purposeFromTyp(header);
+  if (carried && declared && carried !== declared) {
+    throw new Error(
+      `JWT typ ${String(header.typ)} implies proofPurpose ${declared} but its payload is a ${documentKind(carried)}`,
+    );
+  }
+  if (carried) return carried;
+  if (declared) return declared;
+  throw new Error('JWT has neither vc/vp claims nor vc+jwt/vp+jwt typ; cannot determine proofPurpose');
+}
+
+function purposeFromTyp(header: Record<string, unknown>): string {
+  switch (header.typ) {
+    case 'vc+jwt':
+    case 'application/vc+jwt':
+    case 'vc+sd-jwt':
+    case 'application/vc+sd-jwt':
+      return 'assertionMethod';
+    case 'vp+jwt':
+    case 'application/vp+jwt':
+      return 'authentication';
+    default:
+      return '';
+  }
+}
+
+function purposeFromBody(body: Record<string, unknown>): string {
+  const hasVC = body.vc !== undefined;
+  const hasVP = body.vp !== undefined;
+  if (hasVC && hasVP) throw new Error('JWT carries both vc and vp claims; its kind is ambiguous');
+  if (hasVC) return 'assertionMethod';
+  if (hasVP) return 'authentication';
+  const type = body.type;
+  if (Array.isArray(type)) {
+    let found = '';
+    for (const v of type) {
+      const p = purposeFromType(typeof v === 'string' ? v : '');
+      if (!p) continue;
+      if (found && found !== p) {
+        throw new Error('JWT type names both a credential and a presentation; its kind is ambiguous');
+      }
+      found = p;
+    }
+    return found;
+  }
+  if (typeof type === 'string') return purposeFromType(type);
+  return '';
+}
+
+function purposeFromType(t: string): string {
+  if (t === 'VerifiableCredential') return 'assertionMethod';
+  if (t === 'VerifiablePresentation') return 'authentication';
+  return '';
+}
+
+function documentKind(purpose: string): string {
+  return purpose === 'assertionMethod' ? 'credential' : 'presentation';
 }
 
 function jwtIssuedAt(payloadB64: string): Date | null {

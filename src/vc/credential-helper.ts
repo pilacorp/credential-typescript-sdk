@@ -17,6 +17,7 @@ import type {
   Schema,
   Status,
   Subject,
+  TermsOfUse,
 } from './types';
 
 /** Extract a dot-notation field from a nested JSON map. */
@@ -66,6 +67,12 @@ export function serializeCredentialContents(
   }
   if (vcc.credentialStatus && vcc.credentialStatus.length > 0) {
     vcJSON.credentialStatus = serializeStatuses(vcc.credentialStatus);
+  }
+  if (vcc.termsOfUse && vcc.termsOfUse.length > 0) {
+    vcc.termsOfUse.forEach((term, i) => {
+      if (!term.type) throw new Error(`termsOfUse[${i}].type is required`);
+    });
+    vcJSON.termsOfUse = vcc.termsOfUse.map(serializeTermsOfUse);
   }
   if (vcc.validFrom) {
     vcJSON.validFrom = formatRFC3339(vcc.validFrom);
@@ -136,6 +143,13 @@ function serializeStatus(status: Status): CredentialData {
   if (status.statusPurpose) out.statusPurpose = status.statusPurpose;
   if (status.statusListIndex) out.statusListIndex = status.statusListIndex;
   if (status.statusListCredential) out.statusListCredential = status.statusListCredential;
+  return out;
+}
+
+/** Serialize a termsOfUse entry; type is required by the W3C data model. */
+function serializeTermsOfUse(term: TermsOfUse): CredentialData {
+  const out: CredentialData = { type: term.type };
+  if (term.id) out.id = term.id;
   return out;
 }
 

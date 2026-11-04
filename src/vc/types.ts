@@ -27,6 +27,13 @@ export interface Schema {
   type?: string;
 }
 
+/** termsOfUse entry as per W3C Verifiable Credentials. */
+export interface TermsOfUse {
+  id?: string;
+  /** Policy type — required by the W3C data model. */
+  type: string;
+}
+
 export interface CredentialContents {
   context?: unknown[];
   id?: string;
@@ -37,6 +44,7 @@ export interface CredentialContents {
   credentialStatus?: Status[];
   subject?: Subject[];
   schemas?: Schema[];
+  termsOfUse?: TermsOfUse[];
 }
 
 export type Decoy = DecoyConfig;
