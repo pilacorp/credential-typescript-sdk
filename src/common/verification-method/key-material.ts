@@ -2,11 +2,11 @@
  * Public key material helpers — Node port of
  * credential/common/verification-method/key_material.go
  */
-import { p256 } from '@noble/curves/nist';
+import { p256, p384 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '../crypto/hex';
 import type { JWK, VerificationMethodEntry } from './verification-method';
-import { decodeP256PublicMultibase } from './multikey';
+import { decodeECPublicMultibase } from './multikey';
 
 export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
   if (!vm) throw new Error('verification method is nil');
@@ -29,21 +29,22 @@ export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
     return jwkToHex(vm.publicKeyJwk);
   }
   if (vm.publicKeyMultibase) {
-    return bytesToHex(decodeP256PublicMultibase(vm.publicKeyMultibase));
+    return bytesToHex(decodeECPublicMultibase(vm.publicKeyMultibase).uncompressed);
   }
   throw new Error(`verification method '${vm.id}' has no public key material`);
 }
 
 /**
- * Convert an EC JWK (secp256k1 or P-256) to uncompressed hex (0x04 || X || Y).
+ * Convert an EC JWK (secp256k1, P-256 or P-384) to uncompressed hex (0x04 || X || Y).
  */
 export function jwkToHex(jwk: JWK): string {
   if (jwk.kty !== 'EC') throw new Error(`unsupported key type: ${jwk.kty}`);
-  if (jwk.crv !== 'secp256k1' && jwk.crv !== 'P-256') {
-    throw new Error(`unsupported curve: ${jwk.crv}`);
+  if (jwk.crv !== 'secp256k1' && jwk.crv !== 'P-256' && jwk.crv !== 'P-384') {
+    throw new Error(`unsupported curve: ${jwk.crv} (want secp256k1, P-256 or P-384)`);
   }
   if (!jwk.x || !jwk.y) throw new Error('JWK x/y are required');
 
+  if (jwk.crv === 'P-384') return p384JwkToHex(jwk.x, jwk.y);
   const x = Buffer.from(jwk.x, 'base64url');
   const y = Buffer.from(jwk.y, 'base64url');
   if (x.length !== 32 || y.length !== 32) {
@@ -59,4 +60,23 @@ export function jwkToHex(jwk: JWK): string {
   if (jwk.crv === 'P-256') p256.ProjectivePoint.fromHex(uncompressed);
   else secp256k1.ProjectivePoint.fromHex(uncompressed);
   return bytesToHex(uncompressed);
+}
+
+/** Go ECPubFromJWK on P-384: short coordinates are left-padded, longer than 48 bytes refused. */
+function p384JwkToHex(xb64: string, yb64: string): string {
+  const x = Buffer.from(xb64, 'base64url');
+  const y = Buffer.from(yb64, 'base64url');
+  if (x.length > 48 || y.length > 48) {
+    throw new Error(`jwk P-384: coordinates must be at most 48 bytes, got x=${x.length} y=${y.length}`);
+  }
+  const pt = new Uint8Array(97);
+  pt[0] = 0x04;
+  pt.set(x, 49 - x.length);
+  pt.set(y, 97 - y.length);
+  try {
+    p384.ProjectivePoint.fromHex(pt).assertValidity();
+  } catch (e) {
+    throw new Error(`jwk P-384: invalid public key point: ${(e as Error).message}`);
+  }
+  return bytesToHex(pt);
 }

@@ -1,4 +1,4 @@
-import { p256 } from '@noble/curves/nist';
+import { p256, p384 } from '@noble/curves/nist';
 import { decodeBase58Btc, encodeBase58Btc } from '../util/multibase';
 
 /** p256-pub multicodec 0x1200 as varint 0x80 0x24 */
@@ -58,4 +58,42 @@ export function isP256PublicMultibase(multibase: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** p384-pub multicodec 0x1201 as varint 0x81 0x24 (Go: p384PubMulticodec). */
+export const P384_PUB_MULTICODEC = new Uint8Array([0x81, 0x24]);
+
+/** Encode a P-384 public key (compressed or uncompressed) as raw Multikey bytes. */
+export function encodeP384PublicMultikeyBytes(point: Uint8Array): Uint8Array {
+  const compressed = p384.ProjectivePoint.fromHex(point).toRawBytes(true);
+  const raw = new Uint8Array(2 + compressed.length);
+  raw.set(P384_PUB_MULTICODEC, 0);
+  raw.set(compressed, 2);
+  return raw;
+}
+
+export function encodeP384PublicMultibase(point: Uint8Array): string {
+  return encodeBase58Btc(encodeP384PublicMultikeyBytes(point));
+}
+
+/**
+ * Like Go's ECPubFromMultikeyBytes: the curve comes from the 2-byte prefix
+ * (P-256 or P-384 only); returns the uncompressed point.
+ */
+export function decodeECPublicMultikeyBytes(raw: Uint8Array): { curve: 'P-256' | 'P-384'; uncompressed: Uint8Array } {
+  if (raw.length < 2) throw new Error('multikey: value too short');
+  if (raw[0] === 0x80 && raw[1] === 0x24) return { curve: 'P-256', uncompressed: decodeP256PublicMultikeyBytes(raw) };
+  if (raw[0] === 0x81 && raw[1] === 0x24) {
+    try {
+      if (raw.length !== 2 + 49) throw new Error('length');
+      return { curve: 'P-384', uncompressed: p384.ProjectivePoint.fromHex(raw.slice(2)).toRawBytes(false) };
+    } catch {
+      throw new Error('multikey: invalid P-384 compressed point');
+    }
+  }
+  throw new Error(`multikey: unsupported multicodec prefix 0x${Buffer.from(raw.slice(0, 2)).toString('hex')}`);
+}
+
+export function decodeECPublicMultibase(multibase: string) {
+  return decodeECPublicMultikeyBytes(decodeBase58Btc(multibase));
 }
