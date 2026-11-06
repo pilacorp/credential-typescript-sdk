@@ -6,7 +6,7 @@
  */
 import Ajv2020 from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
-import { fetchAndCheckRevocation } from '../common/credential-status';
+import { fetchAndCheckRevocation, parseStatusListIndex } from '../common/credential-status';
 import { copyExcept, JSONMap, shallowCopyObj, splitJSONObj } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
 import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
@@ -294,8 +294,10 @@ export async function checkRevocation(c: CredentialData): Promise<void> {
   if (typeof statusListIndex !== 'string' || !statusListIndex) {
     throw new Error('credentialStatus.statusListIndex is required');
   }
-  const position = parseInt(statusListIndex, 10);
-  if (!Number.isInteger(position)) {
+  let position: number;
+  try {
+    position = parseStatusListIndex(statusListIndex);
+  } catch {
     throw new Error('invalid credentialStatus.statusListIndex');
   }
   const isRevoked = await fetchAndCheckRevocation(statusListCredential, position);
