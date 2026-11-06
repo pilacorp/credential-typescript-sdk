@@ -35,11 +35,33 @@ export function formatRFC3339Nano(date: Date): string {
   return frac ? `${m[1]}.${frac}Z` : `${m[1]}Z`;
 }
 
-/** Parse an RFC3339 string. Throws if invalid. */
-export function parseRFC3339(value: string): Date {
-  const date = new Date(value);
-  if (isNaN(date.getTime())) {
+const RFC3339 =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(?:Z|([+-])(\d{2}):(\d{2}))$/;
+
+/**
+ * Strict RFC 3339 (Go `time.Parse(time.RFC3339, ...)`): `T` separator, a
+ * mandatory zone, real calendar values. Returns nanoseconds since the epoch,
+ * which `Date` (milliseconds) cannot hold. Throws if invalid.
+ */
+export function parseRFC3339Nanos(value: string): bigint {
+  const m = typeof value === 'string' ? RFC3339.exec(value) : null;
+  if (!m) throw new Error(`invalid RFC3339 time: ${value}`);
+  const [y, mo, d, h, mi, s] = m.slice(1, 7).map(Number);
+  const ms = Date.UTC(y, mo - 1, d, h, mi, s);
+  const check = new Date(ms);
+  if (
+    mo < 1 || mo > 12 || h > 23 || mi > 59 || s > 59 ||
+    check.getUTCMonth() !== mo - 1 || check.getUTCDate() !== d ||
+    (m[9] !== undefined && (Number(m[9]) > 23 || Number(m[10]) > 59))
+  ) {
     throw new Error(`invalid RFC3339 time: ${value}`);
   }
-  return date;
+  const offsetSec = m[8] ? (m[8] === '-' ? -1 : 1) * (Number(m[9]) * 3600 + Number(m[10]) * 60) : 0;
+  const frac = BigInt((m[7] ?? '').slice(0, 9).padEnd(9, '0'));
+  return (BigInt(ms / 1000 - offsetSec)) * 1_000_000_000n + frac;
+}
+
+/** Strict RFC 3339 as a Date (millisecond precision; see parseRFC3339Nanos). Throws if invalid. */
+export function parseRFC3339(value: string): Date {
+  return new Date(Number(parseRFC3339Nanos(value) / 1_000_000n));
 }

@@ -3,6 +3,7 @@
  */
 import type { Proof } from '../dto/proof';
 import type { JSONMap } from './json';
+import { parseRFC3339Nanos } from './time';
 
 export function serializeTypes(types: string[]): unknown {
   if (types.length === 0) return null;
@@ -16,14 +17,18 @@ export function checkValidityPeriod(
   entity: 'credential' | 'presentation',
   leewayMs = 0,
 ): void {
-  const now = Date.now();
-  const leeway = Math.max(leewayMs, 0);
+  const now = BigInt(Date.now()) * 1_000_000n;
+  const leeway = BigInt(Math.trunc(Math.max(leewayMs, 0))) * 1_000_000n;
   for (const [field, kind] of [['validFrom', 'start'], ['validUntil', 'end']] as const) {
     const value = data[field];
     if (value === undefined || value === null || value === '') continue;
     if (typeof value !== 'string') throw new Error(`field "${field}" must be a string`);
-    const time = new Date(value).getTime();
-    if (Number.isNaN(time)) throw new Error(`failed to parse ${field}`);
+    let time: bigint;
+    try {
+      time = parseRFC3339Nanos(value);
+    } catch {
+      throw new Error(`failed to parse ${field}`);
+    }
     if (kind === 'start' && now + leeway < time) throw new Error(`${entity} is not valid yet`);
     if (kind === 'end' && now - leeway > time) throw new Error(`${entity} is expired`);
   }
@@ -35,13 +40,14 @@ export function checkJwtTimeClaims(claims: JSONMap, leewayMs = 0): void {
   const leeway = Math.max(leewayMs, 0);
   for (const [claim, kind] of [['nbf', 'start'], ['exp', 'end']] as const) {
     const value = claims[claim];
-    if (value === undefined) continue;
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value !== 'number' || !Number.isFinite(value) || Math.trunc(value) <= 0) {
       throw new Error(`invalid JWT ${claim} claim`);
     }
-    const time = value * 1000;
+    const time = Math.trunc(value) * 1000;
     if (kind === 'start' && now + leeway < time) throw new Error('JWT is not valid yet');
-    if (kind === 'end' && now - leeway > time) throw new Error('JWT is expired');
+    // RFC 7519 §4.1.4: not acceptable on or after exp (Go: !now.Before(exp)).
+    if (kind === 'end' && now - leeway >= time) throw new Error('JWT is expired');
   }
 }
 

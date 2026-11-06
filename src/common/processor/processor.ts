@@ -52,6 +52,10 @@ const extraContexts: Record<string, unknown> = {};
 let injectedLoader: DocumentLoader | null = null;
 
 export function registerContext(url: string, document: unknown): void {
+  // Bundled contexts are frozen, published documents: like Go, they cannot be overridden.
+  if (url in wellKnownContexts) {
+    throw new Error(`registerContext: ${url} is a bundled context and cannot be overridden`);
+  }
   extraContexts[url] = document;
 }
 
@@ -65,7 +69,7 @@ export function bundledContextUrls(): string[] {
 
 const bundledSizes = new Map<unknown, number>();
 function bundledSize(url: string): number | undefined {
-  const doc = extraContexts[url] ?? wellKnownContexts[url];
+  const doc = wellKnownContexts[url] ?? extraContexts[url];
   if (!doc) return undefined;
   let n = bundledSizes.get(doc);
   if (n === undefined) {
@@ -80,7 +84,7 @@ function newBudget(): ContextBudget {
   return new ContextBudget({
     bundledSize,
     local: (url) => {
-      const doc = extraContexts[url] ?? wellKnownContexts[url];
+      const doc = wellKnownContexts[url] ?? extraContexts[url];
       if (doc) return { contextUrl: null, document: doc, documentUrl: url };
       return injectedLoader ? injectedLoader(url) : undefined;
     },
@@ -203,10 +207,19 @@ function convertToJSONLDCompatible(value: unknown): unknown {
   };
 }
 
+/**
+ * Go's `fmt.Sprintf("%v", float64)`: shortest round-trip digits, in exponent
+ * form (`1e+06`, `1.7e+09`, `1e-05`) when the decimal exponent is < -4 or >= 6.
+ * Only the legacy canonicalizer uses this; the library path keeps native types.
+ */
 function numberToCanonicalString(n: number): string {
-  // Match Go's `fmt.Sprintf("%v", n)` for integers (no trailing ".0") and
-  // floats (default format). JavaScript already drops trailing zeros for
-  // integer-valued floats — covers 2023, 2023.5, etc.
+  if (n === 0) return Object.is(n, -0) ? '-0' : '0';
+  if (!Number.isFinite(n)) return String(n);
+  const [mant, exp] = n.toExponential().split('e');
+  const e = Number(exp);
+  if (e < -4 || e >= 6) {
+    return `${mant}e${e < 0 ? '-' : '+'}${String(Math.abs(e)).padStart(2, '0')}`;
+  }
   return String(n);
 }
 
@@ -231,7 +244,7 @@ export async function compactJSONLD(
   expanded: unknown,
   ctx: unknown,
 ): Promise<Record<string, unknown>> {
-  return guard('compact', () => jsonld.compact(expanded, ctx, ldOptions(newBudget())));
+  return guard('compact', () => jsonld.compact(expanded, ctx, ldOptions(newBudget(), { safe: true })));
 }
 
 export async function toRDFNQuads(doc: unknown): Promise<string[]> {
@@ -264,11 +277,12 @@ export async function canonicalizeWithIdMap(
   doc: Record<string, unknown>,
 ): Promise<[string[], Map<string, string>]> {
   if (!doc) throw new Error('canonicalize: document is nil');
-  const budget = newBudget();
-  const dataset = await guard('canonicalize', async () => {
-    budget.limitInline(doc);
-    return jsonld.toRDF(doc, ldOptions(budget, { safe: true }));
-  });
+  // Like Go's toRDFDataset: expand first so dropped types / relative ids are
+  // refused, then convert the expanded form (no contexts left to load).
+  const expanded = await expandJSONLD(doc);
+  const dataset = await guard('canonicalize', () =>
+    jsonld.toRDF(expanded, ldOptions(newBudget(), { safe: true })),
+  );
   return canonicalizeDatasetWithIdMap(dataset);
 }
 
@@ -297,18 +311,29 @@ function isAbsoluteIri(s: string): boolean {
   return /^[A-Za-z][A-Za-z0-9+.-]*:/.test(s);
 }
 
-function relativeKeywordValues(v: unknown, keyword: string, out: string[] = []): string[] {
+// json-gold's IsKeyword: a keyword value (e.g. `@type: "@json"`) is never relative.
+const KEYWORDS = new Set(
+  ('@base @container @context @default @direction @embed @explicit @json @id @included @index @first ' +
+    '@graph @import @language @list @nest @none @omitDefault @prefix @preserve @propagate @protected ' +
+    '@requireAll @reverse @set @type @value @version @vocab').split(' '),
+);
+
+// Go: ld.Arrayify(val) then IsRelativeIri on every string, so array-valued @type counts.
+export function relativeKeywordValues(v: unknown, keyword: string, out: string[] = []): string[] {
   if (Array.isArray(v)) {
     for (const item of v) relativeKeywordValues(item, keyword, out);
     return out;
   }
   if (v && typeof v === 'object') {
-    const obj = v as Record<string, unknown>;
-    for (const [k, val] of Object.entries(obj)) {
-      if (k === keyword && typeof val === 'string') {
-        if (val !== keyword && !val.startsWith('_:') && !isAbsoluteIri(val)) out.push(val);
-      } else {
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      if (k !== keyword) {
         relativeKeywordValues(val, keyword, out);
+        continue;
+      }
+      for (const x of Array.isArray(val) ? val : [val]) {
+        if (typeof x === 'string' && !KEYWORDS.has(x) && !x.startsWith('_:') && !isAbsoluteIri(x)) {
+          out.push(x);
+        }
       }
     }
   }

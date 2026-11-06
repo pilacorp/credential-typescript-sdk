@@ -67,44 +67,119 @@ export async function canonicalize(m: JSONMap): Promise<Uint8Array> {
   return computeDigest(canonical);
 }
 
+/** Options for the embedded-proof signers (go ProofOpt). */
+export interface ProofSignOptions {
+  challenge?: string;
+  domain?: string;
+  /** The key the verification method publishes; the fresh signature is checked against it (go WithVMPublicKey). */
+  vmPublicKey?: Uint8Array;
+}
+
+/** Puts @context back the way it is now (go contextSnapshot). */
+function contextSnapshot(m: JSONMap): () => void {
+  const had = Object.prototype.hasOwnProperty.call(m, '@context');
+  const prev = m['@context'];
+  return () => {
+    if (had) m['@context'] = prev;
+    else delete m['@context'];
+  };
+}
+
+function rawProofList(m: JSONMap): unknown[] {
+  const raw = m[PROOF_FIELD];
+  if (raw === undefined || raw === null) return [];
+  return Array.isArray(raw) ? raw : [raw];
+}
+
+/** Appends to the W3C proof set; a lone proof is stored as an object (go appendProof). */
+function appendProof(m: JSONMap, raw: unknown): void {
+  const list = [...rawProofList(m), raw];
+  m[PROOF_FIELD] = list.length === 1 ? list[0] : list;
+}
+
+/** The wire form of a proof: every property it carries except the raw external-signing bytes. */
+function proofToRaw(proof: Proof): JSONMap {
+  const out: JSONMap = {};
+  for (const [k, v] of Object.entries(proof as unknown as JSONMap)) {
+    if (k === 'signature' || v === undefined || (v === '' && typeof v === 'string')) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+/** Every proof in the document's proof set, parsed (go Proofs). */
+export function proofs(m: JSONMap): Proof[] {
+  return rawProofList(m).map(parseRawToProof);
+}
+
+function checkSignatureAgainstVM(
+  suite: string,
+  alg: 'P-256' | 'secp256k1',
+  vmPub: Uint8Array | undefined,
+  digest: Uint8Array,
+  signature: Uint8Array,
+  verificationMethod: string,
+): void {
+  if (!vmPub) return;
+  let ok = false;
+  try {
+    ok = (alg === 'P-256' ? p256 : secp256k1).verify(signature, digest, vmPub, { lowS: false });
+  } catch {
+    ok = false;
+  }
+  if (!ok) {
+    throw new Error(
+      `jsonmap: the ${suite} signature does not verify against verification method '${verificationMethod}'; the signer does not hold that key`,
+    );
+  }
+}
+
 export async function addECDSAProof(
   m: JSONMap,
   signer: SignerProvider,
   verificationMethod: string,
   proofPurpose: string,
-  extras: { challenge?: string; domain?: string } = {},
+  extras: ProofSignOptions = {},
 ): Promise<void> {
   if (!m) throw new Error('jsonmap: JSONMap is nil');
   if (!signer) throw new Error('jsonmap: signer provider cannot be nil');
   if (!verificationMethod) throw new Error('jsonmap: verification method is required');
   if (!proofPurpose) throw new Error('jsonmap: proof purpose is required');
 
-  const proof: Proof = {
-    type: DataIntegrityProof,
-    created: formatRFC3339(new Date()),
-    verificationMethod,
-    proofPurpose,
-    cryptosuite: ECDSARDFC2019,
-  };
-  if (extras.challenge) proof.challenge = extras.challenge;
-  if (extras.domain) proof.domain = extras.domain;
+  // The document is only mutated on the way to a signature; a failure leaves it as it was.
+  const restoreContext = contextSnapshot(m);
+  try {
+    const proof: Proof = {
+      type: DataIntegrityProof,
+      created: formatRFC3339(new Date()),
+      verificationMethod,
+      proofPurpose,
+      cryptosuite: ECDSARDFC2019,
+    };
+    if (extras.challenge) proof.challenge = extras.challenge;
+    if (extras.domain) proof.domain = extras.domain;
 
-  // ecdsa-rdfc-2019 is the Data Integrity suite for P-256 (and P-384, not
-  // implemented here). The signature is 64-byte r||s and goes into proofValue
-  // as multibase base58btc. secp256k1 keys have no Data Integrity cryptosuite;
-  // they sign under addEcdsaSecp256k1Proof, so a non-64-byte signature here is
-  // a misrouted signer and is rejected rather than issued as a hex proofValue.
-  ensureDataIntegrityContext(m);
-  const hashData = await ecdsaHashData(m, proof);
-  const digest = sha256(hashData);
-  const signature = await signer.sign(digest);
-  if (signature.length !== 64) {
-    throw new Error(
-      `jsonmap: ecdsa-rdfc-2019 expects a 64-byte P-256 signature (r||s) but the signer returned ${signature.length} bytes; the signer does not match the verification method`,
-    );
+    // ecdsa-rdfc-2019 is the Data Integrity suite for P-256 (P-384 is not
+    // implemented here). The signature is 64-byte r||s in proofValue as
+    // multibase base58btc. secp256k1 keys sign under addEcdsaSecp256k1Proof,
+    // so a non-64-byte signature here is a misrouted signer, not a hex proof.
+    ensureDataIntegrityContext(m);
+    const hashData = await ecdsaHashData(m, proof);
+    const digest = sha256(hashData);
+    const signature = await signer.sign(digest);
+    if (signature.length !== 64) {
+      throw new Error(
+        `jsonmap: ecdsa-rdfc-2019 expects a 64-byte P-256 signature (r||s) but the signer returned ${signature.length} bytes; the signer does not match the verification method`,
+      );
+    }
+    // Catch a signer bound to the wrong VM here, not at the verifier.
+    checkSignatureAgainstVM(ECDSARDFC2019, 'P-256', extras.vmPublicKey, digest, signature, verificationMethod);
+    proof.proofValue = encodeBase58Btc(signature);
+    appendProof(m, proofToRaw(proof));
+  } catch (err) {
+    restoreContext();
+    throw err;
   }
-  proof.proofValue = encodeBase58Btc(signature);
-  m[PROOF_FIELD] = serializeProofs([proof]);
 }
 
 // ===== EcdsaSecp256k1Signature2019 (Linked Data Signatures) =====
@@ -123,7 +198,7 @@ export async function addEcdsaSecp256k1Proof(
   signer: SignerProvider,
   verificationMethod: string,
   proofPurpose: string,
-  extras: { challenge?: string; domain?: string } = {},
+  extras: ProofSignOptions = {},
 ): Promise<void> {
   if (!m) throw new Error('jsonmap: JSONMap is nil');
   if (!signer) throw new Error('jsonmap: signer provider cannot be nil');
@@ -132,10 +207,15 @@ export async function addEcdsaSecp256k1Proof(
 
   // Signing adds the suite @context before it knows it will succeed; restore
   // the caller's document untouched on any failure.
-  const hadContext = Object.prototype.hasOwnProperty.call(m, '@context');
-  const prevContext = m['@context'];
+  const restoreContext = contextSnapshot(m);
   try {
     await addSuiteContextWithoutChangingMeaning(m);
+    // The suite binds to a secp256k1 key: refuse another curve before signing.
+    if (extras.vmPublicKey && !isSecp256k1Point(extras.vmPublicKey)) {
+      throw new Error(
+        `jsonmap: ${EcdsaSecp256k1Signature2019} needs a secp256k1 key, but verification method '${verificationMethod}' does not hold one`,
+      );
+    }
 
     const proof: Proof = {
       type: EcdsaSecp256k1Signature2019,
@@ -152,13 +232,22 @@ export async function addEcdsaSecp256k1Proof(
 
     const rawSig = await signer.sign(digest);
     const signature = joseSecp256k1Signature(rawSig);
+    checkSignatureAgainstVM(EcdsaSecp256k1Signature2019, 'secp256k1', extras.vmPublicKey, digest, signature, verificationMethod);
 
     proof.jws = `${encHeader}..${Buffer.from(signature).toString('base64url')}`;
-    m[PROOF_FIELD] = serializeProofs([proof]);
+    appendProof(m, proofToRaw(proof));
   } catch (err) {
-    if (hadContext) m['@context'] = prevContext;
-    else delete m['@context'];
+    restoreContext();
     throw err;
+  }
+}
+
+function isSecp256k1Point(pub: Uint8Array): boolean {
+  try {
+    secp256k1.ProjectivePoint.fromHex(pub);
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -288,16 +377,7 @@ export async function proofHashData(
   if (ctx === undefined || ctx === null) {
     throw new Error('document is missing the @context needed to canonicalize the proof configuration');
   }
-  const cfg: JSONMap = {
-    type: proof.type,
-    created: proof.created,
-    verificationMethod: proof.verificationMethod,
-    proofPurpose: proof.proofPurpose,
-    '@context': ctx,
-  };
-  if (proof.cryptosuite) cfg.cryptosuite = proof.cryptosuite;
-  if (proof.challenge) cfg.challenge = proof.challenge;
-  if (proof.domain) cfg.domain = proof.domain;
+  const cfg = ecdsaProofConfig(m, proof);
   const cfgCanonical = await canonicalizeRDF(cfg);
   const cfgHash = computeDigest(cfgCanonical);
   const hashData = new Uint8Array(64);
@@ -347,6 +427,8 @@ export async function addECDSASDBaseProof(
       'jsonmap: the document already carries a proof; an ecdsa-sd-2023 base proof replaces the proof set, so remove the existing proof first if that is intended',
     );
   }
+  const restoreContext = contextSnapshot(m);
+  try {
   ensureDataIntegrityContext(m);
   const proof: Proof = {
     type: DataIntegrityProof,
@@ -367,6 +449,10 @@ export async function addECDSASDBaseProof(
     issuerPub,
   );
   m[PROOF_FIELD] = serializeProofs([proof]);
+  } catch (err) {
+    restoreContext();
+    throw err;
+  }
 }
 
 export async function deriveECDSASD(m: JSONMap, selectivePointers: string[]): Promise<JSONMap> {
@@ -385,21 +471,28 @@ export async function deriveECDSASD(m: JSONMap, selectivePointers: string[]): Pr
   return derived;
 }
 
+// Data Integrity § 4.4 / Go ecdsaProofConfig: the whole proof minus the field
+// that holds the signature, plus the document's @context. Nothing else is
+// filtered, so id, expires, nonce, previousProof, array domain and unknown
+// properties are all part of the hash.
+const PROOF_TYPED_KEYS = [
+  'id', 'type', 'created', 'expires', 'verificationMethod', 'proofPurpose', 'cryptosuite',
+  'challenge', 'domain', 'nonce', 'previousProof', 'proofValue', 'jws',
+];
+
 function ecdsaProofConfig(m: JSONMap, proof: Proof): JSONMap {
   const ctx = m['@context'];
   if (ctx === undefined || ctx === null) {
     throw new Error('document is missing the @context needed to canonicalize the proof configuration');
   }
-  const cfg: JSONMap = {
-    type: proof.type,
-    created: proof.created,
-    verificationMethod: proof.verificationMethod,
-    proofPurpose: proof.proofPurpose,
-    '@context': ctx,
-  };
-  if (proof.cryptosuite) cfg.cryptosuite = proof.cryptosuite;
-  if (proof.challenge) cfg.challenge = proof.challenge;
-  if (proof.domain) cfg.domain = proof.domain;
+  const cfg: JSONMap = { ...(proof as unknown as JSONMap) };
+  delete cfg.signature; // raw signature bytes of the external-signing flow, never serialized
+  for (const k of Object.keys(cfg)) {
+    // Go omitempty on typed fields; an empty or unset one is not on the wire.
+    if (cfg[k] === undefined || (cfg[k] === '' && PROOF_TYPED_KEYS.includes(k))) delete cfg[k];
+  }
+  delete cfg[proof.type === EcdsaSecp256k1Signature2019 ? 'jws' : 'proofValue'];
+  cfg['@context'] = ctx;
   return cfg;
 }
 
@@ -635,17 +728,16 @@ export function parseRawToProof(proof: unknown): Proof {
     throw new Error('invalid proof format');
   }
   const p = proof as JSONMap;
-  const result: Proof = {
-    type: typeof p.type === 'string' ? p.type : '',
-    created: typeof p.created === 'string' ? p.created : '',
-    verificationMethod: typeof p.verificationMethod === 'string' ? p.verificationMethod : '',
-    proofPurpose: typeof p.proofPurpose === 'string' ? p.proofPurpose : '',
-  };
-  if (typeof p.proofValue === 'string') result.proofValue = p.proofValue;
-  if (typeof p.cryptosuite === 'string') result.cryptosuite = p.cryptosuite;
-  if (typeof p.challenge === 'string') result.challenge = p.challenge;
-  if (typeof p.domain === 'string') result.domain = p.domain;
-  if (typeof p.jws === 'string') result.jws = p.jws;
+  // Keep every property (Go's dto.Proof.Extra) so the proof configuration
+  // still hashes what the issuer signed; typed fields fall back to "".
+  const result = { ...p } as unknown as Proof;
+  result.type = typeof p.type === 'string' ? p.type : '';
+  result.created = typeof p.created === 'string' ? p.created : '';
+  result.verificationMethod = typeof p.verificationMethod === 'string' ? p.verificationMethod : '';
+  result.proofPurpose = typeof p.proofPurpose === 'string' ? p.proofPurpose : '';
+  for (const k of ['proofValue', 'cryptosuite', 'challenge', 'jws'] as const) {
+    if (typeof p[k] !== 'string') delete result[k];
+  }
   return result;
 }
 

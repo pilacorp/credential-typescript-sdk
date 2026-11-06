@@ -48,16 +48,22 @@ export function verifySignature(
   message: Uint8Array,
   signature: Uint8Array,
 ): boolean {
+  // Mirrors Go VerifySignature: a 65-byte signature is checked by recovering
+  // the key from its recovery id; anything else must be 64 bytes, low-S.
   if (publicKey.length !== 33 || message.length === 0) {
     return false;
   }
-  if (signature.length !== 64 && signature.length !== 65) {
-    return false;
-  }
   const hash = sha256(message);
-  const rs = signature.length === 65 ? signature.subarray(0, 64) : signature;
   try {
-    return secp256k1.verify(rs, hash, publicKey, { lowS: false });
+    if (signature.length === 65) {
+      const v = signature[64];
+      if (v > 3) return false;
+      const sig = secp256k1.Signature.fromCompact(signature.subarray(0, 64)).addRecoveryBit(v);
+      const recovered = sig.recoverPublicKey(hash).toRawBytes(true);
+      return Buffer.from(recovered).equals(Buffer.from(publicKey));
+    }
+    if (signature.length !== 64) return false;
+    return secp256k1.verify(signature, hash, publicKey, { lowS: true });
   } catch {
     return false;
   }

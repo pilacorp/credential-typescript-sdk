@@ -63,6 +63,14 @@ export async function fetchAndCheckRevocation(
   return isRevoked(position, resp.data.credentialSubject);
 }
 
+/** Go `strconv.Atoi`: optional sign then digits only ("12abc", " 1", "1.5" are errors). */
+export function parseStatusListIndex(s: string): number {
+  if (!/^[+-]?\d+$/.test(s)) throw new Error(`invalid statusListIndex: ${JSON.stringify(s)}`);
+  const n = Number(s);
+  if (!Number.isSafeInteger(n)) throw new Error(`invalid statusListIndex: ${JSON.stringify(s)}`);
+  return n;
+}
+
 export function bitAt(position: number, encodedList: string): boolean {
   const byteString = decompressFromBase64URL(encodedList);
   const maxPosition = byteString.length * 8 - 1;

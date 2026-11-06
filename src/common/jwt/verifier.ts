@@ -67,10 +67,11 @@ export class JWTVerifier {
 
     const signingString = parts[0] + '.' + parts[1];
     const signature = new Uint8Array(Buffer.from(parts[2], 'base64url'));
-    if (signature.length !== 64 && signature.length !== 65) {
-      throw new Error('invalid signature length');
+    // RFC 7518 §3.4 / RFC 8812 §3.2: a JWS ECDSA signature is exactly 64 bytes.
+    if (signature.length !== 64) {
+      throw new Error(`invalid signature length: got ${signature.length}, want 64`);
     }
-    const rs = signature.length === 65 ? signature.subarray(0, 64) : signature;
+    const rs = signature;
     const hash = sha256(Buffer.from(signingString, 'utf8'));
     const ok =
       alg === 'ES256'
@@ -102,7 +103,7 @@ export function newJWTVerifier(resolver: ResolverProvider): JWTVerifier {
   return new JWTVerifier(resolver);
 }
 
-function decodeSecp256k1PublicKey(publicKeyHex: string): Uint8Array {
+export function decodeSecp256k1PublicKey(publicKeyHex: string): Uint8Array {
   const clean = publicKeyHex.startsWith('0x') || publicKeyHex.startsWith('0X')
     ? publicKeyHex.slice(2)
     : publicKeyHex;
@@ -141,7 +142,7 @@ function jwtSigner(body: Record<string, unknown>, purpose: string): string {
   // case-insensitive consumer but not here, letting a signer name the victim
   // under a key this lookup never sees.
   for (const k of Object.keys(doc)) {
-    if (k !== field && k.toLowerCase() === field.toLowerCase()) {
+    if (k !== field && foldCase(k) === foldCase(field)) {
       throw new Error(`JWT carries "${k}", which differs from ${field} only by case`);
     }
   }
@@ -252,6 +253,14 @@ function jwtIssuedAt(payloadB64: string): Date | null {
     throw new Error(`invalid iat value: ${raw}`);
   }
   return new Date(sec * 1000);
+}
+
+/** Unicode simple case folding like Go's strings.EqualFold ("ſ" folds to "s"). */
+function foldCase(s: string): string {
+  return Array.from(s, (c) => {
+    const u = c.toUpperCase();
+    return Array.from(u).length === 1 ? u.toLowerCase() : c.toLowerCase();
+  }).join('');
 }
 
 function decodePayload(b64: string): Record<string, unknown> {

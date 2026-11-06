@@ -28,16 +28,19 @@ export function p256PubFromJwk(jwk: JWK): Uint8Array {
   if (!jwk.x || !jwk.y) throw new Error('P-256 JWK missing x/y');
   const x = Buffer.from(jwk.x, 'base64url');
   const y = Buffer.from(jwk.y, 'base64url');
+  if (x.length > 32 || y.length > 32) throw new Error('P-256 JWK coordinate longer than 32 bytes');
+  // Left-pad short coordinates (a JWK may drop leading zero bytes).
   const uncompressed = new Uint8Array(65);
   uncompressed[0] = 0x04;
-  uncompressed.set(x, 1);
-  uncompressed.set(y, 33);
+  uncompressed.set(x, 33 - x.length);
+  uncompressed.set(y, 65 - y.length);
   return p256.ProjectivePoint.fromHex(uncompressed).toRawBytes(false);
 }
 
 export function verifyES256(pubUncompressed: Uint8Array, digest: Uint8Array, sig: Uint8Array): boolean {
+  if (sig.length !== 64) return false;
   try {
-    return p256.verify(sig.subarray(0, 64), digest, pubUncompressed, { lowS: false });
+    return p256.verify(sig, digest, pubUncompressed, { lowS: false });
   } catch {
     return false;
   }
