@@ -81,18 +81,28 @@ export interface CredentialOptions {
   schemaLoader?: SchemaLoaderFunc;
   /** Custom DID resolver. Defaults to HTTPResolver(didBaseURL). */
   resolver?: ResolverProvider;
+  /** Verifying a JSON-LD proof set: check only the proof bound to this VM URL
+   *  (go WithProofVerificationMethod). Default: every proof must verify. */
+  proofVerificationMethod?: string;
+  /** Signing a JWT/JOSE credential: replace a signature already present
+   *  (go WithReplaceProof). Refused on JSON-LD, which appends to the proof set. */
+  replaceProof?: boolean;
 }
 
-/** Shared interface implemented by JWTCredential and JSONCredential. */
+/** Read-only consumer contract (go vc.Credential): verify, output, hash. */
 export interface Credential {
+  verify(opts?: CredentialOptions): Promise<void>;
+  serialize(): Promise<unknown>;
+  hash(): Promise<string>;
+  getContents(): Uint8Array;
+  getType(): 'JWT' | 'JSON' | 'JOSE';
+  extractField(path: string): unknown;
+}
+
+/** A credential that can also be signed (JWT, JSON-LD, JOSE). */
+export interface SignableCredential extends Credential {
   addProof(priv: string, opts?: CredentialOptions): Promise<void>;
   addProofByProvider(signer: SignerProvider, opts?: CredentialOptions): Promise<void>;
   addCustomProof(proof: Proof, opts?: CredentialOptions): Promise<void>;
   getSigningInput(): Promise<Uint8Array>;
-  verify(opts?: CredentialOptions): Promise<void>;
-  serialize(): Promise<unknown>;
-  getContents(): Uint8Array;
-  getType(): 'JWT' | 'JSON' | 'JOSE';
-  extractField(path: string): unknown;
-  addSelectiveDisclosures(selectivePaths: string[]): Promise<Credential>;
 }

@@ -1,10 +1,9 @@
 import { addECDSASDBaseProof, deriveECDSASD } from '../common/jsonmap/jsonmap';
-import { P256Provider } from '../common/signer/p256-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import { hexToBytes } from '../common/crypto/hex';
-import { publicKeyHexFromVM, resolveSigningVM } from '../common/verification-method';
+import { publicKeyHexFromVM, vmKeyKind } from '../common/verification-method';
 import { JSONCredential } from './json-credential';
-import { getOptions } from './options';
+import { refuseReplaceOnJSONLD, signingOptions } from './options';
 import type { Credential, CredentialContents, CredentialOptions } from './types';
 
 export function dotPathsToPointers(paths: string[]): string[] {
@@ -22,7 +21,7 @@ export function dotPathsToPointers(paths: string[]): string[] {
     });
 }
 
-export class ECDSASDCredential {
+export class ECDSASDCredential implements Credential {
   constructor(readonly base: JSONCredential) {}
 
   static async create(vcc: CredentialContents, opts: CredentialOptions = {}): Promise<ECDSASDCredential> {
@@ -33,34 +32,34 @@ export class ECDSASDCredential {
     return new ECDSASDCredential(await JSONCredential.parse(rawJSON, opts));
   }
 
+  /**
+   * Signs into an ecdsa-sd-2023 base proof. mandatoryPaths are always disclosed;
+   * every other claim becomes selectively disclosable. The proof is bound to the
+   * VM the options pin (or the default one), which must hold a P-256 key; the
+   * gate is the VM's key kind, not the signer's class, so a callback-backed
+   * P-256 signer works too.
+   */
   async addProofByProvider(
     signerProvider: SignerProvider,
     mandatoryPaths: string[],
     opts: CredentialOptions = {},
   ): Promise<void> {
     if (!signerProvider) throw new Error('signer provider cannot be nil');
-    if (!(signerProvider instanceof P256Provider)) {
-      throw new Error('unsupported key kind for ecdsa-sd-2023 credential');
+    refuseReplaceOnJSONLD(opts);
+    await this.base.executeOptions(signingOptions(opts));
+    const { vm, url: resolved } = await this.base.resolveSigningVMEntry(opts);
+    const kind = vmKeyKind(vm);
+    if (!kind) throw new Error(`verification method '${resolved}' has an unrecognized key type`);
+    if (kind !== 'P-256') {
+      throw new Error(`unsupported key kind ${kind} for ecdsa-sd-2023 credential`);
     }
-    await this.base.executeOptions(opts);
-    const data = this.base.getInternalData();
-    const issuer = data.issuer;
-    if (typeof issuer !== 'string' || !issuer) throw new Error('issuer is missing or invalid');
-    const options = getOptions(opts);
-    const { vm, url: resolved } = await resolveSigningVM(
-      issuer,
-      'assertionMethod',
-      options.verificationMethodKey,
-      options.resolver,
-    );
-    const issuerPub = hexToBytes(publicKeyHexFromVM(vm));
     await addECDSASDBaseProof(
-      data,
+      this.base.getInternalData(),
       signerProvider,
       resolved,
       'assertionMethod',
       dotPathsToPointers(mandatoryPaths),
-      issuerPub,
+      hexToBytes(publicKeyHexFromVM(vm)),
     );
   }
 
@@ -95,3 +94,18 @@ export class ECDSASDCredential {
 }
 
 export type { Credential };
+
+/** Free-function constructors (go NewECDSASDCredential / ParseECDSASDCredential). */
+export function newECDSASDCredential(
+  vcc: CredentialContents,
+  opts: CredentialOptions = {},
+): Promise<ECDSASDCredential> {
+  return ECDSASDCredential.create(vcc, opts);
+}
+
+export function parseECDSASDCredential(
+  rawJSON: Uint8Array | string,
+  opts: CredentialOptions = {},
+): Promise<ECDSASDCredential> {
+  return ECDSASDCredential.parse(rawJSON, opts);
+}

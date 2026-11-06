@@ -93,7 +93,7 @@ describe('A2: JSON-LD signing suite selection', () => {
       },
       { verificationMethodKey: 'key-1', resolver },
     );
-    await cred.addProof(SECP_PRIV, { verificationMethodKey: 'key-1', resolver });
+    await cred.addProofByProvider(new DefaultProvider(SECP_PRIV), { verificationMethodKey: 'key-1', resolver });
 
     const out = (await cred.serialize()) as Record<string, unknown>;
     const proof = out.proof as Record<string, unknown>;

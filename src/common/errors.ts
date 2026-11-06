@@ -8,6 +8,7 @@ export const ErrorCode = {
   InvalidProof: 'invalid_proof',
   MalformedInput: 'malformed_input',
   Unsupported: 'unsupported',
+  SDJWTRequiresJOSE: 'sdjwt_requires_jose',
 } as const;
 
 export type ErrorCodeValue = (typeof ErrorCode)[keyof typeof ErrorCode];

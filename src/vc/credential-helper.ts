@@ -66,6 +66,9 @@ export function serializeCredentialContents(
     vcJSON.credentialSchema = serializeSchemas(vcc.schemas);
   }
   if (vcc.credentialStatus && vcc.credentialStatus.length > 0) {
+    vcc.credentialStatus.forEach((st, i) => {
+      if (!st.type) throw new Error(`credentialStatus[${i}].type is required`);
+    });
     vcJSON.credentialStatus = serializeStatuses(vcc.credentialStatus);
   }
   if (vcc.termsOfUse && vcc.termsOfUse.length > 0) {
@@ -165,6 +168,20 @@ export function subjectFromJSON(subjectObj: CredentialData): Subject {
   return { id, customFields: rest };
 }
 
+function isEmptyValue(v: unknown): boolean {
+  if (v === undefined || v === null || v === '') return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.keys(v as object).length === 0;
+  return false;
+}
+
+/** Required on every credential by VCDM 2.0 (go requireCredentialProperties). */
+export function requireCredentialProperties(m: CredentialData): void {
+  for (const p of ['@context', 'type', 'issuer', 'credentialSubject']) {
+    if (isEmptyValue(m[p])) throw new Error(`credential is missing ${p}`);
+  }
+}
+
 // ---- Validation ----
 
 export async function validateCredential(
@@ -172,19 +189,15 @@ export async function validateCredential(
   opts: ResolvedCredentialOptions,
 ): Promise<void> {
   const copyMap = shallowCopyObj(m);
-  const requiredKeys = ['type', 'credentialSchema', 'credentialSubject'];
-  let schemaList: unknown[] = [];
-  for (const key of requiredKeys) {
-    if (!(key in copyMap)) {
-      throw new Error(`${key} is required`);
-    }
-    if (key === 'credentialSchema') {
-      schemaList = convertToArray(copyMap[key]);
-    }
+  // credentialSchema is optional per VCDM 2.0 §4.11, but this path exists to
+  // validate against it, so here it is required (go validateCredential).
+  for (const key of ['credentialSchema', '@context', 'type', 'issuer', 'credentialSubject']) {
+    if (isEmptyValue(copyMap[key])) throw new Error(`${key} is required`);
   }
+  const schemaList = convertToArray(copyMap.credentialSchema);
 
-  // Drop the proof field before validating — schemas typically don't include it.
-  const validationDoc = copyExcept(copyMap, 'proof');
+  // The whole document is validated, proof included, like Go.
+  const validationDoc = copyMap;
 
   // Mirror Go SDK's gojsonschema.NewReferenceLoader: identify each fetched
   // schema by its URL and resolve any `$ref` (including cross/self refs)

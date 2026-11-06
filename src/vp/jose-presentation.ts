@@ -9,18 +9,25 @@
  * shared JWTVerifier (purpose=authentication), as for the VC 1.1 JWT path.
  */
 import type { Proof } from '../common/dto/proof';
-import { JWTVerifier, newJWTSigner } from '../common/jwt';
+import { acceptSignature, JWTVerifier, resolveSigningKey, SigningKey } from '../common/jwt';
+import { sha256 } from '@noble/hashes/sha256';
+import { bytesToHex } from '../common/crypto/hex';
 import { isSDJWT } from '../common/sdjwt';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import { JSONMap } from '../common/util/json';
-import { resolveSigningVM, vmKeyKind } from '../common/verification-method';
 import { TypeEnvelopedVC, TypeVCJWT, TypeVCSDJWT } from '../vc/jose-credential';
-import { getOptions } from './options';
+import {
+  getOptions,
+  refuseOverwrite,
+  rejectBuildTimeOptions,
+  signingOptions,
+} from './options';
 import { checkAudience, checkChallenge } from './audience';
 import {
   checkExpiration,
   checkJwtTimeClaims,
+  extractFieldFromMap,
   isJWTPresentation,
   serializePresentationContents,
   verifyCredentials,
@@ -30,6 +37,7 @@ import type {
   PresentationContents,
   PresentationData,
   PresentationOptions,
+  SignablePresentation,
 } from './types';
 
 const CREDENTIALS_V2_CONTEXT = 'https://www.w3.org/ns/credentials/v2';
@@ -37,6 +45,9 @@ const TYPE_VERIFIABLE_PRESENTATION = 'VerifiablePresentation';
 
 /** Media type vc-jose-cose gives a JWS-secured presentation (typ header). */
 export const TypeVPJWT = 'vp+jwt';
+
+/** What getType() reports for a vc-jose-cose presentation (go vp.TypeJOSE). */
+export const TypeJOSE = 'JOSE';
 
 /** Reports whether typ names a JOSE (vc-jose-cose) presentation. */
 export function isJOSEPresentationTyp(typ: string | undefined): boolean {
@@ -107,15 +118,22 @@ function envelopeMediaType(token: string): string {
   return isSDJWT(token) ? TypeVCSDJWT : TypeVCJWT;
 }
 
-export class JOSEPresentation implements Presentation {
+export class JOSEPresentation implements SignablePresentation {
   private signingInput: string;
   private payloadData: PresentationData;
   private signature: string;
+  private signingKey: SigningKey | null;
 
-  constructor(signingInput: string, payloadData: PresentationData, signature: string) {
+  constructor(
+    signingInput: string,
+    payloadData: PresentationData,
+    signature: string,
+    signingKey: SigningKey | null = null,
+  ) {
     this.signingInput = signingInput;
     this.payloadData = payloadData;
     this.signature = signature;
+    this.signingKey = signingKey;
   }
 
   static async create(
@@ -170,19 +188,19 @@ export class JOSEPresentation implements Presentation {
     payloadData.iat = Math.floor(Date.now() / 1000);
 
     if (!vpc.holder) throw new Error('holder is required to resolve VM');
-    const { vm, url: kid } = await resolveSigningVM(
+    // alg follows the VM's key; an RSA or unrecognized key is an error, not ES256K.
+    const signingKey = await resolveSigningKey(
       vpc.holder,
       'authentication',
       options.verificationMethodKey,
       options.resolver,
     );
-    const alg = vmKeyKind(vm) === 'P-256' ? 'ES256' : 'ES256K';
 
-    const header = { typ: TypeVPJWT, alg, kid };
+    const header = { typ: TypeVPJWT, alg: signingKey.alg, kid: signingKey.id };
     const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
     const payloadEncoded = Buffer.from(JSON.stringify(payloadData), 'utf8').toString('base64url');
 
-    const pres = new JOSEPresentation(headerEncoded + '.' + payloadEncoded, payloadData, '');
+    const pres = new JOSEPresentation(headerEncoded + '.' + payloadEncoded, payloadData, '', signingKey);
     await pres.executeOptions(opts);
     return pres;
   }
@@ -238,17 +256,27 @@ export class JOSEPresentation implements Presentation {
 
   async addProofByProvider(signer: SignerProvider, opts: PresentationOptions = {}): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
+    rejectBuildTimeOptions(opts, false);
+    refuseOverwrite(this.signature, opts);
+
+    // challenge/domain are committed (nonce/aud) only after a successful sign.
     const options = getOptions(opts);
+    let signingInput = this.signingInput;
+    let payload: PresentationData | null = null;
     if (options.challenge || options.domain) {
-      const { payload, header } = this.decodeSigningInput();
-      if (options.challenge) payload.nonce = options.challenge;
-      if (options.domain) payload.aud = options.domain;
-      this.payloadData = payload as PresentationData;
-      const payloadEncoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
-      this.signingInput = header + '.' + payloadEncoded;
+      const decoded = this.decodeSigningInput();
+      if (options.challenge) decoded.payload.nonce = options.challenge;
+      if (options.domain) decoded.payload.aud = options.domain;
+      payload = decoded.payload as PresentationData;
+      signingInput =
+        decoded.header + '.' + Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
     }
-    const signature = await newJWTSigner(signer).signString(this.signingInput);
-    await this.executeOptions(opts);
+    await this.executeOptions(signingOptions(opts));
+
+    const raw = await signer.sign(sha256(Buffer.from(signingInput, 'utf8')));
+    const signature = acceptSignature(this.signingKey, signingInput, raw);
+    this.signingInput = signingInput;
+    if (payload) this.payloadData = payload;
     this.signature = signature;
   }
 
@@ -261,8 +289,10 @@ export class JOSEPresentation implements Presentation {
     if (!proof.signature || proof.signature.length === 0) {
       throw new Error('proof signature cannot be empty');
     }
-    await this.executeOptions(opts);
-    this.signature = Buffer.from(proof.signature).toString('base64url');
+    rejectBuildTimeOptions(opts, true);
+    refuseOverwrite(this.signature, opts);
+    await this.executeOptions(signingOptions(opts));
+    this.signature = acceptSignature(this.signingKey, this.signingInput, proof.signature);
   }
 
   async verify(opts: PresentationOptions = {}): Promise<void> {
@@ -278,7 +308,19 @@ export class JOSEPresentation implements Presentation {
   }
 
   getType(): 'JOSE' {
-    return 'JOSE';
+    return TypeJOSE;
+  }
+
+  extractField(path: string): unknown {
+    return extractFieldFromMap(this.payloadData, path);
+  }
+
+  /** SHA-256 (hex) of the serialized token; the presentation must be signed first. */
+  async hash(): Promise<string> {
+    if (!this.signature) {
+      throw new Error('presentation must be signed before hashing');
+    }
+    return bytesToHex(sha256(Buffer.from(await this.serialize(), 'utf8')));
   }
 
   private decodeSigningInput(): { payload: JSONMap; header: string } {
@@ -296,7 +338,7 @@ export class JOSEPresentation implements Presentation {
   async executeOptions(opts: PresentationOptions = {}): Promise<void> {
     const options = getOptions(opts);
     if (options.validateVC) {
-      await verifyCredentials(this.payloadData, options.clockSkewLeewayMs);
+      await verifyCredentials(this.payloadData, options);
     }
     if (options.checkExpiration) {
       // The vp+jwt payload is flat: exp/nbf/iat and validFrom/validUntil all sit
@@ -308,8 +350,8 @@ export class JOSEPresentation implements Presentation {
       if (!this.signature) throw new Error('presentation is not signed');
       const verifier = new JWTVerifier(options.resolver);
       await verifier.verifyJWT(this.signingInput + '.' + this.signature);
-    }
-    if (options.expectedChallenge || options.expectedDomain || options.requireAudience) {
+      // exp and nbf bound the signature, so they belong to proof verification.
+      checkJwtTimeClaims(this.payloadData, options.clockSkewLeewayMs);
       checkChallenge(this.payloadData.nonce, options.expectedChallenge);
       checkAudience(this.payloadData.aud, options);
     }

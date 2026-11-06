@@ -127,10 +127,10 @@ describe('JOSEPresentation (vp+jwt)', () => {
       { verificationMethodKey: 'key-1', resolver },
     );
     // kid in the header is holder#key-1, but we sign with the attacker's key.
-    await vp.addProofByProvider(new DefaultProvider(ATTACKER_PRIV), { resolver });
-    const token = await vp.serialize();
-    const parsed = await JOSEPresentation.parse(token, { resolver });
-    await expect(parsed.verify({ resolver })).rejects.toThrow();
+    // The signature is checked against the kid's key at sign time (go signingKey.Accept).
+    await expect(vp.addProofByProvider(new DefaultProvider(ATTACKER_PRIV), { resolver }))
+      .rejects.toThrow(/does not verify against verification method/);
+    expect((await vp.serialize()).split('.')).toHaveLength(2); // still unsigned
   });
 
   it('binds challenge and domain, and checks them on verify', async () => {

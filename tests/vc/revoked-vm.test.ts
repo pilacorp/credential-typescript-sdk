@@ -100,7 +100,7 @@ describe('revoked VM rejected at signing', () => {
     await pinnedActive.verify({ resolver, verifyProof: true });
   });
 
-  it('JOSECredential: pinned revoked key-1 is rejected at create and addProof', async () => {
+  it('JOSECredential: pinned revoked key-1 is rejected at create; addProof refuses the kid option', async () => {
     const resolver = new StaticResolver(secpDoc());
     await expect(
       JOSECredential.create(contents, { resolver, verificationMethodKey: 'key-1' }),
@@ -112,7 +112,7 @@ describe('revoked VM rejected at signing', () => {
         resolver,
         verificationMethodKey: 'key-1',
       }),
-    ).rejects.toThrow(/was revoked at/);
+    ).rejects.toThrow(/cannot be applied when signing a JWT/);
 
     await cred.addProofByProvider(new DefaultProvider(SECP_PRIV), { resolver });
     await cred.verify({ resolver, verifyProof: true });

@@ -95,5 +95,5 @@ function jwtCredentialFromOuterClaims(
     JSON.stringify({ iss: 'did:example:issuer', vc, ...outerClaims }),
     'utf8',
   ).toString('base64url');
-  return new JWTCredential(`${header}.${payload}`, vc, '', []);
+  return new JWTCredential(`${header}.${payload}`, vc, '');
 }

@@ -28,6 +28,7 @@ import {
   publicKeyHexFromVM,
   ResolverProvider,
   VerificationMethodEntry,
+  vmIsP256,
   vmIsSecp256k1,
 } from '../verification-method';
 import { serializeProofs } from '../util/vc';
@@ -386,28 +387,27 @@ export async function proofHashData(
   return hashData;
 }
 
+// Appends the data-integrity context unless @context already defines the proof
+// terms. Matched by exact URL (go ensureDataIntegrityContext): a substring match
+// would take any lookalike URL as covering the terms.
 function ensureDataIntegrityContext(m: JSONMap): void {
   const ctx = m['@context'];
   if (ctx === undefined || ctx === null) {
     m['@context'] = [DATA_INTEGRITY_V2_CONTEXT];
-    return;
-  }
-  if (typeof ctx === 'string') {
+  } else if (typeof ctx === 'string') {
     if (!coversDataIntegrity(ctx)) m['@context'] = [ctx, DATA_INTEGRITY_V2_CONTEXT];
-    return;
-  }
-  if (Array.isArray(ctx)) {
-    if (ctx.some((e) => typeof e === 'string' && coversDataIntegrity(e))) return;
-    m['@context'] = [...ctx, DATA_INTEGRITY_V2_CONTEXT];
+  } else if (Array.isArray(ctx)) {
+    if (!ctx.some((e) => typeof e === 'string' && coversDataIntegrity(e))) {
+      m['@context'] = [...ctx, DATA_INTEGRITY_V2_CONTEXT];
+    }
+  } else if (typeof ctx === 'object') {
+    // A bare inline context object defines no proof terms.
+    m['@context'] = [ctx, DATA_INTEGRITY_V2_CONTEXT];
   }
 }
 
 function coversDataIntegrity(ctx: string): boolean {
-  return (
-    ctx.includes('data-integrity') ||
-    ctx.includes('/ns/credentials/v2') ||
-    ctx.includes('credentials/v2')
-  );
+  return ctx === DATA_INTEGRITY_V2_CONTEXT || ctx === 'https://www.w3.org/ns/credentials/v2';
 }
 
 export async function addECDSASDBaseProof(
@@ -508,25 +508,123 @@ async function verifyECDSASDProof(m: JSONMap, doc: DIDDocument, proof: Proof): P
   return true;
 }
 
+/**
+ * Appends a proof signed outside the SDK to the proof set, keeping every property
+ * it carries (id, expires, nonce, previousProof, unknown fields).
+ */
 export function addCustomProof(m: JSONMap, proof: Proof | null): void {
   if (!m) throw new Error('JSONMap is nil');
   if (!proof) throw new Error('proof is nil');
-  m[PROOF_FIELD] = serializeProofs([proof]);
+  appendProof(m, proofToRaw(proof));
 }
 
+/** This release issues base58btc ("z") ecdsa-rdfc-2019 values only; hex is refused. */
+export function refuseHexRdfcProof(proof: Proof): void {
+  if (
+    proof.type === DataIntegrityProof &&
+    proof.cryptosuite === ECDSARDFC2019 &&
+    !(proof.proofValue ?? '').startsWith('z')
+  ) {
+    throw new Error('proofValue must be multibase base58btc ("z" prefix); hex proofs are no longer issued');
+  }
+}
+
+/**
+ * The 32-byte digest an external signer signs: SHA-256 of the section 3.2.4
+ * hashData built from docHash and the proof options (go CreateProofSigning).
+ */
+export async function createProofSigning(m: JSONMap, docHash: Uint8Array, proof: Proof): Promise<Uint8Array> {
+  return sha256(await proofHashData(m, docHash, proof));
+}
+
+/**
+ * Verifies one proof against the document as it stands, before it is attached
+ * (go VerifyDetachedProof). Only ecdsa-rdfc-2019 can be rebuilt without the
+ * proof present; other suites are refused rather than checked wrongly.
+ */
+export async function verifyDetachedProof(
+  m: JSONMap,
+  resolver: ResolverProvider | null,
+  proof: Proof,
+): Promise<void> {
+  if (!m) throw new Error('jsonmap: JSONMap is nil');
+  if (!proof) throw new Error('jsonmap: proof is nil');
+  if (!resolver) throw new Error('jsonmap: document resolver is required');
+  if (proof.type !== DataIntegrityProof || proof.cryptosuite !== ECDSARDFC2019) {
+    const suite = proof.type + (proof.cryptosuite ? `/${proof.cryptosuite}` : '');
+    throw new Error(
+      `jsonmap: a ${suite} proof cannot be checked before it is attached; only ${DataIntegrityProof}/${ECDSARDFC2019} can; attach it without verifyProof and call verify instead`,
+    );
+  }
+  let ok: boolean;
+  try {
+    ok = await verifyOneProof(m, resolver, proof);
+  } catch (err) {
+    throw new Error(`jsonmap: proof (${proof.verificationMethod}): ${(err as Error).message}`);
+  }
+  if (!ok) {
+    throw new Error(
+      `jsonmap: the proof does not verify against verification method '${proof.verificationMethod}'; it was signed by another key or over data other than this document`,
+    );
+  }
+}
+
+/**
+ * Verifies the document's proof set. By default EVERY proof must verify, each
+ * against the DID in its own verificationMethod. With targetVM only the proof
+ * bound to that verification method URL is checked.
+ */
 export async function verifyProof(
   m: JSONMap,
   resolver: ResolverProvider | null,
+  targetVM = '',
 ): Promise<boolean> {
   if (!m) throw new Error('JSONMap is nil');
   if (!resolver) throw new Error('document resolver is required');
 
-  const proof = parseRawToProof(getFirstProof(m));
-  const signerDID = signerDIDFromBody(m);
+  const raws = rawProofList(m);
+  if (raws.length === 0) throw new Error('credential has no proof');
+  const list = raws.map((raw) => ({ raw, proof: parseRawToProof(raw) }));
+
+  if (targetVM) {
+    const hit = list.find((e) => e.proof.verificationMethod === targetVM);
+    if (!hit) throw new Error(`no proof found for verification method '${targetVM}'`);
+    try {
+      return await verifyOneProof(m, resolver, hit.proof, hit.raw);
+    } catch (err) {
+      throw new Error(`proof (${targetVM}): ${(err as Error).message}`);
+    }
+  }
+
+  for (let i = 0; i < list.length; i++) {
+    const { raw, proof } = list[i];
+    let ok: boolean;
+    try {
+      ok = await verifyOneProof(m, resolver, proof, raw);
+    } catch (err) {
+      throw new Error(`proof ${i} (${proof.verificationMethod}): ${(err as Error).message}`);
+    }
+    if (!ok) return false;
+  }
+  return true;
+}
+
+// verifyOneProof verifies a single proof against the DID document resolved from
+// that proof's own verificationMethod (never the body's issuer/holder, which an
+// attacker controls).
+async function verifyOneProof(
+  m: JSONMap,
+  resolver: ResolverProvider,
+  proof: Proof,
+  raw: unknown = proof,
+): Promise<boolean> {
+  // JwtProof2020 reads the single proof it is handed.
+  const view: JSONMap = { ...m, [PROOF_FIELD]: raw };
+  const signerDID = didForProof(view, proof);
   const doc = await resolver.resolveDocument(signerDID);
 
   if (proof.type === JwtProof2020) {
-    return verifyJWTProofImpl(m, doc, proof);
+    return verifyJWTProofImpl(view, doc, proof);
   }
   if (proof.type === EcdsaSecp256k1Signature2019) {
     return verifyEcdsaSecp256k1Proof(m, doc, proof);
@@ -541,6 +639,39 @@ export async function verifyProof(
     return verifyJWSProof(m, doc, proof);
   }
   throw new Error(`unsupported proof type: ${proof.type}`);
+}
+
+/** The DID named by an issuer/holder field: a string, or an object with a string id (go DIDFromField). */
+export function didFromField(v: unknown): string | null {
+  if (typeof v === 'string') return v || null;
+  if (v && typeof v === 'object' && !Array.isArray(v)) {
+    const id = (v as JSONMap).id;
+    if (typeof id === 'string' && id) return id;
+  }
+  return null;
+}
+
+function didFromVMURL(vm: string): string {
+  if (!vm.startsWith('did:')) return '';
+  const i = vm.indexOf('#');
+  return i > 0 ? vm.slice(0, i) : vm;
+}
+
+function didForProof(m: JSONMap, proof: Proof): string {
+  const did = didFromVMURL(proof.verificationMethod);
+  if (did) return did;
+  // JwtProof2020 may name its verification method only in the JWS kid.
+  if (proof.type === JwtProof2020) {
+    try {
+      const fromKid = didFromVMURL(jwtVerificationMethodURL(m));
+      if (fromKid) return fromKid;
+    } catch {
+      // fall through to the error below
+    }
+  }
+  throw new Error(
+    `proof verificationMethod '${proof.verificationMethod}' is not a DID URL; it must name a key in the signer's DID document`,
+  );
 }
 
 async function verifyJWSProof(m: JSONMap, doc: DIDDocument, proof: Proof): Promise<boolean> {
@@ -632,6 +763,13 @@ async function verifyDataIntegrityProof(
   if (!proof.proofValue) return false;
   let ok: boolean;
   if (proof.proofValue.startsWith('z')) {
+    // Only the P-256 profile of ecdsa-rdfc-2019 is implemented; a secp256k1 key
+    // has its own suite and must not be accepted here.
+    if (!vmIsP256(vm)) {
+      throw new Error(
+        `ecdsa-rdfc-2019: verification method '${proof.verificationMethod}' does not hold a P-256 key; this SDK supports P-256 only`,
+      );
+    }
     const signature = decodeBase58Btc(proof.proofValue);
     if (signature.length !== 64) {
       throw new Error(
@@ -651,15 +789,10 @@ async function verifyDataIntegrityProof(
 }
 
 function verifyRawEcdsa(publicKeyHex: string, digest: Uint8Array, signature: Uint8Array): boolean {
-  const pubBytes = hexToBytes(publicKeyHex);
   try {
-    return p256.verify(signature, digest, pubBytes, { lowS: false });
+    return p256.verify(signature, digest, hexToBytes(publicKeyHex), { lowS: false });
   } catch {
-    try {
-      return secp256k1.verify(signature, digest, pubBytes, { lowS: false });
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 
@@ -739,23 +872,6 @@ export function parseRawToProof(proof: unknown): Proof {
     if (typeof p[k] !== 'string') delete result[k];
   }
   return result;
-}
-
-function signerDIDFromBody(m: JSONMap): string {
-  const issuer = didFromField(m.issuer);
-  if (issuer) return issuer;
-  const holder = didFromField(m.holder);
-  if (holder) return holder;
-  throw new Error('body is missing required `issuer` (VC) or `holder` (VP) field');
-}
-
-function didFromField(v: unknown): string | null {
-  if (typeof v === 'string') return v || null;
-  if (v && typeof v === 'object' && !Array.isArray(v)) {
-    const id = (v as JSONMap).id;
-    if (typeof id === 'string' && id) return id;
-  }
-  return null;
 }
 
 function strictPurposeCheck(

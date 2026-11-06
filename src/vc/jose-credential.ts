@@ -2,9 +2,8 @@
  * VC-JOSE (vc+jwt / vc+sd-jwt) — Node port of vc/jose_credential.go.
  * The unsecured VC is the JWS payload (no nested `vc` claim).
  */
-import { newJWTSigner, JWTVerifier } from '../common/jwt';
+import { acceptSignature, JWTVerifier, resolveSigningKey, SigningKey } from '../common/jwt';
 import { DefaultProvider } from '../common/signer/default-provider';
-import { P256Provider } from '../common/signer/p256-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import type { Proof } from '../common/dto/proof';
 import { sha256 } from '@noble/hashes/sha256';
@@ -20,29 +19,37 @@ import {
   reconstruct,
 } from '../common/sdjwt';
 import type { DecodedDisclosure } from '../common/sdjwt';
-import { resolveSigningVM } from '../common/verification-method';
 import { JSONMap } from '../common/util/json';
-import { getOptions } from './options';
+import {
+  getOptions,
+  refuseOverwrite,
+  rejectBuildTimeOptions,
+  signingOptions,
+} from './options';
+import { carriesSDMachinery, requireDisclosableAtTopLevel, requireSecuredClaimsSigned } from './sd-checks';
 import {
   checkExpiration,
   checkJwtTimeClaims,
   checkRevocation,
   extractFieldFromMap,
   normalizeCredentialData,
+  requireCredentialProperties,
   serializeCredentialContents,
   validateCredential,
 } from './credential-helper';
 import type {
-  Credential,
   CredentialContents,
   CredentialData,
   CredentialOptions,
+  SignableCredential,
 } from './types';
 import { isJWTCredentialString } from './jwt-credential';
 
 export const TypeVCJWT = 'vc+jwt';
 export const TypeVCSDJWT = 'vc+sd-jwt';
 export const TypeEnvelopedVC = 'EnvelopedVerifiableCredential';
+/** What getType() reports for a vc-jose-cose credential (go vc.TypeJOSE). */
+export const TypeJOSE = 'JOSE';
 const CREDENTIALS_V2_CONTEXT = 'https://www.w3.org/ns/credentials/v2';
 
 export function isJOSECredentialTyp(typ: string | undefined): boolean {
@@ -67,14 +74,21 @@ export function peekJwtTyp(token: string): string | undefined {
   }
 }
 
+/** A signature proves who produced the bytes, not that they are a vc+jwt credential. */
 function requireJOSECredential(m: CredentialData): void {
-  const types = m.type;
-  const names = Array.isArray(types) ? types : types ? [types] : [];
-  if (!names.includes('VerifiableCredential')) {
-    throw new Error('vc+jwt payload must include type VerifiableCredential');
+  requireCredentialProperties(m);
+  const ctx = m['@context'];
+  const first = Array.isArray(ctx) ? ctx[0] : ctx;
+  if (first !== CREDENTIALS_V2_CONTEXT) {
+    throw new Error(
+      `credential must name "${CREDENTIALS_V2_CONTEXT}" first in @context, got ${JSON.stringify(first)}`,
+    );
   }
-  if (!m.issuer) throw new Error('vc+jwt payload is missing issuer');
-  if (!m.credentialSubject) throw new Error('vc+jwt payload is missing credentialSubject');
+  const types = m.type;
+  const names = Array.isArray(types) ? types : [types];
+  if (!names.includes('VerifiableCredential')) {
+    throw new Error(`credential type must include VerifiableCredential, got ${JSON.stringify(types)}`);
+  }
 }
 
 function requireV2Context(context: unknown[] | undefined): unknown[] {
@@ -88,22 +102,25 @@ function requireV2Context(context: unknown[] | undefined): unknown[] {
   return context;
 }
 
-export class JOSECredential implements Credential {
+export class JOSECredential implements SignableCredential {
   private signingInput: string;
   private payloadData: CredentialData;
   private signature: string;
   private disclosures: string[];
+  private signingKey: SigningKey | null;
 
   constructor(
     signingInput: string,
     payloadData: CredentialData,
     signature: string,
     disclosures: string[],
+    signingKey: SigningKey | null = null,
   ) {
     this.signingInput = signingInput;
     this.payloadData = payloadData;
     this.signature = signature;
     this.disclosures = disclosures;
+    this.signingKey = signingKey;
   }
 
   static async create(
@@ -128,22 +145,36 @@ export class JOSECredential implements Credential {
     });
     vcMap = result.processedVC;
     const disclosures = [...result.disclosures, ...options.sdDisclosures];
+    // Caller-built disclosures need the _sd_alg the digests were made under.
+    if (options.sdDisclosures.length > 0 && !('_sd_alg' in vcMap)) {
+      vcMap._sd_alg = options.sdAlg || 'sha-256';
+    }
+    requireDisclosableAtTopLevel(vcMap, true);
+    // Validate rather than trust: every disclosure must match a digest, once.
+    try {
+      reconstruct(vcMap, disclosures, true);
+    } catch (err) {
+      throw new Error(`invalid SD-JWT disclosures: ${(err as Error).message}`);
+    }
     delete vcMap.vc;
     delete vcMap.vp;
+    // iat gives the verifier a signing time to compare a soft revocation against.
+    vcMap.iat = Math.floor(Date.now() / 1000);
 
     if (!vcc.issuer) throw new Error('issuer is required to resolve VM');
-    const { url: kid } = await resolveSigningVM(
+    const signingKey = await resolveSigningKey(
       vcc.issuer,
       'assertionMethod',
       options.verificationMethodKey,
       options.resolver,
     );
 
+    // typ follows the payload (decoy-only credentials count): vc+sd-jwt when _sd_alg is present.
     const disclosable = '_sd_alg' in vcMap;
     const header = {
-      typ: disclosable || disclosures.length > 0 ? TypeVCSDJWT : TypeVCJWT,
-      alg: 'ES256K',
-      kid,
+      typ: disclosable ? TypeVCSDJWT : TypeVCJWT,
+      alg: signingKey.alg,
+      kid: signingKey.id,
     };
     const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
     const payloadEncoded = Buffer.from(JSON.stringify(vcMap), 'utf8').toString('base64url');
@@ -152,6 +183,7 @@ export class JOSECredential implements Credential {
       vcMap as CredentialData,
       '',
       disclosures,
+      signingKey,
     );
     await cred.executeOptions(opts);
     return cred;
@@ -165,11 +197,9 @@ export class JOSECredential implements Credential {
 
     let issuerJWT: string;
     let disclosures: string[] = [];
-    if (isSDJWT(trimmed)) {
-      const segments = trimmed.split('~');
-      const tail = segments[segments.length - 1];
-      if (tail && isJWT(tail)) throw new Error('key binding JWT is not supported');
-      const parsed = parseSDJWT(trimmed);
+    const combinedSD = isSDJWT(trimmed);
+    if (combinedSD) {
+      const parsed = parseSDJWT(trimmed); // refuses a key binding JWT
       issuerJWT = parsed.baseJWT;
       disclosures = parsed.disclosures;
     } else {
@@ -180,19 +210,50 @@ export class JOSECredential implements Credential {
     }
 
     const parts = issuerJWT.split('.');
-    const headerMap = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8')) as JSONMap;
-    if (!isJOSECredentialTyp(typeof headerMap.typ === 'string' ? headerMap.typ : undefined)) {
-      throw new Error(`invalid vc-jose typ: ${String(headerMap.typ)}`);
+    let headerMap: JSONMap;
+    try {
+      headerMap = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8')) as JSONMap;
+    } catch (err) {
+      throw new Error(`failed to decode header: ${(err as Error).message}`);
     }
-    const payloadMap = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as JSONMap;
+    const typ = typeof headerMap.typ === 'string' ? headerMap.typ : '';
+    if (!isJOSECredentialTyp(typ)) {
+      throw new Error(`invalid typ header for JOSECredential: got ${JSON.stringify(typ)}, want "${TypeVCJWT}" or "${TypeVCSDJWT}"`);
+    }
+    let payloadMap: JSONMap;
+    try {
+      payloadMap = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as JSONMap;
+    } catch (err) {
+      throw new Error(`failed to decode payload: ${(err as Error).message}`);
+    }
+    if (!payloadMap || typeof payloadMap !== 'object' || Array.isArray(payloadMap)) {
+      throw new Error('failed to unmarshal payload: not an object');
+    }
     if ('vc' in payloadMap || 'vp' in payloadMap) {
       throw new Error('vc+jwt payload must not contain vc or vp claims');
     }
-    requireJOSECredential(payloadMap as CredentialData);
-    let vcMap = payloadMap;
-    if ('_sd_alg' in vcMap || disclosures.length > 0) {
-      vcMap = reconstruct(vcMap, disclosures, true);
+
+    // Whether this is an SD-JWT is answered by the media type and the combined
+    // format, not only by a claim inside the payload (_sd_alg is optional in RFC 9901).
+    const declaredSD = typ.replace(/^application\//, '') === TypeVCSDJWT;
+    const hasSDAlg = '_sd_alg' in payloadMap;
+    // A header typed vc+jwt means plain JWS to every other verifier.
+    if (!declaredSD && (combinedSD || hasSDAlg)) {
+      throw new Error(`typ "${typ}" does not match the SD-JWT format`);
     }
+    // The issuer must not have made anything outside credentialSubject
+    // disclosable; runs before reconstruct, which removes the evidence.
+    requireDisclosableAtTopLevel(payloadMap, declaredSD);
+
+    let vcMap = payloadMap;
+    // Reconstruct also strips _sd and _sd_alg, so it runs whenever the token is
+    // an SD-JWT (or digests are present), not only when a disclosure arrived.
+    const disclosable = declaredSD || combinedSD || hasSDAlg || carriesSDMachinery(payloadMap);
+    if (disclosable || disclosures.length > 0) {
+      vcMap = reconstruct(payloadMap, disclosures, true);
+    }
+    requireSecuredClaimsSigned(payloadMap, vcMap);
+    requireJOSECredential(vcMap as CredentialData);
 
     const cred = new JOSECredential(
       parts[0] + '.' + parts[1],
@@ -213,32 +274,12 @@ export class JOSECredential implements Credential {
     opts: CredentialOptions = {},
   ): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
-    if (opts.resolver || opts.verificationMethodKey) {
-      const options = getOptions(opts);
-      const issuer = this.payloadData.issuer;
-      if (typeof issuer === 'string' && issuer) {
-        const header = JSON.parse(
-          Buffer.from(this.signingInput.split('.')[0], 'base64url').toString('utf8'),
-        ) as JSONMap;
-        await resolveSigningVM(
-          issuer,
-          'assertionMethod',
-          options.verificationMethodKey || (typeof header.kid === 'string' ? header.kid : ''),
-          options.resolver,
-        );
-      }
-    }
-    if (signer instanceof P256Provider) {
-      const parts = this.signingInput.split('.');
-      const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8')) as JSONMap;
-      header.alg = 'ES256';
-      const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
-      this.signingInput = headerEncoded + '.' + parts[1];
-    }
-    const jwtSigner = newJWTSigner(signer);
-    const signature = await jwtSigner.signString(this.signingInput);
-    await this.executeOptions(opts);
-    this.signature = signature;
+    rejectBuildTimeOptions(opts);
+    refuseOverwrite(this.signature, opts);
+    await this.executeOptions(signingOptions(opts));
+
+    const raw = await signer.sign(sha256(Buffer.from(this.signingInput, 'utf8')));
+    this.signature = acceptSignature(this.signingKey, this.signingInput, raw);
   }
 
   async getSigningInput(): Promise<Uint8Array> {
@@ -250,8 +291,10 @@ export class JOSECredential implements Credential {
     if (!proof.signature || proof.signature.length === 0) {
       throw new Error('proof signature cannot be empty');
     }
-    await this.executeOptions(opts);
-    this.signature = Buffer.from(proof.signature).toString('base64url');
+    rejectBuildTimeOptions(opts);
+    refuseOverwrite(this.signature, opts);
+    await this.executeOptions(signingOptions(opts));
+    this.signature = acceptSignature(this.signingKey, this.signingInput, proof.signature);
   }
 
   async verify(opts: CredentialOptions = {}): Promise<void> {
@@ -260,10 +303,8 @@ export class JOSECredential implements Credential {
 
   async serialize(): Promise<string> {
     let base = this.signingInput;
-    if (this.signature || this.disclosures.length > 0 || this.isDisclosable()) {
-      base = base + '.' + this.signature;
-    }
-    if (!this.isDisclosable() && this.disclosures.length === 0) return base;
+    if (this.signature) base = base + '.' + this.signature;
+    if (!this.isDisclosable()) return base;
     let out = base;
     for (const d of this.disclosures) {
       if (!d) continue;
@@ -284,10 +325,6 @@ export class JOSECredential implements Credential {
   extractField(path: string): unknown {
     if (!this.payloadData) return null;
     return extractFieldFromMap(this.payloadData, path);
-  }
-
-  async addSelectiveDisclosures(_selectivePaths: string[]): Promise<Credential> {
-    throw new Error('use JOSECredential.create with sdSelectivePaths');
   }
 
   decodedDisclosures(): DecodedDisclosure[] {
@@ -346,10 +383,13 @@ export class JOSECredential implements Credential {
     if (options.verifyProof) {
       tasks.push(
         (async () => {
+          if (!this.signature) throw new Error('credential is not signed');
           const baseJWS = `${this.signingInput}.${this.signature}`;
           const verifier = new JWTVerifier(options.resolver);
           try {
             await verifier.verifyJWT(baseJWS);
+            // exp and nbf bound the signature, so they belong to proof verification.
+            checkJwtTimeClaims(this.payloadData, options.clockSkewLeewayMs);
           } catch (err) {
             throw new Error(`verify proof: ${(err as Error).message}`);
           }
@@ -365,7 +405,6 @@ export class JOSECredential implements Credential {
       }
     }
     if (options.checkExpiration) {
-      checkJwtTimeClaims(this.payloadData, options.clockSkewLeewayMs);
       checkExpiration(this.payloadData, options.clockSkewLeewayMs);
     }
   }
