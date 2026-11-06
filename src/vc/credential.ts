@@ -22,8 +22,23 @@ export { init } from './config';
 export * from './types';
 export { JWTCredential } from './jwt-credential';
 export { JSONCredential } from './json-credential';
-export { JOSECredential, TypeVCJWT, TypeVCSDJWT, TypeEnvelopedVC, isJOSECredentialTyp } from './jose-credential';
-export { ECDSASDCredential, dotPathsToPointers } from './ecdsasd-credential';
+export {
+  JOSECredential,
+  TypeVCJWT,
+  TypeVCSDJWT,
+  TypeEnvelopedVC,
+  TypeJOSE,
+  isJOSECredentialTyp,
+} from './jose-credential';
+export {
+  ECDSASDCredential,
+  dotPathsToPointers,
+  newECDSASDCredential,
+  parseECDSASDCredential,
+} from './ecdsasd-credential';
+export { subjectFromJSON } from './credential-helper';
+export { isSDJWTRequiresJOSE, sdJWTRequiresJOSE } from './errors';
+export { ErrorCode, CredentialError } from '../common/errors';
 
 export async function parseCredential(
   rawCredential: Uint8Array | string,
@@ -70,6 +85,19 @@ export async function parseCredentialWithValidation(
     validateSchema: true,
     verifyProof: true,
   });
+}
+
+/** Free-function parsers per type (go ParseJSONCredential / ParseJWTCredential / ParseJOSECredential). */
+export function parseJSONCredential(raw: Uint8Array | string, opts: CredentialOptions = {}): Promise<JSONCredential> {
+  return JSONCredential.parse(raw, opts);
+}
+
+export function parseJWTCredential(raw: string, opts: CredentialOptions = {}): Promise<JWTCredential> {
+  return JWTCredential.parse(raw, opts);
+}
+
+export function parseJOSECredential(raw: string, opts: CredentialOptions = {}): Promise<JOSECredential> {
+  return JOSECredential.parse(raw, opts);
 }
 
 export async function newJWTCredential(

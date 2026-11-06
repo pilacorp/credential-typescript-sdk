@@ -1,7 +1,7 @@
 /**
  * Top-level VP parser — Node port of vp/presentation.go.
  */
-import { isJSONPresentationBytes, isJWTPresentation } from './presentation-helper';
+import { isJSONPresentationBytes, isJWTPresentation, isSDJWTShaped } from './presentation-helper';
 import { JSONPresentation } from './json-presentation';
 import { JWTPresentation } from './jwt-presentation';
 import { JOSEPresentation, isJOSEPresentationTyp } from './jose-presentation';
@@ -11,7 +11,7 @@ export { init } from './config';
 export * from './types';
 export { JWTPresentation } from './jwt-presentation';
 export { JSONPresentation } from './json-presentation';
-export { JOSEPresentation, TypeVPJWT } from './jose-presentation';
+export { JOSEPresentation, TypeVPJWT, TypeJOSE } from './jose-presentation';
 
 export async function parsePresentation(
   rawPresentation: Uint8Array | string,
@@ -41,6 +41,9 @@ export async function parsePresentation(
     }
     return JWTPresentation.parse(valStr, opts);
   }
+  if (isSDJWTShaped(valStr)) {
+    throw new Error('presentation carries SD-JWT disclosures, which are not supported for presentations');
+  }
   throw new Error('failed to parse presentation');
 }
 
@@ -51,6 +54,19 @@ export async function parsePresentationWithValidation(
     validateVC: true,
     verifyProof: true,
   });
+}
+
+/** Free-function parsers per type (go ParseJSONPresentation / ParseJWTPresentation / ParseJOSEPresentation). */
+export function parseJSONPresentation(raw: Uint8Array | string, opts: PresentationOptions = {}): Promise<JSONPresentation> {
+  return JSONPresentation.parse(raw, opts);
+}
+
+export function parseJWTPresentation(raw: string, opts: PresentationOptions = {}): Promise<JWTPresentation> {
+  return JWTPresentation.parse(raw, opts);
+}
+
+export function parseJOSEPresentation(raw: string, opts: PresentationOptions = {}): Promise<JOSEPresentation> {
+  return JOSEPresentation.parse(raw, opts);
 }
 
 export async function newJWTPresentation(
