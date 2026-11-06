@@ -4,12 +4,11 @@
  * Serialization helpers between CredentialContents (structured) and
  * CredentialData (JSON map), plus schema/revocation/expiration checks.
  */
-import Ajv2020 from 'ajv/dist/2020';
-import addFormats from 'ajv-formats';
 import { fetchAndCheckRevocation, parseStatusListIndex } from '../common/credential-status';
 import { copyExcept, JSONMap, shallowCopyObj, splitJSONObj } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
 import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
+import { newGoAjv, prepareSchema, renderGoErrors } from './schema-validate';
 import type { ResolvedCredentialOptions } from './options';
 import type {
   CredentialContents,
@@ -196,75 +195,73 @@ export async function validateCredential(
   }
   const schemaList = convertToArray(copyMap.credentialSchema);
 
-  // The whole document is validated, proof included, like Go.
-  const validationDoc = copyMap;
-
-  // Mirror Go SDK's gojsonschema.NewReferenceLoader: identify each fetched
-  // schema by its URL and resolve any `$ref` (including cross/self refs)
-  // by re-fetching through the same loader.
-  const ajv = new Ajv2020({
-    strict: false,
-    allErrors: true,
-    loadSchema: async (uri: string) => {
-      const bytes = await loadSchemaBytes(uri, opts);
-      const json = JSON.parse(Buffer.from(bytes).toString('utf8'));
-      if (typeof json === 'object' && json !== null && !('$id' in json)) {
-        json.$id = uri;
-      }
-      return json;
-    },
-  });
-  addFormats(ajv);
-
   for (const schema of schemaList) {
-    if (typeof schema !== 'object' || schema === null) {
-      throw new Error('credentialSchema entry must be an object');
+    // Go round-trips each entry through json into map[string]interface{}.
+    if (schema !== null && (typeof schema !== 'object' || Array.isArray(schema))) {
+      throw new Error(`failed to unmarshal schema: json: cannot unmarshal ${jsonKind(schema)} into Go value of type map[string]interface {}`);
     }
-    const schemaMap = schema as JSONMap;
-    const id = schemaMap.id;
+    const id = (schema as JSONMap | null)?.id;
+    if (id === undefined || id === null) throw new Error('credentialSchema.id is required');
     if (typeof id !== 'string' || id === '') {
       throw new Error('credentialSchema.id must be a non-empty string');
     }
-    const schemaBytes = await loadSchemaBytes(id, opts);
-    const schemaJSON = JSON.parse(Buffer.from(schemaBytes).toString('utf8'));
-    if (typeof schemaJSON === 'object' && schemaJSON !== null && !('$id' in schemaJSON)) {
-      schemaJSON.$id = id;
-    }
-    let validator;
+
+    // Custom loader only supplies the root schema; gojsonschema fetches every $ref itself.
+    let raw: unknown;
     try {
-      validator = ajv.getSchema(id) ?? (await ajv.compileAsync(schemaJSON));
+      let bytes: Uint8Array;
+      if (opts.schemaLoader) bytes = await loadCustom(id, opts);
+      else bytes = await loadReference(id);
+      raw = JSON.parse(Buffer.from(bytes).toString('utf8'));
     } catch (err) {
-      throw new Error(
-        `failed to compile schema: ${(err as Error).message}`,
-      );
+      if ((err as Error).message.startsWith('failed to load schema via custom loader')) throw err;
+      throw new Error(`failed to validate schema: ${(err as Error).message}`);
     }
-    const valid = validator(validationDoc);
-    if (!valid) {
-      const message = validator.errors
-        ? validator.errors.map((e) => `${e.instancePath} ${e.message}`).join(', ')
-        : 'unknown';
-      throw new Error(`credential validation failed: ${message}`);
+    let validate;
+    try {
+      const ajv = newGoAjv(async (uri) => JSON.parse(Buffer.from(await loadReference(uri)).toString('utf8')));
+      const prepared = prepareSchema(raw);
+      if (typeof prepared === 'object' && !('$id' in prepared)) prepared.$id = id;
+      validate = await ajv.compileAsync(prepared as object);
+    } catch (err) {
+      throw new Error(`failed to validate schema: ${(err as Error).message}`);
+    }
+    // The whole document is validated, proof included, like Go.
+    if (!validate(copyMap)) {
+      throw new Error(`credential validation failed: [${renderGoErrors(validate.errors ?? []).join(' ')}]`);
     }
   }
 }
 
-async function loadSchemaBytes(
-  id: string,
-  opts: ResolvedCredentialOptions,
-): Promise<Uint8Array> {
-  if (opts.schemaLoader) {
-    const bytes = await opts.schemaLoader(id);
-    if (!bytes || bytes.length === 0) {
-      throw new Error('failed to load schema via custom loader: schema is empty');
+function jsonKind(v: unknown): string {
+  return typeof v === 'number' ? 'number' : typeof v === 'string' ? 'string' : typeof v === 'boolean' ? 'bool' : 'array';
+}
+
+async function loadCustom(id: string, opts: ResolvedCredentialOptions): Promise<Uint8Array> {
+  let bytes: Uint8Array;
+  try {
+    bytes = await opts.schemaLoader!(id);
+  } catch (err) {
+    throw new Error(`failed to load schema via custom loader: ${(err as Error).message}`);
+  }
+  if (!bytes || bytes.length === 0) {
+    throw new Error('failed to load schema via custom loader: schema is empty');
+  }
+  return bytes;
+}
+
+/** gojsonschema.NewReferenceLoader: http(s) is fetched, anything else is read as a file path. */
+async function loadReference(id: string): Promise<Uint8Array> {
+  if (/^https?:\/\//i.test(id)) {
+    const resp = await fetch(id);
+    if (!resp.ok) {
+      throw new Error(`Could not read schema from HTTP, response status is ${resp.status} ${resp.statusText}`);
     }
-    return bytes;
+    return new Uint8Array(Buffer.from(await resp.arrayBuffer()));
   }
-  const resp = await fetch(id);
-  if (!resp.ok) {
-    throw new Error(`failed to fetch schema: ${resp.status} ${resp.statusText}`);
-  }
-  const buf = Buffer.from(await resp.arrayBuffer());
-  return new Uint8Array(buf);
+  const { readFile } = await import('node:fs/promises');
+  const { fileURLToPath } = await import('node:url');
+  return new Uint8Array(await readFile(id.startsWith('file://') ? fileURLToPath(id) : id));
 }
 
 // ---- Expiration ----
