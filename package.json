@@ -9,13 +9,14 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:esm",
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "tsc --noEmit",
     "clean": "rm -rf dist coverage",
     "example": "ts-node examples/main.ts",
-    "issue:go-interop": "ts-node examples/issue-go-interop.ts"
+    "issue:go-interop": "ts-node examples/issue-go-interop.ts",
+    "build:esm": "esbuild src/index.ts --bundle --format=esm --platform=node --target=node18 --packages=external --banner:js=\"import { createRequire as __cr } from 'module'; const require = __cr(import.meta.url);\" --outfile=dist/esm/index.mjs"
   },
   "keywords": [
     "verifiable-credential",
@@ -43,9 +44,21 @@
     "@types/jest": "^29.5.13",
     "@types/jsonld": "^1.5.15",
     "@types/node": "^20.16.5",
+    "esbuild": "^0.28.2",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
+  },
+  "module": "dist/esm/index.mjs",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   }
 }

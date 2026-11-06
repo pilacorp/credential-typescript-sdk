@@ -24,6 +24,8 @@ npm install @pilacorp/credential-sdk
 
 Yêu cầu Node.js >= 18.
 
+Gói có cả CommonJS (`require`) và ESM (`import`) qua `exports` trong `package.json`; `npm run build` tạo `dist/` (tsc, CJS) và `dist/esm/index.mjs` (esbuild). Dùng `import { vc, vp } from '@pilacorp/credential-sdk'` thay vì import sâu vào `src/...`.
+
 ## Build & test
 
 ```bash
