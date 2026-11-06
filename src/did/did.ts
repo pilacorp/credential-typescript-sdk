@@ -142,6 +142,11 @@ export function generateP256KeyPair(): { privateKeyHex: string; publicKeyHex: st
   return { privateKeyHex: `0x${bytesToHex(privateKey)}`, publicKeyHex: `0x${publicKeyHex}` };
 }
 
+/**
+ * Legacy return shape (one entry per curve). `didv2.generateDualCurveKeyPair` returns
+ * Go's single KeyPair shape (address + P-256 X/Y) and is the canonical dual-curve keygen.
+ * @deprecated Prefer `didv2.generateDualCurveKeyPair`.
+ */
 export function generateDualCurveKeyPair(): {
   secp256k1: { privateKeyHex: string; publicKeyHex: string };
   p256: { privateKeyHex: string; publicKeyHex: string };

@@ -44,6 +44,12 @@ export function vmKeyKind(vm: VerificationMethodEntry | null): KeyKind | null {
   return null;
 }
 
+function vmMatchesKind(vm: VerificationMethodEntry, kind: KeyKind): boolean {
+  if (kind === 'RSA') return vmIsRSA(vm);
+  if (kind === 'P-256') return vmIsP256(vm);
+  return kind === 'secp256k1' && vmIsSecp256k1(vm);
+}
+
 /** When the document has exactly one VM, sign with it; otherwise the latest active VM for purpose. */
 export function selectDefaultSigningVM(
   doc: DIDDocument | null,
@@ -75,6 +81,39 @@ export function selectLatestActiveVMForPurpose(
   doc: DIDDocument | null,
   purpose: string,
 ): VerificationMethodEntry {
+  const vm = selectLatestActiveVM(doc, purpose);
+  if (!vm) {
+    throw new Error(
+      `no active verification method for purpose '${purpose}' on DID '${doc!.id}'`,
+    );
+  }
+  return vm;
+}
+
+/**
+ * Like selectLatestActiveVMForPurpose but only considers VMs holding a key of
+ * `kind`, so an RSA signer never binds its proof to a secp256k1 VM (or vice
+ * versa) on a DID with keys of several kinds in the same relationship array.
+ */
+export function selectLatestActiveVMForKey(
+  doc: DIDDocument | null,
+  purpose: string,
+  kind: KeyKind,
+): VerificationMethodEntry {
+  const vm = selectLatestActiveVM(doc, purpose, (v) => vmMatchesKind(v, kind));
+  if (!vm) {
+    throw new Error(
+      `no active ${kind} verification method for purpose '${purpose}' on DID '${doc!.id}'`,
+    );
+  }
+  return vm;
+}
+
+function selectLatestActiveVM(
+  doc: DIDDocument | null,
+  purpose: string,
+  match?: (vm: VerificationMethodEntry) => boolean,
+): VerificationMethodEntry | null {
   if (!doc) throw new Error('did document is nil');
 
   let purposeArr: string[];
@@ -93,17 +132,14 @@ export function selectLatestActiveVMForPurpose(
   for (const vm of doc.verificationMethod) {
     if (vm.revoked) continue;
     if (!idInPurposeArray(vm.id, doc.id, purposeArr)) continue;
+    if (match && !match(vm)) continue;
     const n = parseSequentialFragment(vm.id, doc.id) ?? 0;
-    if (n > bestN) {
+    // Higher #key-N wins; a tie breaks on the larger id (byte order, like Go)
+    // so selection does not depend on the resolver's ordering.
+    if (n > bestN || (n === bestN && bestVM && Buffer.compare(Buffer.from(vm.id), Buffer.from(bestVM.id)) > 0)) {
       bestN = n;
       bestVM = vm;
     }
-  }
-
-  if (!bestVM) {
-    throw new Error(
-      `no active verification method for purpose '${purpose}' on DID '${doc.id}'`,
-    );
   }
   return bestVM;
 }
@@ -137,11 +173,13 @@ export function idInPurposeArray(
   return arr.some((ref) => ref === vmID || ref === frag);
 }
 
+/** N from "<did>#key-N" the way Go's Sscanf("%d") reads it: "#key-02" is 2, "#key-2a" is 2. */
 function parseSequentialFragment(vmID: string, did: string): number | null {
   const prefix = `${did}#key-`;
   if (!vmID.startsWith(prefix)) return null;
-  const tail = vmID.slice(prefix.length);
-  const n = parseInt(tail, 10);
-  if (Number.isNaN(n) || String(n) !== tail) return null;
-  return n;
+  const m = /^[ \t]*([+-]?\d+)/.exec(vmID.slice(prefix.length));
+  if (!m) return null;
+  const big = BigInt(m[1]);
+  if (big > 9223372036854775807n || big < -9223372036854775808n) return null;
+  return Number(big);
 }

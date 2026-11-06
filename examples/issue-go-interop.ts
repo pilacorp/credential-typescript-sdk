@@ -1,3 +1,4 @@
+import { StaticResolver } from '../src/common/verification-method';
 /**
  * Issue a JSON-LD VC with ecdsa-rdfc-2019 (P-256) for Go SDK verification.
  *
@@ -18,14 +19,6 @@ import { P256Provider } from '../src/common/signer/p256-provider';
 const P256_PRIV = 'c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721';
 const ISSUER = 'did:example:issuer';
 const VM = `${ISSUER}#key-1`;
-
-class StaticResolver implements ResolverProvider {
-  constructor(private readonly doc: DIDDocument) {}
-
-  async resolveDocument(): Promise<DIDDocument> {
-    return this.doc;
-  }
-}
 
 async function main(): Promise<void> {
   const signer = new P256Provider(P256_PRIV);

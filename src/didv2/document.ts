@@ -5,9 +5,10 @@ import { keccak_256 } from '@noble/hashes/sha3';
 import type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
 import { transform } from '../common/jsoncanonicalizer/jsoncanonicalizer';
 import { formatRFC3339Nano } from '../common/util/time';
+import { parseRFC3339Strict } from '../common/verification-method/verification-method';
 import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
 import { encodeP256PublicMultibase } from '../common/verification-method/multikey';
-import { generateDualCurveKeyPair } from '../did/did';
+import { generateDualCurveKeyPair as generateLegacyDualCurveKeyPair } from '../did/did';
 import {
   DIDTypePeople,
   PurposeAssertionMethod,
@@ -33,8 +34,12 @@ export function generateECDSAKeyPair(): KeyPair {
   };
 }
 
-export function generateDualCurveDIDKeyPair(): KeyPair {
-  const pair = generateDualCurveKeyPair();
+/**
+ * One scalar published as both a secp256k1 key pair and a P-256 public key
+ * (Go's GenerateDualCurveKeyPair).
+ */
+export function generateDualCurveKeyPair(): KeyPair {
+  const pair = generateLegacyDualCurveKeyPair();
   const scalar = hexToBytes(normalizeHex(pair.secp256k1.privateKeyHex));
   const compressed = secp256k1.getPublicKey(scalar, true);
   const p256Pub = p256.getPublicKey(scalar, false);
@@ -48,6 +53,9 @@ export function generateDualCurveDIDKeyPair(): KeyPair {
     },
   };
 }
+
+/** @deprecated Use generateDualCurveKeyPair. */
+export const generateDualCurveDIDKeyPair = generateDualCurveKeyPair;
 
 export function canonicalVMID(did: string, idOrFragment: string): string {
   return idOrFragment.startsWith('#') ? `${did}${idOrFragment}` : idOrFragment;
@@ -67,16 +75,18 @@ export function newP256MultikeyVM(
   fragment: string,
   p256UncompressedOrXY: Uint8Array | { x: string; y: string },
 ): VerificationMethodEntry {
-  let uncompressed: Uint8Array;
+  let point: Uint8Array;
   if (p256UncompressedOrXY instanceof Uint8Array) {
-    uncompressed = p256UncompressedOrXY;
+    point = p256UncompressedOrXY;
   } else {
-    uncompressed = hexToBytes(`04${p256UncompressedOrXY.x}${p256UncompressedOrXY.y}`);
+    point = hexToBytes(`04${p256UncompressedOrXY.x}${p256UncompressedOrXY.y}`);
   }
-  if (uncompressed.length === 65 && uncompressed[0] === 0x04) {
-    uncompressed = uncompressed.slice(1);
-  }
-  if (uncompressed.length !== 64) {
+  // 64 bytes is the raw X||Y form; SEC1 (33 compressed / 65 uncompressed) passes through.
+  if (point.length === 64) point = new Uint8Array([0x04, ...point]);
+  let uncompressed: Uint8Array;
+  try {
+    uncompressed = p256.ProjectivePoint.fromHex(point).toRawBytes(false);
+  } catch {
     throw new Error('NewP256MultikeyVM requires a P-256 public key');
   }
   return {
@@ -152,9 +162,10 @@ function documentContext(vms: VerificationMethodEntry[]): string[] {
 }
 
 export function findVerificationMethod(
-  doc: DIDDocument,
+  doc: DIDDocument | null | undefined,
   idOrFragment: string,
 ): VerificationMethodEntry | undefined {
+  if (!doc) return undefined;
   const target = canonicalVMID(doc.id, idOrFragment);
   return doc.verificationMethod.find((vm) => canonicalVMID(doc.id, vm.id) === target);
 }
@@ -213,7 +224,7 @@ export function didDocumentJSON(doc: DIDDocument): Record<string, unknown> {
   // `null` for an absent field. Mirror that exactly for a byte-identical DocHash.
   return {
     '@context': doc['@context'] ?? null,
-    id: doc.id,
+    id: doc.id ?? '',
     controller: doc.controller ?? '',
     verificationMethod: doc.verificationMethod ? doc.verificationMethod.map(vmJSON) : null,
     authentication: doc.authentication ?? null,
@@ -223,19 +234,33 @@ export function didDocumentJSON(doc: DIDDocument): Record<string, unknown> {
 }
 
 function vmJSON(vm: VerificationMethodEntry): Record<string, unknown> {
+  // Go writes id/type/controller without omitempty (a missing one is ""), and
+  // omits an empty publicKeyJwk map.
   const out: Record<string, unknown> = {
-    id: vm.id,
-    type: vm.type,
-    controller: vm.controller,
+    id: vm.id ?? '',
+    type: vm.type ?? '',
+    controller: vm.controller ?? '',
   };
   if (vm.publicKeyHex) out.publicKeyHex = vm.publicKeyHex;
-  if (vm.publicKeyJwk) out.publicKeyJwk = vm.publicKeyJwk;
+  if (vm.publicKeyJwk && Object.keys(vm.publicKeyJwk).length > 0) out.publicKeyJwk = vm.publicKeyJwk;
   if (vm.publicKeyMultibase) out.publicKeyMultibase = vm.publicKeyMultibase;
-  // Go marshals *time.Time as RFC3339Nano; toISOString always adds ".000Z",
-  // which would hash differently. Match Go so the DocHash is byte-identical.
-  if (vm.revoked) out.revoked = formatRFC3339Nano(vm.revoked);
+  // Go marshals *time.Time as RFC3339Nano with the original offset and
+  // nanoseconds; keep the parsed text while it still denotes the same instant.
+  if (vm.revoked) out.revoked = revokedText(vm);
   if (vm.revocationReason) out.revocationReason = vm.revocationReason;
   return out;
+}
+
+function revokedText(vm: VerificationMethodEntry): string {
+  const kept = vm.revokedText;
+  if (kept) {
+    try {
+      if (parseRFC3339Strict(kept).date.getTime() === vm.revoked!.getTime()) return kept;
+    } catch {
+      /* fall through to the Date value */
+    }
+  }
+  return formatRFC3339Nano(vm.revoked!);
 }
 
 function sortObject(input: Record<string, unknown>): Record<string, unknown> {
@@ -247,10 +272,24 @@ function sortObject(input: Record<string, unknown>): Record<string, unknown> {
 }
 
 function sortValue(v: unknown): unknown {
-  // A Date in metadata must serialize as Go marshals time.Time (RFC3339Nano),
-  // not be flattened to {} by the object branch below.
+  // A Date serializes as Go marshals time.Time (RFC3339Nano), not as {}.
   if (v instanceof Date) return formatRFC3339Nano(v);
+  // Go: []byte marshals as base64; NaN/Inf make json.Marshal fail.
+  if (v instanceof Uint8Array) return Buffer.from(v).toString('base64');
+  if (typeof v === 'number' && !Number.isFinite(v)) {
+    throw new Error(`json: unsupported value: ${v}`);
+  }
   if (Array.isArray(v)) return v.map(sortValue);
+  // A Map with string keys is Go's map[string]any; a Set has no Go counterpart.
+  if (v instanceof Map) {
+    const o: Record<string, unknown> = {};
+    for (const [k, val] of v) {
+      if (typeof k !== 'string') throw new Error('json: unsupported map key type');
+      o[k] = val;
+    }
+    return sortObject(o);
+  }
+  if (v instanceof Set) throw new Error('json: unsupported type: Set');
   if (v && typeof v === 'object') return sortObject(v as Record<string, unknown>);
   return v;
 }
@@ -261,7 +300,8 @@ export function addressFromPublicKeyHex(publicKeyHex: string): string {
   if (bytes.length === 33 && (bytes[0] === 0x02 || bytes[0] === 0x03)) {
     uncompressed = secp256k1.ProjectivePoint.fromHex(bytes).toRawBytes(false);
   } else if (bytes.length === 65 && bytes[0] === 0x04) {
-    uncompressed = bytes;
+    // Reject a point that is not on the curve, like Go's crypto.UnmarshalPubkey.
+    uncompressed = secp256k1.ProjectivePoint.fromHex(bytes).toRawBytes(false);
   } else {
     throw new Error(
       `unsupported public key format: expected 33 bytes (compressed) or 65 bytes (uncompressed), got ${bytes.length} bytes`,

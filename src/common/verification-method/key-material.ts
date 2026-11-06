@@ -4,17 +4,26 @@
  */
 import { p256 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
-import { bytesToHex } from '../crypto/hex';
+import { bytesToHex, hexToBytes } from '../crypto/hex';
 import type { JWK, VerificationMethodEntry } from './verification-method';
 import { decodeP256PublicMultibase } from './multikey';
 
 export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
   if (!vm) throw new Error('verification method is nil');
   if (vm.publicKeyHex) {
-    if (vm.type && vm.type !== 'EcdsaSecp256k1VerificationKey2019') {
-      throw new Error(`publicKeyHex is only valid for secp256k1 verification methods, got type ${vm.type}`);
+    // Like Go's ECPubFromVM: publicKeyHex names no curve so it is read as
+    // secp256k1 whatever the VM type says, and the point must be valid.
+    const hex = vm.publicKeyHex.replace(/^0x/i, '');
+    const raw = hexToBytes(hex);
+    if (!((raw.length === 33 && (raw[0] === 2 || raw[0] === 3)) || (raw.length === 65 && raw[0] === 4))) {
+      throw new Error(`secp256k1 public key: want 33 compressed or 65 uncompressed bytes, got ${raw.length}`);
     }
-    return vm.publicKeyHex.replace(/^0x/i, '');
+    try {
+      secp256k1.ProjectivePoint.fromHex(raw);
+    } catch (e) {
+      throw new Error(`invalid secp256k1 public key: ${(e as Error).message}`);
+    }
+    return hex;
   }
   if (vm.publicKeyJwk) {
     return jwkToHex(vm.publicKeyJwk);

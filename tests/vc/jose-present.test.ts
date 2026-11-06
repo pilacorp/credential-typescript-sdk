@@ -3,6 +3,7 @@ import { DefaultProvider } from '../../src/common/signer/default-provider';
 import {
   DIDDocument,
   ResolverProvider,
+  StaticResolver
 } from '../../src/common/verification-method';
 import { bytesToHex, hexToBytes } from '../../src/common/crypto/hex';
 import { secp256k1 } from '@noble/curves/secp256k1';
@@ -11,13 +12,6 @@ import { ErrorCode } from '../../src/common/errors';
 const ISSUER = 'did:example:issuer';
 const SUBJECT = 'did:example:subject';
 const SECP_PRIV = '4646464646464646464646464646464646464646464646464646464646464646';
-
-class StaticResolver implements ResolverProvider {
-  constructor(private readonly doc: DIDDocument) {}
-  async resolveDocument(): Promise<DIDDocument> {
-    return this.doc;
-  }
-}
 
 function secpDid(): DIDDocument {
   const pubHex = bytesToHex(secp256k1.getPublicKey(hexToBytes(SECP_PRIV), false));

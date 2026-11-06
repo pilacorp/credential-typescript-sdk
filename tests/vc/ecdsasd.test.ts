@@ -6,19 +6,13 @@ import { P256Provider } from '../../src/common/signer/p256-provider';
 import {
   DIDDocument,
   ResolverProvider,
+  StaticResolver
 } from '../../src/common/verification-method';
 import { decodeP256SecretMultibase, encodeP256PublicMultibase } from '../../src/common/verification-method/multikey';
 import { ECDSASDCredential } from '../../src/vc/ecdsasd-credential';
 import { Cryptosuite } from '../../src/common/ecdsasd';
 
 const ISSUER = 'did:key:zDnaepBuvsQ8cpsWrVKw8fbpGpvPeNSjVPTWoq6cRqaYzBKVP';
-
-class StaticResolver implements ResolverProvider {
-  constructor(private readonly doc: DIDDocument) {}
-  async resolveDocument(): Promise<DIDDocument> {
-    return this.doc;
-  }
-}
 
 describe('ecdsa-sd-2023', () => {
   const keys = JSON.parse(

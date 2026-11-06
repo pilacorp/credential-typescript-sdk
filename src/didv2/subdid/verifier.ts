@@ -5,6 +5,7 @@ import { checkDID, didAddress, didPrefix, docHash, validateSubDID } from './docu
 import { revokedLeaf, verifyProof } from './merkle';
 import type { ChainProof, ProofResponse } from './proof';
 import { verifyRootConsent } from './signature';
+import { wrapSentinel } from './errors';
 
 const statusActivated = 'activated';
 const statusDeactivated = 'deactivated';
@@ -119,7 +120,7 @@ function consistentProof(proof: ProofResponse, subDID: string): boolean {
 function chainEntry(proof: ProofResponse, code: string): ChainProof {
   const entry = proof.chains.find((e) => e.chain === code);
   if (!entry) {
-    throw new Error(`${ErrNotAnchored.message}: chain ${code}`);
+    throw wrapSentinel(`chain ${code}`, undefined, ErrNotAnchored);
   }
   return entry;
 }
@@ -145,20 +146,23 @@ async function checkOnChain(
   try {
     chainId = await c.client.getChainId();
   } catch (e) {
-    throw wrapChain(`${ErrChainUnavailable.message}: chain ${c.code}: ${(e as Error).message}`);
+    throw wrapChain(`chain ${c.code}: ${(e as Error).message}`, e, ErrChainUnavailable);
   }
   if (chainId !== c.evmChainId) {
     throw wrapChain(
-      `${ErrChainUnavailable.message}: ${ErrChainMismatch.message}: chain ${c.code}: node reports ${chainId}, want ${c.evmChainId}`,
+      `chain ${c.code}: node reports ${chainId}, want ${c.evmChainId}`,
+      undefined,
+      ErrChainUnavailable,
+      ErrChainMismatch,
     );
   }
   let receipt: TransactionReceiptLike | null;
   try {
     receipt = await c.client.getTransactionReceipt(anchor.txHash);
   } catch (e) {
-    throw wrapChain(`${ErrChainUnavailable.message}: chain ${c.code}: receipt ${anchor.txHash}: ${(e as Error).message}`);
+    throw wrapChain(`chain ${c.code}: receipt ${anchor.txHash}: ${(e as Error).message}`, e, ErrChainUnavailable);
   }
-  if (!receipt) throw wrapChain(`${ErrChainUnavailable.message}: chain ${c.code}: receipt ${anchor.txHash} is empty`);
+  if (!receipt) throw wrapChain(`chain ${c.code}: receipt ${anchor.txHash} is empty`, undefined, ErrChainUnavailable);
   if (Number(receipt.status ?? 0) !== 1) return 'no_anchor';
   const written = lastWriterAnchor(receipt, c.didRegistry, proof);
   if (!written) return 'no_anchor';
@@ -167,7 +171,7 @@ async function checkOnChain(
   try {
     isWriter = await HasRole(c.client, c.didRegistry, SubtreeWriterRole, written.writer);
   } catch (e) {
-    throw wrapChain(`${ErrChainUnavailable.message}: chain ${c.code}: ${(e as Error).message}`);
+    throw wrapChain(`chain ${c.code}: ${(e as Error).message}`, e, ErrChainUnavailable);
   }
   if (!isWriter) return 'writer_revoked';
   return '';
@@ -192,8 +196,8 @@ function lastWriterAnchor(
   return undefined;
 }
 
-function wrapChain(message: string): Error {
-  return new Error(message);
+function wrapChain(detail: string, cause: unknown, ...sentinels: Error[]): Error {
+  return wrapSentinel(detail, cause, ...sentinels);
 }
 
 export { DecodeWriterAnchors as decodeWriterAnchors, HasRole as hasRole };

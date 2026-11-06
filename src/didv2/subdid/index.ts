@@ -35,3 +35,4 @@ export {
   Verifier,
 } from './verifier';
 export type { Chain, ChainClient, Reason } from './verifier';
+export { SubDIDError, errorIs, wrapSentinel } from './errors';

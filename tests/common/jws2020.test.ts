@@ -1,3 +1,4 @@
+import { StaticResolver } from '../../src/common/verification-method';
 import { generateKeyPairSync } from 'node:crypto';
 import { p256 } from '@noble/curves/nist';
 import { sha256 } from '@noble/hashes/sha256';
@@ -7,13 +8,6 @@ import { P256Provider } from '../../src/common/signer/p256-provider';
 import type { DIDDocument, ResolverProvider } from '../../src/common/verification-method';
 
 const ISSUER = 'did:example:jws';
-
-class StaticResolver implements ResolverProvider {
-  constructor(private readonly doc: DIDDocument) {}
-  async resolveDocument(): Promise<DIDDocument> {
-    return this.doc;
-  }
-}
 
 async function attachAndVerify(
   alg: 'ES256' | 'RS256',

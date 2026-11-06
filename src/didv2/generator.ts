@@ -1,7 +1,7 @@
 import {
   addressFromPublicKeyHex,
   generateDIDDocument,
-  generateDualCurveDIDKeyPair,
+  generateDualCurveKeyPair,
   hashDIDDocument,
   newP256MultikeyVM,
   newSpec,
@@ -12,7 +12,7 @@ import { generateCapID, generateIssueDIDSignature, type IssuerSignature } from '
 import { DefaultProvider } from './signer';
 import type { DIDConfig, DIDOption, DIDTxResult, DIDType } from './types';
 import { toDID } from './types';
-import { DefaultDIDSMCAddress, DefaultMethod, defaultDIDConfig } from './config';
+import { defaultDIDConfig } from './config';
 
 export class DIDGenerator {
   private readonly baseConfig: DIDConfig;
@@ -24,7 +24,7 @@ export class DIDGenerator {
     this.baseConfig = cfg;
     this.didContract = new Contract({
       rpcUrl: cfg.rpc,
-      contractAddress: cfg.didSmcAddr || DefaultDIDSMCAddress,
+      contractAddress: cfg.didSmcAddr,
       chainId: cfg.chainId,
     });
   }
@@ -36,14 +36,14 @@ export class DIDGenerator {
     ...options: DIDOption[]
   ): Promise<DIDTxResult> {
     const cfg = this.resolveConfig(...options);
-    const keyPair = generateDualCurveDIDKeyPair();
+    const keyPair = generateDualCurveKeyPair();
     const didSigner = new DefaultProvider(keyPair.privateKeyHex);
     options = options.concat([(c) => {
       c.didSigner = didSigner;
     }]);
     if (cfg.enableP256VM && keyPair.p256PublicKeyXY) {
       const didAddr = addressFromPublicKeyHex(keyPair.publicKeyHex);
-      const p256VM = newP256MultikeyVM(toDID(cfg.method || DefaultMethod, didAddr), '#key-2', keyPair.p256PublicKeyXY);
+      const p256VM = newP256MultikeyVM(toDID(cfg.method, didAddr), '#key-2', keyPair.p256PublicKeyXY);
       options = options.concat([(c) => {
         c.extraVMs = c.extraVMs.concat(newSpec(p256VM));
       }]);

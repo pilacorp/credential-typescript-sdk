@@ -141,7 +141,7 @@ describe('resolveSigningVM', () => {
     ).rejects.toThrow(/was revoked at 2026-01-01T00:00:00Z/);
   });
 
-  it('rejects a hard revocation reason even without a timestamp', async () => {
+  it('looks only at the revoked timestamp when signing (Go parity: a bare keyCompromise reason is not refused)', async () => {
     const hard: DIDDocument = {
       ...doc,
       verificationMethod: [
@@ -154,9 +154,8 @@ describe('resolveSigningVM', () => {
       ],
       assertionMethod: [`${did}#key-1`],
     };
-    await expect(
-      resolveSigningVM(did, 'assertionMethod', 'key-1', new StubResolver(hard)),
-    ).rejects.toThrow(/hard reason 'keyCompromise'/);
+    const { url } = await resolveSigningVM(did, 'assertionMethod', 'key-1', new StubResolver(hard));
+    expect(url).toBe(`${did}#key-1`);
   });
 
   it('accepts a pinned active kid', async () => {

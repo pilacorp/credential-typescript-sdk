@@ -1,6 +1,6 @@
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '../../src/common/crypto/hex';
-import { DIDDocument, ResolverProvider } from '../../src/common/verification-method';
+import { DIDDocument, ResolverProvider, StaticResolver } from '../../src/common/verification-method';
 import { JWTPresentation } from '../../src/vp/jwt-presentation';
 import { JSONPresentation } from '../../src/vp/json-presentation';
 import { ErrorCode } from '../../src/common/errors';
@@ -8,13 +8,6 @@ import { DefaultProvider } from '../../src/common/signer/default-provider';
 
 const HOLDER_PRIV = '5555555555555555555555555555555555555555555555555555555555555555';
 const HOLDER = 'did:example:holder';
-
-class StaticResolver implements ResolverProvider {
-  constructor(private readonly doc: DIDDocument) {}
-  async resolveDocument(): Promise<DIDDocument> {
-    return this.doc;
-  }
-}
 
 function holderDid(): DIDDocument {
   const pubHex = bytesToHex(secp256k1.getPublicKey(hexToBytes(HOLDER_PRIV), false));

@@ -4,6 +4,7 @@ import type { DIDDocument } from '../../common/verification-method';
 import { bytesToHex, hexToBytes } from '../../common/crypto/hex';
 import type { SignerProvider } from '../signer';
 import { checkDID, didAddress, docHash } from './document';
+import { wrapSentinel } from './errors';
 
 export const rootConsentPrefix = 'Sub-DID ';
 const rootConsentKey = 'rootConsent';
@@ -77,17 +78,17 @@ export function verifyRootConsent(subDoc: DIDDocument, rootDID: string): void {
   try {
     checkDID(rootDID);
   } catch (e) {
-    throw wrap(ErrConsentInvalid, `root DID: ${(e as Error).message}`);
+    throw wrap(ErrConsentInvalid, `root DID: ${(e as Error).message}`, e);
   }
   try {
     checkDID(subDoc.id);
   } catch (e) {
-    throw wrap(ErrConsentInvalid, `Sub-DID: ${(e as Error).message}`);
+    throw wrap(ErrConsentInvalid, `Sub-DID: ${(e as Error).message}`, e);
   }
   try {
     checkSigner(rootConsentDigest(subDoc.id), sig, didAddress(rootDID));
   } catch (e) {
-    throw wrap(ErrConsentInvalid, (e as Error).message);
+    throw wrap(ErrConsentInvalid, (e as Error).message, e);
   }
 }
 
@@ -107,19 +108,19 @@ export function verifyDocumentSignature(doc: DIDDocument | null | undefined, sig
   try {
     normalized = normalizeSignature(sig);
   } catch (e) {
-    throw wrap(ErrPossessionInvalid, (e as Error).message);
+    throw wrap(ErrPossessionInvalid, (e as Error).message, e);
   }
   if (!doc) throw wrap(ErrPossessionInvalid, 'document is nil');
   let h: string;
   try {
     h = docHash(doc);
   } catch (e) {
-    throw wrap(ErrPossessionInvalid, (e as Error).message);
+    throw wrap(ErrPossessionInvalid, (e as Error).message, e);
   }
   try {
     checkSigner(signatureDigest(h), normalized, didAddress(doc.id));
   } catch (e) {
-    throw wrap(ErrPossessionInvalid, (e as Error).message);
+    throw wrap(ErrPossessionInvalid, (e as Error).message, e);
   }
 }
 
@@ -130,6 +131,6 @@ function checkSigner(digest: Uint8Array, storedSig: Uint8Array, address: string)
   }
 }
 
-function wrap(base: Error, detail: string): Error {
-  return new Error(`${base.message}: ${detail}`);
+function wrap(base: Error, detail: string, cause?: unknown): Error {
+  return wrapSentinel(detail, cause, base);
 }

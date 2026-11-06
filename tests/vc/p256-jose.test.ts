@@ -4,6 +4,7 @@ import { P256Provider } from '../../src/common/signer/p256-provider';
 import {
   DIDDocument,
   ResolverProvider,
+  StaticResolver
 } from '../../src/common/verification-method';
 import { encodeP256PublicMultibase } from '../../src/common/verification-method/multikey';
 import { JSONCredential } from '../../src/vc/json-credential';
@@ -16,13 +17,6 @@ const ISSUER = 'did:example:p256-issuer';
 const SUBJECT = 'did:example:subject';
 const P256_PRIV = '1111111111111111111111111111111111111111111111111111111111111111';
 const SECP_PRIV = '4646464646464646464646464646464646464646464646464646464646464646';
-
-class StaticResolver implements ResolverProvider {
-  constructor(private readonly doc: DIDDocument) {}
-  async resolveDocument(): Promise<DIDDocument> {
-    return this.doc;
-  }
-}
 
 function p256Did(): DIDDocument {
   const pub = p256.getPublicKey(hexToBytes(P256_PRIV), false);

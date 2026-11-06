@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
-import { getAddress, getBytes, isAddress, keccak256, solidityPacked, hexlify, concat } from 'ethers';
+import { getBytes, keccak256, solidityPacked, hexlify, concat } from 'ethers';
 import { bytesToHex } from '../common/crypto/hex';
+import { isHexAddress, toEthersAddress } from './address';
 import type { DIDType } from './types';
 import type { SignerProvider } from './signer';
 
@@ -24,9 +25,9 @@ export interface IssuerSignature {
 }
 
 export function validateIssueDIDPayload(p: IssueDIDPayload): void {
-  if (!isAddress(p.contractAddress)) throw new Error(`invalid contract address: ${p.contractAddress}`);
-  if (!isAddress(p.issuerAddress)) throw new Error(`invalid issuer address: ${p.issuerAddress}`);
-  if (!isAddress(p.didAddress)) throw new Error(`invalid did address: ${p.didAddress}`);
+  if (!isHexAddress(p.contractAddress)) throw new Error(`invalid contract address: ${p.contractAddress}`);
+  if (!isHexAddress(p.issuerAddress)) throw new Error(`invalid issuer address: ${p.issuerAddress}`);
+  if (!isHexAddress(p.didAddress)) throw new Error(`invalid did address: ${p.didAddress}`);
   if (p.capId.length !== CapIDLength * 2 + 2) {
     throw new Error(`invalid cap id length: expected ${CapIDLength}, got ${p.capId.length}`);
   }
@@ -46,10 +47,10 @@ export function buildIssueDIDPayload(input: IssueDIDPayload): Uint8Array {
   validateIssueDIDPayload(input);
   const packed = solidityPacked(
     ['string', 'address', 'address', 'uint8', 'uint64', 'bytes32'],
-    [CapCreateAction, input.issuerAddress, input.didAddress, input.didType, input.epoch, input.capId],
+    [CapCreateAction, toEthersAddress(input.issuerAddress), toEthersAddress(input.didAddress), input.didType, input.epoch, input.capId],
   );
   const prefix = new Uint8Array([0x19, 0x00]);
-  const addressBytes = Buffer.from(getAddress(input.contractAddress).slice(2), 'hex');
+  const addressBytes = Buffer.from(toEthersAddress(input.contractAddress).slice(2), 'hex');
   return getBytes(concat([prefix, addressBytes, packed]));
 }
 

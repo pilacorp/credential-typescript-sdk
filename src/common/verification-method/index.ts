@@ -6,3 +6,4 @@ export * from './vm-lookup';
 export * from './revocation';
 export * from './key-material';
 export * from './multikey';
+export * from './static-resolver';

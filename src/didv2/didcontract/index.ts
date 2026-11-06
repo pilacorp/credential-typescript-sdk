@@ -8,12 +8,12 @@ import {
   getBytes,
   hexlify,
   id,
-  isAddress,
   keccak256,
   toBeHex,
   zeroPadValue,
   type InterfaceAbi,
 } from 'ethers';
+import { isHexAddress, toEthersAddress } from '../address';
 import type { SignerProvider } from '../signer';
 import type { DIDType } from '../types';
 import type { IssuerSignature } from '../issuer';
@@ -86,7 +86,7 @@ const abi = (artifact as { abi: InterfaceAbi }).abi;
 const iface = new Interface(abi);
 
 export function validateContractConfig(cfg: ContractConfig): void {
-  if (!isAddress(cfg.contractAddress)) throw new Error('contract address is required');
+  if (!isHexAddress(cfg.contractAddress)) throw new Error('contract address is required');
   if (cfg.chainId <= 0n) throw new Error('chain ID must be greater than 0, it\'s required');
 }
 
@@ -113,7 +113,7 @@ export class Contract {
     if (!req) throw new Error('CreateDIDRequest is required');
     validateCreateDIDRequest(req);
     const data = iface.encodeFunctionData('createDID', [
-      req.issuerAddress,
+      toEthersAddress(req.issuerAddress),
       req.didType,
       hexToBytes32(req.docHash),
       hexToBytes32(req.capId),
@@ -129,7 +129,7 @@ export class Contract {
     if (!req) throw new Error('SetDocumentHashRequest is required');
     validateSetDocumentHashRequest(req);
     const data = iface.encodeFunctionData('setDocumentHash', [
-      req.didAddress,
+      toEthersAddress(req.didAddress),
       hexToBytes32(req.docHash),
       hexToBytes32(req.capId),
       Number(req.issuerSig.v),
@@ -147,7 +147,7 @@ export class Contract {
     if (!req) throw new Error('SetDocumentHashByIssuerRequest is required');
     validateSetDocumentHashByIssuerRequest(req);
     const data = iface.encodeFunctionData('setDocumentHashByIssuer', [
-      req.didAddress,
+      toEthersAddress(req.didAddress),
       hexToBytes32(req.docHash),
     ]);
     return signLegacyTx(this.cfg, txSigner, req.nonce, data);
@@ -156,7 +156,7 @@ export class Contract {
   async getCapabilityEpoch(signerAddr: string): Promise<bigint> {
     if (!signerAddr) throw new Error('signer address is required');
     if (!this.provider) throw new Error('RPC client is not initialized, please check RPC URL and try again');
-    const data = iface.encodeFunctionData('getCapabilityEpoch', [signerAddr]);
+    const data = iface.encodeFunctionData('getCapabilityEpoch', [toEthersAddress(signerAddr)]);
     const out = await this.provider.call({ to: this.cfg.contractAddress, data });
     const decoded = iface.decodeFunctionResult('getCapabilityEpoch', out);
     return BigInt(decoded[0]);
@@ -179,29 +179,33 @@ export async function hasRole(
   role: string,
   account: string,
 ): Promise<boolean> {
-  const data = iface.encodeFunctionData(HAS_ROLE_METHOD, [role, account]);
-  const out = await caller.call({ to: registry, data });
+  const data = iface.encodeFunctionData(HAS_ROLE_METHOD, [role, toEthersAddress(account)]);
+  const out = await caller.call({ to: toEthersAddress(registry), data });
   const bytes = getBytes(out);
   if (bytes.length !== 32) {
     throw new Error(`didcontract: ${HAS_ROLE_METHOD} returned ${bytes.length} bytes, want 32`);
   }
-  const decoded = iface.decodeFunctionResult(HAS_ROLE_METHOD, out);
-  return Boolean(decoded[0]);
+  // Go's ABI unpack accepts only a 0/1 word as bool; ethers would call any non-zero word true.
+  if (bytes.slice(0, 31).some((b) => b !== 0) || bytes[31] > 1) {
+    throw new Error(`didcontract: unpack ${HAS_ROLE_METHOD}: improperly encoded boolean value`);
+  }
+  return bytes[31] === 1;
 }
 
 export function decodeWriterAnchors(receipt: TransactionReceiptLike | null, registry: string): WriterAnchor[] {
   if (!receipt) throw new Error('didcontract: receipt is nil');
-  if (!registry || registry === '0x0000000000000000000000000000000000000000') {
+  if (!registry || /^(0x)?0{40}$/i.test(registry)) {
     throw new Error('didcontract: registry address is zero');
   }
   const event = iface.getEvent(WRITER_ANCHOR_EVENT);
   if (!event) throw new Error('didcontract: missing BatchSubtreesAnchoredByWriter');
   const eventId = event.topicHash;
-  const registryAddr = getAddress(registry);
+  const registryAddr = toEthersAddress(registry);
   const anchors: WriterAnchor[] = [];
   for (const log of receipt.logs) {
     if (!log) continue;
-    if (getAddress(log.address) !== registryAddr) continue;
+    // A log whose address is malformed cannot be the registry's: skip it.
+    if (!isHexAddress(log.address) || toEthersAddress(log.address) !== registryAddr) continue;
     if (!log.topics.length || log.topics[0] !== eventId) continue;
     anchors.push(...decodeWriterLog(log));
   }
@@ -254,7 +258,7 @@ async function signLegacyTx(
 ): Promise<SignedTransaction> {
   const tx = Transaction.from({
     type: 0,
-    to: getAddress(cfg.contractAddress),
+    to: toEthersAddress(cfg.contractAddress),
     data,
     nonce: Number(nonce),
     gasLimit: cfg.gasLimit,
@@ -274,7 +278,7 @@ function hexLen(s: string): number {
 }
 
 export function validateCreateDIDRequest(r: CreateDIDRequest): void {
-  if (!isAddress(r.issuerAddress)) throw new Error(`invalid issuer address: ${r.issuerAddress}`);
+  if (!isHexAddress(r.issuerAddress)) throw new Error(`invalid issuer address: ${r.issuerAddress}`);
   if (!r.issuerSig || r.issuerSig.v === undefined || r.issuerSig.r === undefined || r.issuerSig.s === undefined) {
     throw new Error('issuer signature V, R, S are required');
   }
@@ -287,7 +291,7 @@ export function validateCreateDIDRequest(r: CreateDIDRequest): void {
 }
 
 export function validateSetDocumentHashRequest(r: SetDocumentHashRequest): void {
-  if (!isAddress(r.didAddress)) throw new Error(`invalid did address: ${r.didAddress}`);
+  if (!isHexAddress(r.didAddress)) throw new Error(`invalid did address: ${r.didAddress}`);
   if (!r.issuerSig || r.issuerSig.v === undefined || r.issuerSig.r === undefined || r.issuerSig.s === undefined) {
     throw new Error('issuer signature V, R, S are required');
   }
@@ -300,7 +304,7 @@ export function validateSetDocumentHashRequest(r: SetDocumentHashRequest): void 
 }
 
 export function validateSetDocumentHashByIssuerRequest(r: SetDocumentHashByIssuerRequest): void {
-  if (!isAddress(r.didAddress)) throw new Error(`invalid did address: ${r.didAddress}`);
+  if (!isHexAddress(r.didAddress)) throw new Error(`invalid did address: ${r.didAddress}`);
   if (hexLen(r.docHash) !== DocHashHexLength) {
     throw new Error(`invalid docHash length: expected ${DocHashHexLength} hex chars (32 bytes), got ${hexLen(r.docHash)}`);
   }

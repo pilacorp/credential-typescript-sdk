@@ -22,6 +22,9 @@ export class DefaultProvider implements SignerProvider {
     if (compact.length !== 65) {
       throw new Error(`invalid signature length: expected 65 bytes, got ${compact.length}`);
     }
+    // Go's crypto.Sign returns the recovery id (0/1), not 27/28; consumers
+    // (signatureFromBytes, ethers Signature.from) normalize it themselves.
+    compact[64] -= 27;
     return compact;
   }
 

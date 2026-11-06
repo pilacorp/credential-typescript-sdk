@@ -35,6 +35,11 @@ export function decodeP256SecretMultibase(multibase: string): Uint8Array {
   if (d.length !== 32) {
     throw new Error(`multikey: p256 secret key must be 32 bytes, got ${d.length}`);
   }
+  // Like Go's ecdh.P256().NewPrivateKey: the scalar must be in [1, n-1].
+  const scalar = BigInt(`0x${Buffer.from(d).toString('hex')}`);
+  if (scalar === 0n || scalar >= p256.CURVE.n) {
+    throw new Error('multikey: invalid p256 secret key: scalar out of range');
+  }
   return d;
 }
 
