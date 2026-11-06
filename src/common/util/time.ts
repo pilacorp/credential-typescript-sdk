@@ -36,10 +36,11 @@ export function formatRFC3339Nano(date: Date): string {
 }
 
 const RFC3339 =
-  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(?:Z|([+-])(\d{2}):(\d{2}))$/;
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:[.,](\d+))?(?:Z|([+-])(\d{2}):(\d{2}))$/;
 
 /**
- * Strict RFC 3339 (Go `time.Parse(time.RFC3339, ...)`): `T` separator, a
+ * Strict RFC 3339 (Go `time.Parse(time.RFC3339, ...)`, which also takes a ','
+ * fraction separator): `T` separator, a
  * mandatory zone, real calendar values. Returns nanoseconds since the epoch,
  * which `Date` (milliseconds) cannot hold. Throws if invalid.
  */

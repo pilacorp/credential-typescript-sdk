@@ -33,7 +33,8 @@ import {
 } from '../verification-method';
 import { serializeProofs } from '../util/vc';
 import { JSONMap } from '../util/json';
-import { formatRFC3339 } from '../util/time';
+import { formatRFC3339, parseRFC3339Nanos } from '../util/time';
+import { revokedNanos } from '../verification-method/verification-method';
 
 const PROOF_FIELD = 'proof';
 
@@ -874,7 +875,7 @@ export function parseRawToProof(proof: unknown): Proof {
   return result;
 }
 
-function strictPurposeCheck(
+export function strictPurposeCheck(
   doc: DIDDocument,
   vm: VerificationMethodEntry,
   proofPurpose: string,
@@ -886,13 +887,16 @@ function strictPurposeCheck(
     );
   }
   if (vm.revoked) {
-    const created = new Date(proofCreated);
-    if (isNaN(created.getTime())) {
-      throw new Error(`invalid proof.created timestamp '${proofCreated}'`);
+    // Go: time.Parse(RFC3339) then !created.Before(revoked) — nanosecond-exact.
+    let created: bigint;
+    try {
+      created = parseRFC3339Nanos(proofCreated);
+    } catch (e) {
+      throw new Error(`invalid proof.created timestamp '${proofCreated}': ${(e as Error).message}`);
     }
-    if (created.getTime() >= vm.revoked.getTime()) {
+    if (created >= revokedNanos(vm)) {
       throw new Error(
-        `verification method '${vm.id}' was revoked at ${vm.revoked.toISOString()}; proof.created ${created.toISOString()} is not earlier`,
+        `verification method '${vm.id}' was revoked at ${formatRFC3339(vm.revoked)}; proof.created ${formatRFC3339(new Date(Number(created / 1_000_000n)))} is not earlier`,
       );
     }
   }

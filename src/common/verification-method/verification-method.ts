@@ -3,6 +3,8 @@
  * credential/common/verification-method/verification_method.go
  */
 
+import { parseRFC3339Nanos } from '../util/time';
+
 export interface JWK {
   kty: string;
   crv?: string;
@@ -68,6 +70,24 @@ export function parseRFC3339Strict(value: string): { date: Date; text: string } 
   const date = new Date(dt.getTime() - offMin * 60_000);
   const off = offMin === 0 ? 'Z' : m[8];
   return { date, text: `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}${frac ? `.${frac}` : ''}${off}` };
+}
+
+/**
+ * `revoked` in nanoseconds since the epoch. Uses the original RFC3339Nano text
+ * (full precision, like Go's time.Time) while it still denotes the same instant
+ * as the `revoked` Date; otherwise falls back to the Date at ms precision.
+ */
+export function revokedNanos(vm: VerificationMethodEntry): bigint {
+  const ms = BigInt(vm.revoked!.getTime());
+  if (vm.revokedText) {
+    try {
+      const n = parseRFC3339Nanos(vm.revokedText);
+      if (n / 1_000_000n === ms || (n < 0n && (n - 999_999n) / 1_000_000n === ms)) return n;
+    } catch {
+      /* stale text: fall through */
+    }
+  }
+  return ms * 1_000_000n;
 }
 
 /** Parse a raw resolver response into a typed DIDDocument. */
