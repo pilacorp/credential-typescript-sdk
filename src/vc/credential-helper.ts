@@ -4,12 +4,11 @@
  * Serialization helpers between CredentialContents (structured) and
  * CredentialData (JSON map), plus schema/revocation/expiration checks.
  */
-import Ajv2020 from 'ajv/dist/2020';
-import addFormats from 'ajv-formats';
-import { fetchAndCheckRevocation } from '../common/credential-status';
+import { fetchAndCheckRevocation, parseStatusListIndex } from '../common/credential-status';
 import { copyExcept, JSONMap, shallowCopyObj, splitJSONObj } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
-import { serializeContexts, serializeTypes } from '../common/util/vc';
+import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
+import { newGoAjv, prepareSchema, renderGoErrors } from './schema-validate';
 import type { ResolvedCredentialOptions } from './options';
 import type {
   CredentialContents,
@@ -17,6 +16,7 @@ import type {
   Schema,
   Status,
   Subject,
+  TermsOfUse,
 } from './types';
 
 /** Extract a dot-notation field from a nested JSON map. */
@@ -65,7 +65,16 @@ export function serializeCredentialContents(
     vcJSON.credentialSchema = serializeSchemas(vcc.schemas);
   }
   if (vcc.credentialStatus && vcc.credentialStatus.length > 0) {
+    vcc.credentialStatus.forEach((st, i) => {
+      if (!st.type) throw new Error(`credentialStatus[${i}].type is required`);
+    });
     vcJSON.credentialStatus = serializeStatuses(vcc.credentialStatus);
+  }
+  if (vcc.termsOfUse && vcc.termsOfUse.length > 0) {
+    vcc.termsOfUse.forEach((term, i) => {
+      if (!term.type) throw new Error(`termsOfUse[${i}].type is required`);
+    });
+    vcJSON.termsOfUse = vcc.termsOfUse.map(serializeTermsOfUse);
   }
   if (vcc.validFrom) {
     vcJSON.validFrom = formatRFC3339(vcc.validFrom);
@@ -139,6 +148,13 @@ function serializeStatus(status: Status): CredentialData {
   return out;
 }
 
+/** Serialize a termsOfUse entry; type is required by the W3C data model. */
+function serializeTermsOfUse(term: TermsOfUse): CredentialData {
+  const out: CredentialData = { type: term.type };
+  if (term.id) out.id = term.id;
+  return out;
+}
+
 export function subjectFromJSON(subjectObj: CredentialData): Subject {
   const [flds, rest] = splitJSONObj(subjectObj, 'id');
   let id = '';
@@ -151,6 +167,20 @@ export function subjectFromJSON(subjectObj: CredentialData): Subject {
   return { id, customFields: rest };
 }
 
+function isEmptyValue(v: unknown): boolean {
+  if (v === undefined || v === null || v === '') return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.keys(v as object).length === 0;
+  return false;
+}
+
+/** Required on every credential by VCDM 2.0 (go requireCredentialProperties). */
+export function requireCredentialProperties(m: CredentialData): void {
+  for (const p of ['@context', 'type', 'issuer', 'credentialSubject']) {
+    if (isEmptyValue(m[p])) throw new Error(`credential is missing ${p}`);
+  }
+}
+
 // ---- Validation ----
 
 export async function validateCredential(
@@ -158,104 +188,89 @@ export async function validateCredential(
   opts: ResolvedCredentialOptions,
 ): Promise<void> {
   const copyMap = shallowCopyObj(m);
-  const requiredKeys = ['type', 'credentialSchema', 'credentialSubject'];
-  let schemaList: unknown[] = [];
-  for (const key of requiredKeys) {
-    if (!(key in copyMap)) {
-      throw new Error(`${key} is required`);
-    }
-    if (key === 'credentialSchema') {
-      schemaList = convertToArray(copyMap[key]);
-    }
+  // credentialSchema is optional per VCDM 2.0 §4.11, but this path exists to
+  // validate against it, so here it is required (go validateCredential).
+  for (const key of ['credentialSchema', '@context', 'type', 'issuer', 'credentialSubject']) {
+    if (isEmptyValue(copyMap[key])) throw new Error(`${key} is required`);
   }
-
-  // Drop the proof field before validating — schemas typically don't include it.
-  const validationDoc = copyExcept(copyMap, 'proof');
-
-  // Mirror Go SDK's gojsonschema.NewReferenceLoader: identify each fetched
-  // schema by its URL and resolve any `$ref` (including cross/self refs)
-  // by re-fetching through the same loader.
-  const ajv = new Ajv2020({
-    strict: false,
-    allErrors: true,
-    loadSchema: async (uri: string) => {
-      const bytes = await loadSchemaBytes(uri, opts);
-      const json = JSON.parse(Buffer.from(bytes).toString('utf8'));
-      if (typeof json === 'object' && json !== null && !('$id' in json)) {
-        json.$id = uri;
-      }
-      return json;
-    },
-  });
-  addFormats(ajv);
+  const schemaList = convertToArray(copyMap.credentialSchema);
 
   for (const schema of schemaList) {
-    if (typeof schema !== 'object' || schema === null) {
-      throw new Error('credentialSchema entry must be an object');
+    // Go round-trips each entry through json into map[string]interface{}.
+    if (schema !== null && (typeof schema !== 'object' || Array.isArray(schema))) {
+      throw new Error(`failed to unmarshal schema: json: cannot unmarshal ${jsonKind(schema)} into Go value of type map[string]interface {}`);
     }
-    const schemaMap = schema as JSONMap;
-    const id = schemaMap.id;
+    const id = (schema as JSONMap | null)?.id;
+    if (id === undefined || id === null) throw new Error('credentialSchema.id is required');
     if (typeof id !== 'string' || id === '') {
       throw new Error('credentialSchema.id must be a non-empty string');
     }
-    const schemaBytes = await loadSchemaBytes(id, opts);
-    const schemaJSON = JSON.parse(Buffer.from(schemaBytes).toString('utf8'));
-    if (typeof schemaJSON === 'object' && schemaJSON !== null && !('$id' in schemaJSON)) {
-      schemaJSON.$id = id;
-    }
-    let validator;
+
+    // Custom loader only supplies the root schema; gojsonschema fetches every $ref itself.
+    let raw: unknown;
     try {
-      validator = ajv.getSchema(id) ?? (await ajv.compileAsync(schemaJSON));
+      let bytes: Uint8Array;
+      if (opts.schemaLoader) bytes = await loadCustom(id, opts);
+      else bytes = await loadReference(id);
+      raw = JSON.parse(Buffer.from(bytes).toString('utf8'));
     } catch (err) {
-      throw new Error(
-        `failed to compile schema: ${(err as Error).message}`,
-      );
+      if ((err as Error).message.startsWith('failed to load schema via custom loader')) throw err;
+      throw new Error(`failed to validate schema: ${(err as Error).message}`);
     }
-    const valid = validator(validationDoc);
-    if (!valid) {
-      const message = validator.errors
-        ? validator.errors.map((e) => `${e.instancePath} ${e.message}`).join(', ')
-        : 'unknown';
-      throw new Error(`credential validation failed: ${message}`);
+    let validate;
+    try {
+      const ajv = newGoAjv(async (uri) => JSON.parse(Buffer.from(await loadReference(uri)).toString('utf8')));
+      const prepared = prepareSchema(raw);
+      if (typeof prepared === 'object' && !('$id' in prepared)) prepared.$id = id;
+      validate = await ajv.compileAsync(prepared as object);
+    } catch (err) {
+      throw new Error(`failed to validate schema: ${(err as Error).message}`);
+    }
+    // The whole document is validated, proof included, like Go.
+    if (!validate(copyMap)) {
+      throw new Error(`credential validation failed: [${renderGoErrors(validate.errors ?? []).join(' ')}]`);
     }
   }
 }
 
-async function loadSchemaBytes(
-  id: string,
-  opts: ResolvedCredentialOptions,
-): Promise<Uint8Array> {
-  if (opts.schemaLoader) {
-    const bytes = await opts.schemaLoader(id);
-    if (!bytes || bytes.length === 0) {
-      throw new Error('failed to load schema via custom loader: schema is empty');
+function jsonKind(v: unknown): string {
+  return typeof v === 'number' ? 'number' : typeof v === 'string' ? 'string' : typeof v === 'boolean' ? 'bool' : 'array';
+}
+
+async function loadCustom(id: string, opts: ResolvedCredentialOptions): Promise<Uint8Array> {
+  let bytes: Uint8Array;
+  try {
+    bytes = await opts.schemaLoader!(id);
+  } catch (err) {
+    throw new Error(`failed to load schema via custom loader: ${(err as Error).message}`);
+  }
+  if (!bytes || bytes.length === 0) {
+    throw new Error('failed to load schema via custom loader: schema is empty');
+  }
+  return bytes;
+}
+
+/** gojsonschema.NewReferenceLoader: http(s) is fetched, anything else is read as a file path. */
+async function loadReference(id: string): Promise<Uint8Array> {
+  if (/^https?:\/\//i.test(id)) {
+    const resp = await fetch(id);
+    if (!resp.ok) {
+      throw new Error(`Could not read schema from HTTP, response status is ${resp.status} ${resp.statusText}`);
     }
-    return bytes;
+    return new Uint8Array(Buffer.from(await resp.arrayBuffer()));
   }
-  const resp = await fetch(id);
-  if (!resp.ok) {
-    throw new Error(`failed to fetch schema: ${resp.status} ${resp.statusText}`);
-  }
-  const buf = Buffer.from(await resp.arrayBuffer());
-  return new Uint8Array(buf);
+  const { readFile } = await import('node:fs/promises');
+  const { fileURLToPath } = await import('node:url');
+  return new Uint8Array(await readFile(id.startsWith('file://') ? fileURLToPath(id) : id));
 }
 
 // ---- Expiration ----
 
-export function checkExpiration(c: CredentialData): void {
-  const validFrom = parseStringField(c, 'validFrom');
-  if (validFrom) {
-    const t = new Date(validFrom);
-    if (isNaN(t.getTime())) throw new Error(`failed to parse validFrom`);
-    if (Date.now() < t.getTime()) throw new Error('credential is not valid yet');
-  }
-  const validUntil = parseStringField(c, 'validUntil');
-  if (validUntil) {
-    const t = new Date(validUntil);
-    if (isNaN(t.getTime())) throw new Error(`failed to parse validUntil`);
-    if (Date.now() > t.getTime()) throw new Error('credential is expired');
-  }
+export function checkExpiration(c: CredentialData, leewayMs = 0): void {
+  checkValidityPeriod(c, 'credential', leewayMs);
 }
+
+export { checkJwtTimeClaims } from '../common/util/vc';
 
 // ---- Revocation ----
 
@@ -276,8 +291,10 @@ export async function checkRevocation(c: CredentialData): Promise<void> {
   if (typeof statusListIndex !== 'string' || !statusListIndex) {
     throw new Error('credentialStatus.statusListIndex is required');
   }
-  const position = parseInt(statusListIndex, 10);
-  if (!Number.isInteger(position)) {
+  let position: number;
+  try {
+    position = parseStatusListIndex(statusListIndex);
+  } catch {
     throw new Error('invalid credentialStatus.statusListIndex');
   }
   const isRevoked = await fetchAndCheckRevocation(statusListCredential, position);

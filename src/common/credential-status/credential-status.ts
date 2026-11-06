@@ -63,13 +63,16 @@ export async function fetchAndCheckRevocation(
   return isRevoked(position, resp.data.credentialSubject);
 }
 
-export function isRevoked(
-  position: number,
-  subject: StatusListCredentialSubject,
-): boolean {
-  if (subject.statusPurpose !== 'revocation') return false;
+/** Go `strconv.Atoi`: optional sign then digits only ("12abc", " 1", "1.5" are errors). */
+export function parseStatusListIndex(s: string): number {
+  if (!/^[+-]?\d+$/.test(s)) throw new Error(`invalid statusListIndex: ${JSON.stringify(s)}`);
+  const n = Number(s);
+  if (!Number.isSafeInteger(n)) throw new Error(`invalid statusListIndex: ${JSON.stringify(s)}`);
+  return n;
+}
 
-  const byteString = decompressFromBase64URL(subject.encodedList);
+export function bitAt(position: number, encodedList: string): boolean {
+  const byteString = decompressFromBase64URL(encodedList);
   const maxPosition = byteString.length * 8 - 1;
   if (position < 0 || position > maxPosition) {
     throw new Error(
@@ -79,4 +82,25 @@ export function isRevoked(
   const byteIndex = Math.floor(position / 8);
   const bitIndex = position % 8;
   return ((byteString[byteIndex] >> bitIndex) & 1) === 1;
+}
+
+export function isRevoked(
+  position: number,
+  subject: StatusListCredentialSubject,
+): boolean {
+  if (subject.statusPurpose !== 'revocation') return false;
+  return bitAt(position, subject.encodedList);
+}
+
+export function isStatusSet(
+  position: number,
+  subject: StatusListCredentialSubject,
+  purpose = 'revocation',
+): boolean {
+  if (subject.statusPurpose !== purpose) return false;
+  return bitAt(position, subject.encodedList);
+}
+
+export function newStatusListClient(opts: ClientOptions = {}): StatusListClient {
+  return new StatusListClient(opts);
 }

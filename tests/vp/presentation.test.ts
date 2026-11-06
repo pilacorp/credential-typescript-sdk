@@ -7,6 +7,7 @@
  * stub that serves the issuer/holder DID Documents so this inner call
  * succeeds without hitting the network.
  */
+import { DefaultProvider } from '../../src/common/signer/default-provider';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { bytesToHex, hexToBytes } from '../../src/common/crypto/hex';
 import {
@@ -135,6 +136,27 @@ describe('JWTPresentation roundtrip', () => {
 });
 
 describe('JSONPresentation roundtrip', () => {
+  it('addCustomProof appends and does not re-verify the existing proof set', async () => {
+    const resolver = new StaticResolver(docsByDID);
+    const vp = await JSONPresentation.create(
+      { context: ['https://www.w3.org/ns/credentials/v2'], id: 'urn:uuid:replace', types: ['VerifiablePresentation'], holder: HOLDER },
+      { verificationMethodKey: 'key-1', resolver },
+    );
+    await vp.addProofByProvider(new DefaultProvider(HOLDER_PRIV), { verificationMethodKey: 'key-1', resolver });
+    const base = {
+      type: 'DataIntegrityProof',
+      cryptosuite: 'ecdsa-rdfc-2019',
+      created: '2024-01-01T00:00:00Z',
+      verificationMethod: `${HOLDER}#key-1`,
+      proofPurpose: 'authentication',
+    };
+    await expect(vp.addCustomProof({ ...base, proofValue: 'deadbeef' }, { resolver })).rejects.toThrow(/base58btc/);
+    await expect(vp.addCustomProof({ ...base, proofValue: 'zabc' }, { resolver, challenge: 'c' }))
+      .rejects.toThrow(/cannot be applied by addCustomProof/);
+    await vp.addCustomProof({ ...base, proofValue: 'zabc', challenge: 'c1' }, { resolver });
+    expect(((await vp.serialize()).proof as unknown[]).length).toBe(2);
+  });
+
   it('attaches an ECDSA proof and verifies it', async () => {
     const resolver = new StaticResolver(docsByDID);
 
@@ -149,7 +171,7 @@ describe('JSONPresentation roundtrip', () => {
       },
       { verificationMethodKey: 'key-1', resolver },
     );
-    await vc.addProof(ISSUER_PRIV, { verificationMethodKey: 'key-1', resolver });
+    await vc.addProofByProvider(new DefaultProvider(ISSUER_PRIV), { verificationMethodKey: 'key-1', resolver });
 
     const vp = await JSONPresentation.create(
       {
@@ -161,7 +183,7 @@ describe('JSONPresentation roundtrip', () => {
       },
       { verificationMethodKey: 'key-1', resolver },
     );
-    await vp.addProof(HOLDER_PRIV, { verificationMethodKey: 'key-1', resolver });
+    await vp.addProofByProvider(new DefaultProvider(HOLDER_PRIV), { verificationMethodKey: 'key-1', resolver });
 
     const serialized = await vp.serialize();
     expect((serialized as Record<string, unknown>).proof).toBeTruthy();

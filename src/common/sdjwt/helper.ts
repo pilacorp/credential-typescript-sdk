@@ -53,9 +53,12 @@ export function parse(raw: string): ParsedSDJWT {
   for (let i = 1; i < parts.length; i++) {
     const seg = parts[i].trim();
     if (seg === '') continue;
-    // Skip optional Key Binding JWT at the tail
+    // A trailing JWT after the disclosures is a key binding JWT. Skipping it
+    // would hand back a nil error for a binding nothing checked (go refuses too).
     if (i === parts.length - 1 && isJWT(seg) && i > 1) {
-      break;
+      throw new Error(
+        'SD-JWT carries a key binding JWT, which this SDK does not verify yet; present the credential without it',
+      );
     }
     disclosures.push(seg);
   }
@@ -70,14 +73,15 @@ export function buildSDJWTPresentation(
   selectedDisclosures: string[],
 ): string {
   let out = issuerSignedJWT;
-  let hasDisclosure = false;
   for (const sel of selectedDisclosures) {
     if (!sel) continue;
     out += '~' + sel;
-    hasDisclosure = true;
   }
-  if (hasDisclosure) out += '~';
-  return out;
+  return out + '~';
+}
+
+export function decodeDisclosures(disclosures: string[]): DecodedDisclosure[] {
+  return parseDisclosures(disclosures);
 }
 
 export function parseDisclosures(disclosures: string[]): DecodedDisclosure[] {

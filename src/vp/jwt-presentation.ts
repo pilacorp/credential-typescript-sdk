@@ -2,17 +2,22 @@
  * JWT verifiable presentation — Node port of vp/jwt_presentation.go.
  */
 import type { Proof } from '../common/dto/proof';
-import { JWTVerifier, newJWTSigner } from '../common/jwt';
+import { acceptSignature, JWTVerifier, resolveSigningKey, SigningKey } from '../common/jwt';
+import { sha256 } from '@noble/hashes/sha256';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
 import { JSONMap } from '../common/util/json';
 import {
-  normalizeVerificationMethodURL,
-  resolveVerificationMethodURL,
-} from '../common/verification-method';
-import { getOptions } from './options';
+  getOptions,
+  refuseOverwrite,
+  rejectBuildTimeOptions,
+  signingOptions,
+} from './options';
+import { checkAudience, checkChallenge } from './audience';
 import {
   checkExpiration,
+  checkJwtTimeClaims,
+  extractFieldFromMap,
   isJWTPresentation,
   serializePresentationContents,
   verifyCredentials,
@@ -22,17 +27,25 @@ import type {
   PresentationContents,
   PresentationData,
   PresentationOptions,
+  SignablePresentation,
 } from './types';
 
-export class JWTPresentation implements Presentation {
+export class JWTPresentation implements SignablePresentation {
   private signingInput: string;
   private payloadData: PresentationData;
   private signature: string;
+  private signingKey: SigningKey | null;
 
-  constructor(signingInput: string, payloadData: PresentationData, signature: string) {
+  constructor(
+    signingInput: string,
+    payloadData: PresentationData,
+    signature: string,
+    signingKey: SigningKey | null = null,
+  ) {
     this.signingInput = signingInput;
     this.payloadData = payloadData;
     this.signature = signature;
+    this.signingKey = signingKey;
   }
 
   static async create(
@@ -53,25 +66,29 @@ export class JWTPresentation implements Presentation {
       otherClaims.nbf = iat;
     }
     if (vpc.id) otherClaims.jti = vpc.id;
+    const bind = getOptions(opts);
+    if (bind.challenge) otherClaims.nonce = bind.challenge;
+    if (bind.domain) otherClaims.aud = bind.domain;
 
     const payload: JSONMap = { vp: m, ...otherClaims };
 
     const options = getOptions(opts);
-    let kid = options.verificationMethodKey;
-    if (!kid) {
-      if (!vpc.holder) throw new Error('holder is required to resolve VM');
-      kid = await resolveVerificationMethodURL(vpc.holder, 'authentication', options.resolver);
-    } else if (vpc.holder) {
-      kid = normalizeVerificationMethodURL(vpc.holder, kid);
-    }
+    if (!vpc.holder) throw new Error('holder is required to resolve VM');
+    const signingKey = await resolveSigningKey(
+      vpc.holder,
+      'authentication',
+      options.verificationMethodKey,
+      options.resolver,
+    );
 
-    const header = { typ: 'JWT', alg: 'ES256K', kid };
+    const header = { typ: 'JWT', alg: signingKey.alg, kid: signingKey.id };
     const headerEncoded = Buffer.from(JSON.stringify(header), 'utf8').toString('base64url');
     const payloadEncoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
     const pres = new JWTPresentation(
       headerEncoded + '.' + payloadEncoded,
       m as PresentationData,
       '',
+      signingKey,
     );
     await pres.executeOptions(opts);
     return pres;
@@ -118,9 +135,16 @@ export class JWTPresentation implements Presentation {
     opts: PresentationOptions = {},
   ): Promise<void> {
     if (!signer) throw new Error('signer provider cannot be nil');
-    const jwtSigner = newJWTSigner(signer);
-    const signature = await jwtSigner.signString(this.signingInput);
-    await this.executeOptions(opts);
+    rejectBuildTimeOptions(opts, false);
+    refuseOverwrite(this.signature, opts);
+
+    // challenge/domain are committed only after a successful sign.
+    const pending = this.pendingChallengeDomain(opts);
+    await this.executeOptions(signingOptions(opts));
+
+    const raw = await signer.sign(sha256(Buffer.from(pending.signingInput, 'utf8')));
+    const signature = acceptSignature(this.signingKey, pending.signingInput, raw);
+    this.signingInput = pending.signingInput;
     this.signature = signature;
   }
 
@@ -133,8 +157,21 @@ export class JWTPresentation implements Presentation {
     if (!proof.signature || proof.signature.length === 0) {
       throw new Error('proof signature cannot be empty');
     }
-    await this.executeOptions(opts);
-    this.signature = Buffer.from(proof.signature).toString('base64url');
+    rejectBuildTimeOptions(opts, true);
+    refuseOverwrite(this.signature, opts);
+    await this.executeOptions(signingOptions(opts));
+    this.signature = acceptSignature(this.signingKey, this.signingInput, proof.signature);
+  }
+
+  /** The signing input with the nonce/aud the call asks for, without committing it yet. */
+  private pendingChallengeDomain(opts: PresentationOptions): { signingInput: string } {
+    const options = getOptions(opts);
+    if (!options.challenge && !options.domain) return { signingInput: this.signingInput };
+    const { payload, header } = this.extractPayload();
+    if (options.challenge) payload.nonce = options.challenge;
+    if (options.domain) payload.aud = options.domain;
+    const payloadEncoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+    return { signingInput: header + '.' + payloadEncoded };
   }
 
   async verify(opts: PresentationOptions = {}): Promise<void> {
@@ -153,18 +190,40 @@ export class JWTPresentation implements Presentation {
     return 'JWT';
   }
 
+  extractField(path: string): unknown {
+    return extractFieldFromMap(this.payloadData, path);
+  }
+
+  private extractPayload(): { payload: JSONMap; header: string } {
+    const parts = this.signingInput.split('.');
+    if (parts.length !== 2) throw new Error('invalid signing input format');
+    let payload: JSONMap;
+    try {
+      payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    } catch (err) {
+      throw new Error(`failed to decode payload: ${(err as Error).message}`);
+    }
+    return { payload, header: parts[0] };
+  }
+
   async executeOptions(opts: PresentationOptions = {}): Promise<void> {
     const options = getOptions(opts);
     if (options.validateVC) {
-      await verifyCredentials(this.payloadData);
+      await verifyCredentials(this.payloadData, options);
     }
     if (options.checkExpiration) {
-      checkExpiration(this.payloadData);
+      const { payload } = this.extractPayload();
+      checkJwtTimeClaims(payload, options.clockSkewLeewayMs);
+      checkExpiration(this.payloadData, options.clockSkewLeewayMs);
     }
     if (options.verifyProof) {
+      if (!this.signature) throw new Error('presentation is not signed');
       const serialized = await this.serialize();
       const verifier = new JWTVerifier(options.resolver);
       await verifier.verifyJWT(serialized);
+      const { payload } = this.extractPayload();
+      checkChallenge(payload.nonce, options.expectedChallenge);
+      checkAudience(payload.aud, options);
     }
   }
 }

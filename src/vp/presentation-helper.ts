@@ -3,9 +3,12 @@
  */
 import { JSONMap } from '../common/util/json';
 import { formatRFC3339 } from '../common/util/time';
-import { serializeContexts, serializeTypes } from '../common/util/vc';
+import { checkJwtTimeClaims, checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
 import { parseCredential } from '../vc/credential';
 import type { Credential } from '../vc/types';
+import { didFromField } from '../common/jsonmap/jsonmap';
+import { extractFieldFromMap } from '../vc/credential-helper';
+import type { ResolvedPresentationOptions } from './options';
 import type { PresentationContents, PresentationData } from './types';
 
 export function parseStringField(obj: PresentationData, fieldName: string): string {
@@ -17,22 +20,23 @@ export function parseStringField(obj: PresentationData, fieldName: string): stri
   return v;
 }
 
-export function checkExpiration(p: PresentationData): void {
-  const validFrom = parseStringField(p, 'validFrom');
-  if (validFrom) {
-    const t = new Date(validFrom);
-    if (isNaN(t.getTime())) throw new Error('failed to parse validFrom');
-    if (Date.now() < t.getTime()) throw new Error('presentation is not valid yet');
-  }
-  const validUntil = parseStringField(p, 'validUntil');
-  if (validUntil) {
-    const t = new Date(validUntil);
-    if (isNaN(t.getTime())) throw new Error('failed to parse validUntil');
-    if (Date.now() > t.getTime()) throw new Error('presentation is expired');
-  }
+export function checkExpiration(p: PresentationData, leewayMs = 0): void {
+  checkValidityPeriod(p, 'presentation', leewayMs);
 }
 
-export async function verifyCredentials(jsonPresentation: PresentationData): Promise<void> {
+export { checkJwtTimeClaims };
+
+export { extractFieldFromMap };
+
+/**
+ * Verifies each embedded credential (go verifyCredentials): the presentation's
+ * resolver and leeway first, then the caller's validateVC options, which win.
+ * Proof-only by default.
+ */
+export async function verifyCredentials(
+  jsonPresentation: PresentationData,
+  options: ResolvedPresentationOptions,
+): Promise<void> {
   const contents = await parsePresentationContents(jsonPresentation);
   const vcs = contents.verifiableCredentials ?? [];
   if (vcs.length === 0) throw new Error('credential input is empty');
@@ -40,7 +44,11 @@ export async function verifyCredentials(jsonPresentation: PresentationData): Pro
     const v = vcs[i];
     if (!v) throw new Error(`credential at index ${i} is nil`);
     try {
-      await v.verify({ validateSchema: true });
+      await v.verify({
+        resolver: options.resolver,
+        clockSkewLeewayMs: options.clockSkewLeewayMs,
+        ...options.vcOpts,
+      });
     } catch (err) {
       throw new Error(`failed to verify credential at index ${i}: ${(err as Error).message}`);
     }
@@ -75,17 +83,10 @@ export async function serializePresentationContents(
     const list: unknown[] = [];
     for (let i = 0; i < vpc.verifiableCredentials.length; i++) {
       const vc = vpc.verifiableCredentials[i];
-      const serialized = await vc.serialize();
-      list.push(serialized);
-      // Match Go's serializePresentationContents: verify each VC at VP
-      // build time using the SDK's default resolver. Configure it via
-      // `vc.init(baseURL)` (or pass a resolver into the VC's own options
-      // when constructing it) before adding the VC to a presentation.
-      try {
-        await vc.verify();
-      } catch (err) {
-        throw new Error(`failed to verify credential ${i}: ${(err as Error).message}`);
-      }
+      if (!vc) throw new Error(`credential at index ${i} is nil`);
+      // Building a presentation does not verify its credentials (go parity):
+      // pass validateVC to verify them, with the resolver you choose.
+      list.push(await vc.serialize());
     }
     vpJSON.verifiableCredential = list;
   }
@@ -114,7 +115,8 @@ export async function parsePresentationContents(
   } else if (vp.type !== undefined) {
     throw new Error('unsupported type field');
   }
-  if (typeof vp.holder === 'string') contents.holder = vp.holder;
+  const holder = didFromField(vp.holder);
+  if (holder) contents.holder = holder;
   if (typeof vp.validFrom === 'string') {
     contents.validFrom = new Date(vp.validFrom);
     if (isNaN(contents.validFrom.getTime())) throw new Error('failed to parse validFrom');
@@ -123,8 +125,12 @@ export async function parsePresentationContents(
     contents.validUntil = new Date(vp.validUntil);
     if (isNaN(contents.validUntil.getTime())) throw new Error('failed to parse validUntil');
   }
-  if (Array.isArray(vp.verifiableCredential)) {
-    contents.verifiableCredentials = await parseEmbeddedCredentials(vp.verifiableCredential);
+  // verifiableCredential may be a single credential or an array of them.
+  const embedded = vp.verifiableCredential;
+  if (embedded !== undefined && embedded !== null) {
+    contents.verifiableCredentials = await parseEmbeddedCredentials(
+      Array.isArray(embedded) ? embedded : [embedded],
+    );
   }
   return contents;
 }
@@ -161,3 +167,10 @@ export function isJSONPresentationBytes(raw: Uint8Array | string): boolean {
 }
 
 export type { JSONMap };
+
+/** A token that is not a plain JWT but has a JWT before its first "~" (SD-JWT shape). */
+export function isSDJWTShaped(valStr: string): boolean {
+  const trimmed = valStr.replace(/^"|"$/g, '');
+  const i = trimmed.indexOf('~');
+  return i >= 0 && isJWTPresentation(trimmed.slice(0, i));
+}

@@ -69,8 +69,8 @@ describe('buildSDJWTPresentation', () => {
   it('skips empty disclosures', () => {
     expect(buildSDJWTPresentation('a.b.c', ['d1', '', 'd2'])).toBe('a.b.c~d1~d2~');
   });
-  it('emits bare JWT when no disclosures supplied', () => {
-    expect(buildSDJWTPresentation('a.b.c', [])).toBe('a.b.c');
+  it('always terminates with ~ like Go BuildSDJWTPresentation', () => {
+    expect(buildSDJWTPresentation('a.b.c', [])).toBe('a.b.c~');
   });
 });
 
@@ -99,5 +99,25 @@ describe('buildDisclosures + reconstruct roundtrip', () => {
     const reconstructed = reconstruct(result.processedVC, result.disclosures, true);
     const reconstructedCS = reconstructed.credentialSubject as Record<string, unknown>;
     expect(reconstructedCS.email).toBe('alice@example.com');
+  });
+});
+
+describe('SD-JWT disclosure integrity', () => {
+  it('rejects disclosures that are not referenced by the issuer payload', () => {
+    const disclosure = encodeDisclosure(['salt', 'name', 'Alice']);
+    expect(() => reconstruct({ _sd: [] }, [disclosure], true)).toThrow(/matches nothing/);
+  });
+
+  it('rejects the same disclosure sent twice', () => {
+    const disclosure = encodeDisclosure(['salt', 'name', 'Alice']);
+    const digest = hashDisclosure('sha-256', disclosure);
+    expect(() => reconstruct({ _sd: [digest] }, [disclosure, disclosure], true)).toThrow(/sent more than once/);
+  });
+
+  it('rejects a digest referenced more than once in the payload', () => {
+    const disclosure = encodeDisclosure(['salt', 'name', 'Alice']);
+    const digest = hashDisclosure('sha-256', disclosure);
+    expect(() => reconstruct({ a: { _sd: [digest] }, b: { _sd: [digest] } }, [disclosure], true))
+      .toThrow(/referenced more than once/);
   });
 });

@@ -1,24 +1,20 @@
 # credential-typescript-sdk
 
 Node.js / TypeScript port của [`go-credential-sdk`](https://github.com/pilacorp/go-credential-sdk).
-Hỗ trợ issue & verify W3C Verifiable Credentials (VC) và Verifiable Presentations (VP) ở cả 2 định dạng:
+Hỗ trợ issue & verify W3C Verifiable Credentials (VC) và Verifiable Presentations (VP) ở các định dạng:
 
-- **JSON-LD** với `DataIntegrityProof` / cryptosuite `ecdsa-rdfc-2019` (URDNA2015 canonicalization + SHA-256 + secp256k1)
-- **JWT** ký bằng ES256K (secp256k1), kèm hỗ trợ **SD-JWT** (selective disclosure)
+- **JSON-LD** với `DataIntegrityProof` — cryptosuite `ecdsa-rdfc-2019` (URDNA2015 + SHA-256, secp256k1 hoặc P-256) và `ecdsa-sd-2023` (P-256, selective disclosure)
+- **JWT (VC 1.1)** ký bằng ES256K (`JWTCredential` / `JWTPresentation`)
+- **JOSE (VC 2.0, vc-jose-cose)**: `vc+jwt` / `vc+sd-jwt` và `vp+jwt` (`JOSECredential` / `JOSEPresentation`) — **SD-JWT chỉ được issue/đọc qua JOSE**; `JWTCredential` từ chối SD-JWT
+- Khóa **secp256k1**, **P-256** (Multikey / JWK) và **RSA** (JsonWebSignature2020, chỉ verify); signer ngoài (HSM/KMS) qua callback
 
 Ngoài VC/VP, SDK hiện cũng đã có:
 
-- **DID** helpers:
-  - derive DID từ public key
-  - build DID Document
-  - tạo payload `issuer_did/document/transaction`
-  - generate DID + signed Layer2 registration transaction
-  - re-generate registration transaction từ private key
-- **DIDComm** core:
-  - derive shared secret bằng **secp256k1**
-  - encrypt / decrypt JWE theo shape SDK Go cũ
+- **DID (v1)** helpers (`did`): derive DID từ public key, build DID Document, tạo payload `issuer_did/document/transaction`, generate DID + signed Layer2 registration transaction
+- **DIDv2** (`didv2`, port của `didv2` trong Go SDK): DID generator theo capability của issuer, DID Document nhiều verification method (secp256k1 `#key-1` + P-256 Multikey `#key-2`), thao tác VM (add / rotate / revoke / purposes), Sub-DID, DID registry contract
+- **DIDComm** core: derive shared secret bằng **secp256k1**, encrypt / decrypt JWE theo shape SDK Go cũ
 
-Pipeline canonicalization đã được kiểm tra parity byte-for-byte với Go SDK — xem [`scripts/canonicalize-parity.ts`](scripts/canonicalize-parity.ts).
+Canonicalization (URDNA2015, JCS) được kiểm tra với các test vector của Go SDK — xem `tests/common/go-interop.test.ts`, `tests/common/go-rdfc-numeric-interop.test.ts`, `tests/common/jsoncanonicalizer.test.ts`.
 
 ## Cài đặt
 
@@ -27,6 +23,8 @@ npm install @pilacorp/credential-sdk
 ```
 
 Yêu cầu Node.js >= 18.
+
+Gói có cả CommonJS (`require`) và ESM (`import`) qua `exports` trong `package.json`; `npm run build` tạo `dist/` (tsc, CJS) và `dist/esm/index.mjs` (esbuild). Dùng `import { vc, vp } from '@pilacorp/credential-sdk'` thay vì import sâu vào `src/...`.
 
 ## Build & test
 
@@ -205,41 +203,162 @@ await vc.newJSONCredential(contents, {
 });
 ```
 
-### Selective disclosure (SD-JWT)
+### JOSE VC (vc+jwt) và SD-JWT
+
+`JOSECredential` là định dạng VC 2.0 (vc-jose-cose). Có `sdSelectivePaths` thì token là `vc+sd-jwt` (selective disclosure); không có thì là `vc+jwt`. `alg` được chọn theo loại khóa của verification method (secp256k1 → `ES256K`, P-256 → `ES256`).
 
 ```ts
-const credential = await vc.newJWTCredential(contents, {
-  sdSelectivePaths: ['credentialSubject.email', 'credentialSubject.dateOfBirth'],
-  sdShuffle: true,                                    // randomise `_sd` order
-  sdDecoys: [{ path: 'credentialSubject', count: 3 }],// inject decoy digests
-});
-await credential.addProof(privateKeyHex);
+import { vc, DefaultProvider } from '@pilacorp/credential-sdk';
+
+const credential = await vc.newJOSECredential(
+  {
+    context: ['https://www.w3.org/ns/credentials/v2'],
+    types: ['VerifiableCredential'],
+    issuer: 'did:nda:testnet:0x...',
+    subject: [{ id: 'did:nda:testnet:0xsubject', customFields: { email: 'alice@example.com', dateOfBirth: '1990-01-01' } }],
+  },
+  {
+    verificationMethodKey: 'key-1',
+    sdSelectivePaths: ['credentialSubject.email', 'credentialSubject.dateOfBirth'],
+    sdShuffle: true,                                     // randomise `_sd` order
+    sdDecoys: [{ path: 'credentialSubject', count: 3 }], // inject decoy digests
+  },
+);
+await credential.addProofByProvider(new DefaultProvider(privateKeyHex));
 const sdJwt = await credential.serialize(); // "header.payload.sig~D1~D2~"
-```
 
-Khi parse lại, các field disclosed sẽ được reconstruct trong-place:
+// Holder presents only some disclosures:
+const emailOnly = credential.decodedDisclosures().find((d) => d.fieldName === 'email')!;
+const presented = await credential.present([emailOnly.disclosure]);
 
-```ts
-const parsed = await vc.parseCredential(sdJwt);
+// Verifier:
+const parsed = await vc.parseCredential(await presented.serialize(), { verifyProof: true });
 parsed.extractField('credentialSubject.email'); // → "alice@example.com"
 ```
 
-### External signing (Vault / HSM / KMS)
+`vc.parseCredential` định tuyến theo `typ` của header (`vc+jwt` / `vc+sd-jwt` → JOSE; còn lại → JWT VC 1.1). Một `EnvelopedVerifiableCredential` (`data:application/vc+jwt,...`) cũng được unwrap thành `JOSECredential`.
 
-Implement interface `SignerProvider`:
+### ECDSA-SD (ecdsa-sd-2023, P-256)
+
+Selective disclosure cho VC JSON-LD. Verification method của issuer phải giữ khóa **P-256** (Multikey `publicKeyMultibase` hoặc JWK); SDK chọn cryptosuite theo khóa của VM, không theo class của signer.
 
 ```ts
-import type { SignerProvider } from '@pilacorp/credential-sdk';
+import { vc, P256Provider } from '@pilacorp/credential-sdk';
+
+const cred = await vc.ECDSASDCredential.create(contents, { verificationMethodKey: 'key-2' });
+// mandatory pointers luôn được disclose; mọi claim còn lại có thể ẩn đi:
+await cred.addProofByProvider(new P256Provider(p256PrivateKeyHex), ['/issuer', '/credentialSubject/id'], {
+  verificationMethodKey: 'key-2',
+});
+
+// Holder derive một bản chỉ lộ /credentialSubject/name:
+const derived = await cred.derive(['/credentialSubject/name']);
+await derived.verify({ verifyProof: true });
+const json = await derived.serialize();
+```
+
+### JOSE VP (vp+jwt)
+
+```ts
+import { vp, vc, DefaultProvider } from '@pilacorp/credential-sdk';
+
+const presentation = await vp.newJOSEPresentation(
+  {
+    context: ['https://www.w3.org/ns/credentials/v2'],
+    types: ['VerifiablePresentation'],
+    holder: 'did:nda:testnet:0xholder',
+    verifiableCredentials: [joseCredential], // gói thành EnvelopedVerifiableCredential
+  },
+  { verificationMethodKey: 'key-1' },
+);
+await presentation.addProofByProvider(new DefaultProvider(holderPrivateKeyHex));
+const token = await presentation.serialize();
+
+await vp.parsePresentation(token, { verifyProof: true }); // kiểm tra holder binding
+```
+
+VP `vp+jwt` chỉ nhận VC dạng enveloping-secured (JOSE); VC Data Integrity (JSON-LD) bị từ chối.
+
+### Challenge / domain (VP)
+
+Gắn `challenge` (JWT: `nonce`, JSON-LD: `proof.challenge`) và `domain` (JWT: `aud`, JSON-LD: `proof.domain`) khi ký, và yêu cầu chúng khi verify:
+
+```ts
+// JWT / JOSE VP: truyền khi tạo VP.
+const p = await vp.newJWTPresentation(contents, { challenge: 'nonce-123', domain: 'verifier.example' });
+await p.addProofByProvider(new DefaultProvider(holderPrivateKeyHex));
+
+// JSON-LD VP: truyền ở bước ký.
+const jp = await vp.newJSONPresentation(contents);
+await jp.addProofByProvider(new DefaultProvider(holderPrivateKeyHex), { challenge: 'nonce-123', domain: 'verifier.example' });
+
+// Verifier: expected* tự bật verifyProof; sai giá trị → CredentialError
+// với code ChallengeMismatch / DomainMismatch; requireAudience → AudienceUnbound.
+await vp.parsePresentation(token, {
+  expectedChallenge: 'nonce-123',
+  expectedDomain: 'verifier.example',
+});
+```
+
+### External signing (Vault / HSM / KMS) và P-256
+
+Implement interface `SignerProvider`, hoặc dùng callback có sẵn trong namespace `signer`:
+
+```ts
+import { signer, type SignerProvider } from '@pilacorp/credential-sdk';
 
 class VaultSigner implements SignerProvider {
   async sign(digest: Uint8Array): Promise<Uint8Array> {
     // digest is exactly 32 bytes (SHA-256 / RDFC-2019).
-    // Must return secp256k1 signature: 64 bytes (R||S) or 65 bytes (R||S||V).
+    // secp256k1: return 64 bytes (R||S) or 65 bytes (R||S||V).
+    // P-256:     return 64 bytes (R||S), low-S.
   }
 }
-
 await credential.addProofByProvider(new VaultSigner());
+
+// Hoặc gói một callback KMS (Go: NewP256Func / NewRSAFunc):
+const p256 = signer.newP256Func(async (digest) => kms.signP256(digest)); // 64-byte R||S
+const rsa = signer.newRSAFunc(async (digest) => kms.signRSA(digest), 'PS256');
+
+// Khóa in-memory: hex constructor vẫn dùng được, hoặc 32 raw bytes.
+const local = new signer.P256Provider(privateKeyHex);
+signer.algorithmOf(rsa); // "PS256" (mặc định "RS256")
 ```
+
+Scheme ký do **verification method** quyết định (loại khóa của VM), không phải class của signer; chỉ `JsonWebSignature2020` RSA đọc `algorithm()` của signer. `signer.algForKeyKind('P-256')` → `"ES256"`.
+
+Tạo VM cho resolver cục bộ/test (không cần network): `verificationMethod.StaticResolver` cùng `newSecp256k1VM`, `newP256VM`, `newP256MultikeyVM`, `newRSAVM`, `newDIDDocument`:
+
+```ts
+import { verificationMethod as vm } from '@pilacorp/credential-sdk';
+
+const did = 'did:example:issuer';
+const resolver = new vm.StaticResolver(
+  vm.newDIDDocument(did, vm.newP256MultikeyVM(did, 'key-2', p256CompressedOrUncompressedPub)),
+);
+```
+
+### DIDv2
+
+```ts
+import { didv2, signer } from '@pilacorp/credential-sdk';
+
+const generator = didv2.newDIDGenerator(
+  didv2.WithRPC('https://rpc-new.pila.vn'),
+  didv2.WithIssuerSignerProvider(new didv2.DefaultProvider(issuerPrivateKeyHex)),
+  didv2.WithP256VerificationMethod(), // publish the same scalar as P-256 Multikey at #key-2
+);
+const created = await generator.generateDID(didv2.DIDTypePeople, '', { name: 'User 1' });
+// => { did, document, transaction: { txHex, txHash }, secret: { privateKeyHex } }
+
+// Verification-method operations (Go: DIDDocument methods):
+const doc = created.document;
+didv2.revokeVerificationMethod(doc, '#key-2', 'superseded');
+didv2.rotateVerificationMethod(doc, '#key-1', { publicKeyHex: newCompressedPub });
+didv2.hashDIDDocument(doc); // DocHash, byte-identical to Go (keeps `revoked` offset/ns)
+```
+
+Lưu ý: `didv2.DefaultProvider` (có `getAddress()`, `sign` trả recovery id `v` 0/1 như Go) khác `DefaultProvider` top-level dùng cho VC/VP. Các hàm thao tác VM của `didv2` vẫn được export dưới tên cũ trong namespace `did` (alias). `didv2.generateDualCurveKeyPair()` là keygen dual-curve chuẩn (`generateDualCurveDIDKeyPair` là alias deprecated); `did.generateDualCurveKeyPair` giữ shape cũ. Lỗi Sub-DID có thể so sánh kiểu `errors.Is`: `didv2.subdid.errorIs(err, didv2.subdid.ErrConsentInvalid)`.
 
 ## Credential options
 
@@ -252,23 +371,29 @@ await credential.addProofByProvider(new VaultSigner());
 | `verificationMethodKey` | `string` | auto-resolve | VM fragment (`"key-1"`) hoặc full DID URL |
 | `resolver` | `ResolverProvider` | `HTTPResolver(didBaseURL)` | DID document resolver |
 | `didBaseURL` | `string` | `vcConfig.baseURL` | Base URL cho default HTTPResolver |
-| `sdSelectivePaths` | `string[]` | `[]` | Paths to make selectively disclosable (issuer side) |
+| `clockSkewLeewayMs` | `number` | `0` | Leeway cho `validFrom` / `validUntil` / `exp` / `nbf` |
+| `sdSelectivePaths` | `string[]` | `[]` | Paths to make selectively disclosable (issuer side, **JOSE only**) |
 | `sdShuffle` / `sdDecoys` / `sdAlg` | — | — | SD-JWT privacy knobs |
 | `schemaLoader` | `(id) => bytes` | network | Custom loader for JSON schemas |
+| `proofVerificationMethod` | `string` | all proofs | Chỉ verify proof dùng VM này (JSON-LD) |
+| `replaceProof` | `boolean` | `false` | JWT / JOSE: cho phép ký đè token đã ký (JSON-LD từ chối option này — proof được append) |
 
 ## API surface
 
 | Module | Exports |
 |---|---|
-| `vc` | `parseCredential`, `parseCredentialWithValidation`, `newJWTCredential`, `newJSONCredential`, `JWTCredential`, `JSONCredential`, `init` |
-| `vp` | `parsePresentation`, `parsePresentationWithValidation`, `newJWTPresentation`, `newJSONPresentation`, `JWTPresentation`, `JSONPresentation`, `init` |
+| `vc` | `parseCredential`, `parseCredentialWithValidation`, `newJWTCredential`, `newJSONCredential`, `newJOSECredential`, `newECDSASDCredential`, `JWTCredential`, `JSONCredential`, `JOSECredential`, `ECDSASDCredential`, `init` |
+| `vp` | `parsePresentation`, `parsePresentationWithValidation`, `newJWTPresentation`, `newJSONPresentation`, `newJOSEPresentation`, `JWTPresentation`, `JSONPresentation`, `JOSEPresentation`, `init` |
+| `signer` | `DefaultProvider` (secp256k1), `P256Provider`, `newP256Provider`, `newP256Func`, `RSAProvider`, `newRSAFunc`, `AlgorithmProvider`, `algorithmOf`, `algForKeyKind`, `SignerProvider` |
 | `sdjwt` | `buildDisclosures`, `reconstruct`, `parse`, `buildSDJWTPresentation`, `isSDJWT`, `hashDisclosure`, `parseDisclosures` |
-| `verificationMethod` | `HTTPResolver`, `newHTTPResolver`, `ResolverProvider`, `selectLatestActiveVMForPurpose`, `resolveVerificationMethodURL`, `normalizeVerificationMethodURL`, … |
+| `ecdsasd` | `createBaseProof`, `deriveProof`, `verifyProof`, `Cryptosuite` |
+| `verificationMethod` | `HTTPResolver`, `newHTTPResolver`, `StaticResolver`, `newSecp256k1VM`, `newP256VM`, `newP256MultikeyVM`, `newRSAVM`, `newDIDDocument`, `ResolverProvider`, `selectLatestActiveVMForPurpose`, `selectLatestActiveVMForKey`, `resolveVerificationMethodURL`, `resolveVerificationMethodURLForKey`, `normalizeVerificationMethodURL`, … |
 | `credentialStatus` | `isRevoked`, `fetchAndCheckRevocation`, `StatusListClient` |
-| `did` | `parsePublicKeyToDid`, `buildDidDocument`, `createDidFromPublicKey`, `createDidFromPublicKeyWithTransaction`, `submitDidRegistration`, `DIDGenerator` |
+| `did` | `parsePublicKeyToDid`, `buildDidDocument`, `createDidFromPublicKey`, `createDidFromPublicKeyWithTransaction`, `submitDidRegistration`, `DIDGenerator`, VM-op aliases |
+| `didv2` | `newDIDGenerator`, `With*` options, `DefaultProvider`, `generateDIDDocument`, `hashDIDDocument`, `validateDIDDocument`, `generateDualCurveKeyPair`, VM operations (`addVerificationMethod`, `rotateVerificationMethod`, `revokeVerificationMethod`, `*VerificationMethodPurposes`), `didcontract`, `subdid` |
 | `didcomm` | `getSharedSecret`, `encrypt`, `decrypt`, `encryptJWE`, `decryptJWE` |
 | `jsoncanonicalizer` | `transform` (RFC 8785 JCS) |
-| top-level | `SignerProvider`, `DefaultProvider`, `Proof` |
+| top-level | `SignerProvider`, `DefaultProvider`, `P256Provider`, `RSAProvider`, `Proof`, `CredentialError`, `ErrorCode` |
 
 `Credential` interface (cả JWT và JSON-LD đều implement):
 
@@ -289,9 +414,11 @@ Xem [`src/index.ts`](src/index.ts) để có public surface đầy đủ và [`e
 ## Differences vs the Go SDK
 
 - API là async (Promise) vì I/O của Node là non-blocking.
-- Options dùng một object duy nhất thay cho variadic `WithX()` builders của Go.
-- Behaviour parity được giữ. `newJWTPresentation` / `newJSONPresentation` cũng gọi `vc.verify()` cho từng VC tại thời điểm build (qua HTTPResolver mặc định) — gọi `vc.init(baseURL)` trước nếu DID issuer của bạn không resolve được ở URL mặc định.
-- JSON-LD canonicalization (URDNA2015 + SHA-256) được test parity với `piprate/json-gold` của Go — kết quả digest khớp byte-for-byte trên các fixtures string / số / boolean / unicode / nested / key reorder.
+- Options dùng một object duy nhất thay cho variadic `WithX()` builders của Go (DIDv2 giữ nguyên `WithX()` options).
+- Dựng VP (`newJWTPresentation` / `newJSONPresentation` / `newJOSEPresentation`) **không** verify các VC bên trong, giống Go. Muốn verify các VC thì truyền `validateVC` (`true` hoặc `CredentialOptions`) cùng `resolver` bạn chọn; `vc.init(baseURL)` / `vp.init(baseURL)` đặt resolver mặc định.
+- `DIDDocument` ở TS là interface dữ liệu; các thao tác VM của Go (`doc.RotateVerificationMethod`, …) là hàm tự do trong `didv2`.
+- Gói chỉ có CommonJS (chưa có `exports` map). RSA chỉ verify; ký RSA qua `signer.newRSAFunc` (callback).
+- JSON-LD canonicalization (URDNA2015 + SHA-256) được test với `piprate/json-gold` của Go trên các fixtures string / số / boolean / unicode / nested / key reorder; số lớn/nhỏ của proof legacy (hex) được xử lý riêng — xem `tests/common/go-rdfc-numeric-interop.test.ts`.
 
 ## License
 

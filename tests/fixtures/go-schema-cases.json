@@ -1,0 +1,2318 @@
+[
+ {
+  "n": "no-schema-kw",
+  "s": {
+   "type": "object",
+   "required": [
+    "a"
+   ]
+  },
+  "d": {
+   "a": 1
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "required-missing",
+  "s": {
+   "type": "object",
+   "required": [
+    "credentialSubject",
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "required-nested",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "required": [
+      "name",
+      "age"
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject: name is required"
+  ]
+ },
+ {
+  "n": "type-string",
+  "s": {
+   "properties": {
+    "issuer": {
+     "type": "integer"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "type-multi",
+  "s": {
+   "properties": {
+    "issuer": {
+     "type": [
+      "integer",
+      "boolean"
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: [integer,boolean], given: string"
+  ]
+ },
+ {
+  "n": "enum",
+  "s": {
+   "properties": {
+    "issuer": {
+     "enum": [
+      "a",
+      "b"
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer must be one of the following: \"a\", \"b\""
+  ]
+ },
+ {
+  "n": "const",
+  "s": {
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "additional-false",
+  "s": {
+   "properties": {
+    "issuer": {}
+   },
+   "additionalProperties": false
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Additional property dup is not allowed",
+   "(root): Additional property type is not allowed",
+   "(root): Additional property @context is not allowed",
+   "(root): Additional property credentialSchema is not allowed",
+   "(root): Additional property credentialSubject is not allowed"
+  ]
+ },
+ {
+  "n": "additional-nested",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "id": {}
+     },
+     "additionalProperties": false
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject: Additional property age is not allowed"
+  ]
+ },
+ {
+  "n": "pattern",
+  "s": {
+   "properties": {
+    "issuer": {
+     "pattern": "^zz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match pattern '^zz'"
+  ]
+ },
+ {
+  "n": "minLength",
+  "s": {
+   "properties": {
+    "issuer": {
+     "minLength": 100
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: String length must be greater than or equal to 100"
+  ]
+ },
+ {
+  "n": "maxLength",
+  "s": {
+   "properties": {
+    "issuer": {
+     "maxLength": 2
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: String length must be less than or equal to 2"
+  ]
+ },
+ {
+  "n": "minimum",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 30
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be greater than or equal to 30"
+  ]
+ },
+ {
+  "n": "exclMin-d7",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "exclusiveMinimum": 20
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "exclMin-d4",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 20,
+       "exclusiveMinimum": true
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "exclMin-d4-numeric-form",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "exclusiveMinimum": 20
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "Invalid type. Expected: boolean, given: exclusiveMinimum",
+  "errs": []
+ },
+ {
+  "n": "exclMin-nokw-bool",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 20,
+       "exclusiveMinimum": true
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "exclMin-nokw-num",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "exclusiveMinimum": 20
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "multipleOf",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "multipleOf": 7
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be a multiple of 7"
+  ]
+ },
+ {
+  "n": "minItems",
+  "s": {
+   "properties": {
+    "type": {
+     "minItems": 5
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type: Array must have at least 5 items"
+  ]
+ },
+ {
+  "n": "maxItems",
+  "s": {
+   "properties": {
+    "type": {
+     "maxItems": 1
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "uniqueItems",
+  "s": {
+   "properties": {
+    "dup": {
+     "uniqueItems": true
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "dup: array items[0,1] must be unique"
+  ]
+ },
+ {
+  "n": "contains-d7",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "properties": {
+    "type": {
+     "contains": {
+      "const": "X"
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type: At least one of the items must match",
+   "type.0: type.0 does not match: \"X\""
+  ]
+ },
+ {
+  "n": "oneOf",
+  "s": {
+   "oneOf": [
+    {
+     "required": [
+      "issuer"
+     ]
+    },
+    {
+     "required": [
+      "type"
+     ]
+    }
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate one and only one schema (oneOf)"
+  ]
+ },
+ {
+  "n": "anyOf",
+  "s": {
+   "anyOf": [
+    {
+     "required": [
+      "q"
+     ]
+    },
+    {
+     "required": [
+      "r"
+     ]
+    }
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate at least one schema (anyOf)",
+   "(root): q is required"
+  ]
+ },
+ {
+  "n": "allOf",
+  "s": {
+   "allOf": [
+    {
+     "required": [
+      "q"
+     ]
+    },
+    {
+     "required": [
+      "r"
+     ]
+    }
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): q is required",
+   "(root): r is required",
+   "(root): Must validate all the schemas (allOf)"
+  ]
+ },
+ {
+  "n": "not",
+  "s": {
+   "not": {
+    "required": [
+     "issuer"
+    ]
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must not validate the schema (not)"
+  ]
+ },
+ {
+  "n": "dependencies",
+  "s": {
+   "dependencies": {
+    "issuer": [
+     "nope"
+    ]
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Has a dependency on nope"
+  ]
+ },
+ {
+  "n": "minProps",
+  "s": {
+   "minProperties": 50
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must have at least 50 properties"
+  ]
+ },
+ {
+  "n": "maxProps",
+  "s": {
+   "maxProperties": 1
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must have at most 1 properties"
+  ]
+ },
+ {
+  "n": "propertyNames-d7",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "propertyNames": {
+    "maxLength": 3
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Property name of \"issuer\" does not match",
+   "(root): String length must be less than or equal to 3",
+   "(root): Property name of \"type\" does not match",
+   "(root): String length must be less than or equal to 3",
+   "(root): Property name of \"@context\" does not match",
+   "(root): String length must be less than or equal to 3",
+   "(root): Property name of \"credentialSchema\" does not match",
+   "(root): String length must be less than or equal to 3",
+   "(root): Property name of \"credentialSubject\" does not match",
+   "(root): String length must be less than or equal to 3"
+  ]
+ },
+ {
+  "n": "if-then-d7",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "if": {
+    "required": [
+     "issuer"
+    ]
+   },
+   "then": {
+    "required": [
+     "zzz"
+    ]
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate \"then\" as \"if\" was valid",
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "if-then-nokw",
+  "s": {
+   "if": {
+    "required": [
+     "issuer"
+    ]
+   },
+   "then": {
+    "required": [
+     "zzz"
+    ]
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate \"then\" as \"if\" was valid",
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "fmt-email-bad",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "email"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'email'"
+  ]
+ },
+ {
+  "n": "fmt-date-time-bad",
+  "s": {
+   "properties": {
+    "validFrom": {
+     "format": "date-time"
+    }
+   }
+  },
+  "d": {
+   "validFrom": "2026-01-01"
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "fmt-date-time-ok",
+  "s": {
+   "properties": {
+    "validFrom": {
+     "format": "date-time"
+    }
+   }
+  },
+  "d": {
+   "validFrom": "2026-01-01T00:00:00Z"
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "fmt-date-time-lower",
+  "s": {
+   "properties": {
+    "validFrom": {
+     "format": "date-time"
+    }
+   }
+  },
+  "d": {
+   "validFrom": "2026-01-01t00:00:00z"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "validFrom: Does not match format 'date-time'"
+  ]
+ },
+ {
+  "n": "fmt-date-bad",
+  "s": {
+   "properties": {
+    "validFrom": {
+     "format": "date"
+    }
+   }
+  },
+  "d": {
+   "validFrom": "2026-13-01"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "validFrom: Does not match format 'date'"
+  ]
+ },
+ {
+  "n": "fmt-time",
+  "s": {
+   "properties": {
+    "validFrom": {
+     "format": "time"
+    }
+   }
+  },
+  "d": {
+   "validFrom": "25:00:00"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "validFrom: Does not match format 'time'"
+  ]
+ },
+ {
+  "n": "fmt-uri-bad",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "uri"
+    }
+   }
+  },
+  "d": {
+   "issuer": "not a uri"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'uri'"
+  ]
+ },
+ {
+  "n": "fmt-uri-relative",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "uri"
+    }
+   }
+  },
+  "d": {
+   "issuer": "/rel/path"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'uri'"
+  ]
+ },
+ {
+  "n": "fmt-uri-ref",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "uri-reference"
+    }
+   }
+  },
+  "d": {
+   "issuer": "/rel/path"
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "fmt-ipv4",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "ipv4"
+    }
+   }
+  },
+  "d": {
+   "issuer": "999.1.1.1"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'ipv4'"
+  ]
+ },
+ {
+  "n": "fmt-ipv6",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "ipv6"
+    }
+   }
+  },
+  "d": {
+   "issuer": "zz"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'ipv6'"
+  ]
+ },
+ {
+  "n": "fmt-hostname",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "hostname"
+    }
+   }
+  },
+  "d": {
+   "issuer": "-bad-.com"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'hostname'"
+  ]
+ },
+ {
+  "n": "fmt-uuid",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "uuid"
+    }
+   }
+  },
+  "d": {
+   "issuer": "nope"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'uuid'"
+  ]
+ },
+ {
+  "n": "fmt-regex",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "regex"
+    }
+   }
+  },
+  "d": {
+   "issuer": "("
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'regex'"
+  ]
+ },
+ {
+  "n": "fmt-unknown",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "did"
+    }
+   }
+  },
+  "d": {
+   "issuer": "zzz"
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "fmt-json-pointer",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "json-pointer"
+    }
+   }
+  },
+  "d": {
+   "issuer": "nope"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'json-pointer'"
+  ]
+ },
+ {
+  "n": "fmt-on-nonstring",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "format": "email"
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Does not match format 'email'"
+  ]
+ },
+ {
+  "n": "fmt-idn-email",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "idn-email"
+    }
+   }
+  },
+  "d": {
+   "issuer": "nope"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'idn-email'"
+  ]
+ },
+ {
+  "n": "fmt-duration",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "duration"
+    }
+   }
+  },
+  "d": {
+   "issuer": "nope"
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "fmt-iri",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "iri"
+    }
+   }
+  },
+  "d": {
+   "issuer": "nope"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'iri'"
+  ]
+ },
+ {
+  "n": "fmt-uri-template",
+  "s": {
+   "properties": {
+    "issuer": {
+     "format": "uri-template"
+    }
+   }
+  },
+  "d": {
+   "issuer": "{unclosed"
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Does not match format 'uri-template'"
+  ]
+ },
+ {
+  "n": "ref-local-defs",
+  "s": {
+   "definitions": {
+    "s": {
+     "type": "integer"
+    }
+   },
+   "properties": {
+    "issuer": {
+     "$ref": "#/definitions/s"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "ref-local-$defs",
+  "s": {
+   "$defs": {
+    "s": {
+     "type": "integer"
+    }
+   },
+   "properties": {
+    "issuer": {
+     "$ref": "#/$defs/s"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "ref-sibling",
+  "s": {
+   "definitions": {
+    "s": {
+     "type": "string"
+    }
+   },
+   "properties": {
+    "issuer": {
+     "$ref": "#/definitions/s",
+     "minLength": 100
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "ref-missing",
+  "s": {
+   "properties": {
+    "issuer": {
+     "$ref": "#/definitions/nope"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "Object has no key 'definitions'",
+  "errs": []
+ },
+ {
+  "n": "ref-remote-unreachable",
+  "s": {
+   "properties": {
+    "issuer": {
+     "$ref": "http://127.0.0.1:1/x.json"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "Get \"http://127.0.0.1:1/x.json\": dial tcp 127.0.0.1:1: connect: connection refused",
+  "errs": []
+ },
+ {
+  "n": "ref-id-relative",
+  "s": {
+   "$id": "http://example.com/root.json",
+   "definitions": {
+    "s": {
+     "$id": "s.json",
+     "type": "integer"
+    }
+   },
+   "properties": {
+    "issuer": {
+     "$ref": "s.json"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "id-anchor",
+  "s": {
+   "$id": "http://example.com/root.json",
+   "definitions": {
+    "s": {
+     "$id": "#foo",
+     "type": "integer"
+    }
+   },
+   "properties": {
+    "issuer": {
+     "$ref": "#foo"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "ref-recursive",
+  "s": {
+   "definitions": {
+    "n": {
+     "type": "object",
+     "properties": {
+      "c": {
+       "$ref": "#/definitions/n"
+      }
+     }
+    }
+   },
+   "$ref": "#/definitions/n"
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "schema-d2019",
+  "s": {
+   "$schema": "https://json-schema.org/draft/2019-09/schema",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-d2020",
+  "s": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-unknown",
+  "s": {
+   "$schema": "http://example.com/my-schema",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-d6",
+  "s": {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-d7-nohash",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-d4-nohash",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-d7-https",
+  "s": {
+   "$schema": "https://json-schema.org/draft-07/schema#",
+   "required": [
+    "zzz"
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): zzz is required"
+  ]
+ },
+ {
+  "n": "schema-d7-int",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "type": "integer"
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "unevaluated",
+  "s": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "properties": {
+    "issuer": {}
+   },
+   "unevaluatedProperties": false
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "prefixItems",
+  "s": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "properties": {
+    "type": {
+     "prefixItems": [
+      {
+       "type": "integer"
+      }
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "dependentRequired",
+  "s": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "dependentRequired": {
+    "issuer": [
+     "nope"
+    ]
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "items-array-nokw",
+  "s": {
+   "properties": {
+    "type": {
+     "items": [
+      {
+       "type": "integer"
+      }
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type.0: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "items-obj",
+  "s": {
+   "properties": {
+    "type": {
+     "items": {
+      "type": "integer"
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type.0: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "additionalItems",
+  "s": {
+   "properties": {
+    "type": {
+     "items": [
+      {
+       "type": "string"
+      }
+     ],
+     "additionalItems": false
+    }
+   }
+  },
+  "d": {
+   "type": [
+    "a",
+    "b"
+   ]
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type: No additional items allowed on array"
+  ]
+ },
+ {
+  "n": "patternProperties",
+  "s": {
+   "patternProperties": {
+    "^iss": {
+     "type": "integer"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "bad-type-kw",
+  "s": {
+   "type": "foo"
+  },
+  "d": {},
+  "valid": false,
+  "err": "has a primitive type that is NOT VALID -- given: /foo/ Expected valid values are:[array boolean integer number null object string]",
+  "errs": []
+ },
+ {
+  "n": "bad-required",
+  "s": {
+   "required": "issuer"
+  },
+  "d": {},
+  "valid": false,
+  "err": "required must be of an array",
+  "errs": []
+ },
+ {
+  "n": "bad-pattern",
+  "s": {
+   "properties": {
+    "issuer": {
+     "pattern": "("
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "pattern must be a valid regex",
+  "errs": []
+ },
+ {
+  "n": "bool-schema",
+  "s": true,
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "bool-false",
+  "s": false,
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): False always fails validation"
+  ]
+ },
+ {
+  "n": "empty-schema",
+  "s": {},
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "int-float",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "type": "integer"
+      }
+     }
+    }
+   }
+  },
+  "d": {
+   "credentialSubject": {
+    "age": 30.0
+   }
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "float-not-int",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "type": "integer"
+      }
+     }
+    }
+   }
+  },
+  "d": {
+   "credentialSubject": {
+    "age": 30.5
+   }
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Invalid type. Expected: integer, given: number"
+  ]
+ },
+ {
+  "n": "number-null",
+  "s": {
+   "properties": {
+    "issuer": {
+     "type": "null"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: null, given: string"
+  ]
+ },
+ {
+  "n": "nullable",
+  "s": {
+   "properties": {
+    "q": {
+     "type": "string"
+    }
+   }
+  },
+  "d": {
+   "q": null
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "q: Invalid type. Expected: string, given: null"
+  ]
+ },
+ {
+  "n": "proof-additional",
+  "s": {
+   "properties": {
+    "issuer": {}
+   },
+   "additionalProperties": false
+  },
+  "d": {
+   "proof": {
+    "a": 1
+   }
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Additional property credentialSubject is not allowed",
+   "(root): Additional property dup is not allowed",
+   "(root): Additional property proof is not allowed",
+   "(root): Additional property type is not allowed",
+   "(root): Additional property @context is not allowed",
+   "(root): Additional property credentialSchema is not allowed"
+  ]
+ },
+ {
+  "n": "many-errors",
+  "s": {
+   "required": [
+    "a",
+    "b",
+    "c"
+   ],
+   "properties": {
+    "issuer": {
+     "type": "integer"
+    },
+    "type": {
+     "type": "string"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): a is required",
+   "(root): b is required",
+   "(root): c is required",
+   "issuer: Invalid type. Expected: integer, given: string",
+   "type: Invalid type. Expected: string, given: array"
+  ]
+ },
+ {
+  "n": "required-d4-empty",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "required": []
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "required-empty-nokw",
+  "s": {
+   "required": []
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "boolean-const-false",
+  "s": {
+   "properties": {
+    "q": {
+     "const": false
+    }
+   }
+  },
+  "d": {
+   "q": false
+  },
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "const-http://json-schema.org/draft-04/schema#",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "const-http://json-schema.org/draft-04/schema",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "const-https://json-schema.org/draft-04/schema#",
+  "s": {
+   "$schema": "https://json-schema.org/draft-04/schema#",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-http://json-schema.org/draft-04/schema#/",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#/",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-http://json-schema.org/draft-06/schema#",
+  "s": {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-http://json-schema.org/draft-06/schema",
+  "s": {
+   "$schema": "http://json-schema.org/draft-06/schema",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-http://json-schema.org/draft-07/schema#",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-http://json-schema.org/draft-07/schema",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-http://json-schema.org/draft-04/schema#foo",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#foo",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: issuer does not match: \"zzz\""
+  ]
+ },
+ {
+  "n": "const-HTTP://json-schema.org/draft-04/schema",
+  "s": {
+   "$schema": "HTTP://json-schema.org/draft-04/schema",
+   "properties": {
+    "issuer": {
+     "const": "zzz"
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "d4-bool-schema",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "properties": {
+    "issuer": false
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "Expected: valid schema, given: Invalid JSON",
+  "errs": []
+ },
+ {
+  "n": "d6-exclusive-bool",
+  "s": {
+   "$schema": "http://json-schema.org/draft-06/schema#",
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 20,
+       "exclusiveMinimum": true
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "Invalid type. Expected: number, given: exclusiveMinimum",
+  "errs": []
+ },
+ {
+  "n": "d4-exclMin-bool-eq",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 25,
+       "exclusiveMinimum": true
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be greater than 25"
+  ]
+ },
+ {
+  "n": "hy-exclMin-bool-eq",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 25,
+       "exclusiveMinimum": true
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be greater than 25"
+  ]
+ },
+ {
+  "n": "hy-exclMin-num-eq",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "exclusiveMinimum": 25
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be greater than 25"
+  ]
+ },
+ {
+  "n": "hy-exclMax-bool-eq",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "maximum": 25,
+       "exclusiveMaximum": true
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be less than 25"
+  ]
+ },
+ {
+  "n": "hy-exclMax-num-eq",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "exclusiveMaximum": 25
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be less than 25"
+  ]
+ },
+ {
+  "n": "d4-id-ref",
+  "s": {
+   "$schema": "http://json-schema.org/draft-04/schema#",
+   "id": "http://e.com/r",
+   "definitions": {
+    "s": {
+     "type": "integer"
+    }
+   },
+   "properties": {
+    "issuer": {
+     "$ref": "#/definitions/s"
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "issuer: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "d7-enum-num",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "enum": [
+        1,
+        2.5,
+        "x",
+        null,
+        true
+       ]
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: credentialSubject.age must be one of the following: 1, 2.5, \"x\", null, true"
+  ]
+ },
+ {
+  "n": "const-obj",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "const": {
+      "id": "x"
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject: credentialSubject does not match: {\"id\":\"x\"}"
+  ]
+ },
+ {
+  "n": "type-given-bool",
+  "s": {
+   "properties": {
+    "q": {
+     "type": "string"
+    }
+   }
+  },
+  "d": {
+   "q": true
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "q: Invalid type. Expected: string, given: boolean"
+  ]
+ },
+ {
+  "n": "type-given-obj",
+  "s": {
+   "properties": {
+    "q": {
+     "type": "string"
+    }
+   }
+  },
+  "d": {
+   "q": {
+    "a": 1
+   }
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "q: Invalid type. Expected: string, given: object"
+  ]
+ },
+ {
+  "n": "type-given-float",
+  "s": {
+   "properties": {
+    "q": {
+     "type": "string"
+    }
+   }
+  },
+  "d": {
+   "q": 1.5
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "q: Invalid type. Expected: string, given: number"
+  ]
+ },
+ {
+  "n": "deps-schema",
+  "s": {
+   "dependencies": {
+    "issuer": {
+     "required": [
+      "nope"
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): nope is required"
+  ]
+ },
+ {
+  "n": "propnames-pattern",
+  "s": {
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "patternProperties": {
+    "^zz": {}
+   },
+   "additionalProperties": false
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Additional property dup is not allowed",
+   "(root): Additional property issuer is not allowed",
+   "(root): Additional property type is not allowed",
+   "(root): Additional property @context is not allowed",
+   "(root): Additional property credentialSchema is not allowed",
+   "(root): Additional property credentialSubject is not allowed"
+  ]
+ },
+ {
+  "n": "items-additional-schema",
+  "s": {
+   "properties": {
+    "type": {
+     "items": [
+      {
+       "type": "string"
+      }
+     ],
+     "additionalItems": {
+      "type": "integer"
+     }
+    }
+   }
+  },
+  "d": {
+   "type": [
+    "a",
+    "b"
+   ]
+  },
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type.1: Invalid type. Expected: integer, given: string"
+  ]
+ },
+ {
+  "n": "notenough-items",
+  "s": {
+   "properties": {
+    "type": {
+     "items": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "string"
+      }
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "min-float-msg",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "minimum": 30.5
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.age: Must be greater than or equal to 30.5"
+  ]
+ },
+ {
+  "n": "enum-nested-path",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "id": {
+       "enum": [
+        "a"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject.id: credentialSubject.id must be one of the following: \"a\""
+  ]
+ },
+ {
+  "n": "arr-path-type",
+  "s": {
+   "properties": {
+    "type": {
+     "items": {
+      "enum": [
+       "a"
+      ]
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type.0: type.0 must be one of the following: \"a\""
+  ]
+ },
+ {
+  "n": "required-dup-multi",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "required": [
+      "x",
+      "y"
+     ]
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "credentialSubject: x is required",
+   "credentialSubject: y is required"
+  ]
+ },
+ {
+  "n": "multipleOf-float",
+  "s": {
+   "properties": {
+    "credentialSubject": {
+     "properties": {
+      "age": {
+       "multipleOf": 0.1
+      }
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": true,
+  "err": "",
+  "errs": []
+ },
+ {
+  "n": "anyOf-3",
+  "s": {
+   "anyOf": [
+    {
+     "required": [
+      "q"
+     ]
+    },
+    {
+     "required": [
+      "r"
+     ]
+    },
+    {
+     "required": [
+      "s"
+     ]
+    }
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate at least one schema (anyOf)",
+   "(root): q is required"
+  ]
+ },
+ {
+  "n": "oneOf-none",
+  "s": {
+   "oneOf": [
+    {
+     "required": [
+      "q"
+     ]
+    },
+    {
+     "required": [
+      "r"
+     ]
+    }
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate one and only one schema (oneOf)",
+   "(root): q is required"
+  ]
+ },
+ {
+  "n": "oneOf-both",
+  "s": {
+   "oneOf": [
+    {
+     "required": [
+      "issuer"
+     ]
+    },
+    {
+     "required": [
+      "type"
+     ]
+    }
+   ]
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "(root): Must validate one and only one schema (oneOf)"
+  ]
+ },
+ {
+  "n": "contains-none",
+  "s": {
+   "properties": {
+    "type": {
+     "contains": {
+      "const": "Q"
+     }
+    }
+   }
+  },
+  "d": {},
+  "valid": false,
+  "err": "",
+  "errs": [
+   "type: At least one of the items must match",
+   "type.0: type.0 does not match: \"Q\""
+  ]
+ }
+]

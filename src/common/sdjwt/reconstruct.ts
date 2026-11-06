@@ -18,9 +18,15 @@ export function reconstruct(
 ): JSONMap {
   const sdAlg = validateAndGetAlgorithm(vcMap, validateAlg);
   const disclosureMap = buildDisclosureMap(disclosures, sdAlg);
+  const used = new Set<string>();
 
   const rootCopy = deepCopyMap(vcMap);
-  const processed = processNode(rootCopy, disclosureMap);
+  const processed = processNode(rootCopy, disclosureMap, used);
+  for (const digest of disclosureMap.keys()) {
+    if (!used.has(digest)) {
+      throw new Error(`disclosure for digest "${digest}" matches nothing in the payload`);
+    }
+  }
   if (typeof processed !== 'object' || processed === null || Array.isArray(processed)) {
     throw new Error('processed payload is not an object');
   }
@@ -49,6 +55,7 @@ function buildDisclosureMap(
     if (!disc) continue;
     const h = hashDisclosure(sdAlg, disc);
     const info = parseDisclosure(disc);
+    if (out.has(h)) throw new Error(`disclosure for digest "${h}" was sent more than once`);
     out.set(h, info);
   }
   return out;
@@ -57,6 +64,7 @@ function buildDisclosureMap(
 function processNode(
   node: unknown,
   disclosureMap: Map<string, DisclosureInfo>,
+  used: Set<string>,
 ): unknown {
   if (Array.isArray(node)) {
     const out: unknown[] = [];
@@ -75,6 +83,8 @@ function processNode(
           throw new Error(`duplicate digest "${h}" found in array`);
         }
         arrayDigests.add(h);
+        if (used.has(h)) throw new Error(`digest "${h}" is referenced more than once in the payload`);
+        used.add(h);
 
         const info = disclosureMap.get(h);
         if (!info) {
@@ -84,10 +94,10 @@ function processNode(
         if (!info.isArrayElem) {
           throw new Error('object field disclosure used in array context');
         }
-        out.push(processNode(info.value, disclosureMap));
+        out.push(processNode(info.value, disclosureMap, used));
         continue;
       }
-      out.push(processNode(elem, disclosureMap));
+      out.push(processNode(elem, disclosureMap, used));
     }
     return out;
   }
@@ -95,21 +105,15 @@ function processNode(
   if (node && typeof node === 'object') {
     const obj = node as JSONMap;
     const rawSd = obj._sd;
-    if (rawSd !== undefined) {
-      const objectDigests = new Set<string>();
-      let hashes: string[];
-      if (Array.isArray(rawSd)) {
-        hashes = (rawSd as unknown[]).filter(
-          (x): x is string => typeof x === 'string',
-        );
-      } else {
-        hashes = [];
-      }
-      applySDHashes(hashes, obj, disclosureMap, objectDigests);
-      delete obj._sd;
-    }
     for (const [k, v] of Object.entries(obj)) {
-      obj[k] = processNode(v, disclosureMap);
+      if (k !== '_sd') obj[k] = processNode(v, disclosureMap, used);
+    }
+    if (rawSd !== undefined) {
+      if (!Array.isArray(rawSd) || !rawSd.every((x): x is string => typeof x === 'string')) {
+        throw new Error('_sd must be an array of digests');
+      }
+      applySDHashes(rawSd, obj, disclosureMap, new Set<string>(), used);
+      delete obj._sd;
     }
     return obj;
   }
@@ -122,12 +126,15 @@ function applySDHashes(
   v: JSONMap,
   disclosureMap: Map<string, DisclosureInfo>,
   objectDigests: Set<string>,
+  used: Set<string>,
 ): void {
   for (const h of hashes) {
     if (objectDigests.has(h)) {
       throw new Error(`duplicate digest "${h}" found in _sd array`);
     }
     objectDigests.add(h);
+    if (used.has(h)) throw new Error(`digest "${h}" is referenced more than once in the payload`);
+    used.add(h);
 
     const info = disclosureMap.get(h);
     if (!info) continue;
@@ -142,6 +149,6 @@ function applySDHashes(
       );
     }
 
-    v[info.objectField] = processNode(info.value, disclosureMap);
+    v[info.objectField] = processNode(info.value, disclosureMap, used);
   }
 }

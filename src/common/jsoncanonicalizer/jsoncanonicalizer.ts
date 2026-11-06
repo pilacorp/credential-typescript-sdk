@@ -14,23 +14,51 @@
 const INVALID_PATTERN = 0x7ff0000000000000n;
 
 export function transform(input: string | Uint8Array | unknown): Uint8Array {
-  let value: unknown;
-  if (typeof input === 'string') {
-    value = JSON.parse(input);
-  } else if (input instanceof Uint8Array || Buffer.isBuffer(input)) {
-    value = JSON.parse(Buffer.from(input as Uint8Array).toString('utf8'));
-  } else {
-    value = input;
-  }
-  return Buffer.from(serialize(value), 'utf8');
+  return Buffer.from(transformToString(input), 'utf8');
 }
 
 export function transformToString(input: string | Uint8Array | unknown): string {
-  if (typeof input === 'string') return serialize(JSON.parse(input));
-  if (input instanceof Uint8Array || Buffer.isBuffer(input)) {
-    return serialize(JSON.parse(Buffer.from(input as Uint8Array).toString('utf8')));
+  let value: unknown = input;
+  if (typeof input === 'string' || input instanceof Uint8Array || Buffer.isBuffer(input)) {
+    const text = typeof input === 'string' ? input : Buffer.from(input as Uint8Array).toString('utf8');
+    value = JSON.parse(text);
+    rejectDuplicateKeys(text);
   }
-  return serialize(input);
+  // Like Go: only an object or array is a document, never a bare scalar.
+  if (value === null || typeof value !== 'object') {
+    throw new Error('canonicalizer: top-level value must be an object or array');
+  }
+  return serialize(value);
+}
+
+/**
+ * JSON.parse keeps the last of two equal keys; Go's canonicalizer refuses them.
+ * Walks the (already valid) text: every string followed by ":" is a key.
+ */
+function rejectDuplicateKeys(text: string): void {
+  const stack: (Set<string> | null)[] = [];
+  const tok = /"(?:[^"\\]|\\.)*"|[{}[\]]/g;
+  const colon = /\s*:/y;
+  for (let m = tok.exec(text); m; m = tok.exec(text)) {
+    const t = m[0];
+    if (t === '{') stack.push(new Set());
+    else if (t === '[') stack.push(null);
+    else if (t === '}' || t === ']') stack.pop();
+    else {
+      colon.lastIndex = tok.lastIndex;
+      if (!colon.test(text)) continue;
+      const keys = stack[stack.length - 1];
+      const key = JSON.parse(t) as string;
+      if (keys?.has(key)) throw new Error(`canonicalizer: duplicate key: ${key}`);
+      keys?.add(key);
+    }
+  }
+}
+
+function checkSurrogates(s: string): void {
+  if (/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(s)) {
+    throw new Error('canonicalizer: lone surrogate in string');
+  }
 }
 
 function serialize(value: unknown): string {
@@ -81,16 +109,21 @@ const asciiEscapes: Record<number, string> = {
 };
 
 function decorateString(raw: string): string {
+  checkSurrogates(raw);
   let out = '"';
-  const bytes = Buffer.from(raw, 'utf8');
-  for (let i = 0; i < bytes.length; i++) {
-    const c = bytes[i];
-    if (asciiEscapes[c]) {
-      out += asciiEscapes[c];
-    } else if (c < 0x20) {
-      out += '\\u' + c.toString(16).padStart(4, '0');
+  // Iterate by Unicode code point (RFC 8785 §3.2.2.2): the 7 named escapes and
+  // other control chars (< 0x20) are escaped, everything else — including
+  // non-ASCII — is emitted as-is and encoded to raw UTF-8 by the caller.
+  // (Iterating UTF-8 bytes and emitting String.fromCharCode per byte mangled
+  // every multi-byte character into mojibake, which then double-encoded.)
+  for (const ch of raw) {
+    const cp = ch.codePointAt(0) as number;
+    if (asciiEscapes[cp]) {
+      out += asciiEscapes[cp];
+    } else if (cp < 0x20) {
+      out += '\\u' + cp.toString(16).padStart(4, '0');
     } else {
-      out += String.fromCharCode(c);
+      out += ch;
     }
   }
   out += '"';

@@ -1,0 +1,3643 @@
+{
+ "batches": [
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0xb10e2d527612073b26eecdfd717e6a320cf44b4afac2b0732d9fcbe2b7fa0cf6",
+   "n": 1,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 1,
+     "root": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "proof": [],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x0000000000000000000000000000000000000000000000000000000000000001"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+   "n": 2,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 2,
+     "root": "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 2,
+     "root": "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x6e0c627900b24bd432fe7b1f713f1b0744091a646a9fe4a65a18dfed21f2949c",
+   "n": 3,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 3,
+     "root": "0x065199af802af0eb8e82c6d4d7f13466a3678f1cfe3c735a7682cc2feb11791c",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0xcbc4e5fb02c3d1de23a9f1e014b4d2ee5aeaea9505df5e855c9210bf472495af"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 3,
+     "root": "0x065199af802af0eb8e82c6d4d7f13466a3678f1cfe3c735a7682cc2feb11791c",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0xcbc4e5fb02c3d1de23a9f1e014b4d2ee5aeaea9505df5e855c9210bf472495af"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 3,
+     "root": "0x065199af802af0eb8e82c6d4d7f13466a3678f1cfe3c735a7682cc2feb11791c",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x065199af802af0eb8e82c6d4d7f13466a3678f1cfe3c735a7682cc2feb11791c"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x392791df626408017a264f53fde61065d5a93a32b60171df9d8a46afdf82992d",
+   "n": 4,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 4,
+     "root": "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 4,
+     "root": "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 4,
+     "root": "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 4,
+     "root": "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x5917e5a395fb9b454434de59651d36822a9e29c5ec57474df3e67937b969460c",
+   "n": 5,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 5,
+     "root": "0x9b4c27c1b2281aa6ceb806b0c37589d75a1c433399433f136e5af3a6c890435b",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0xa6621ed56adb6fe6b0ce247783a33092143c74a152c3fe4bdebf40325cee9200"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 5,
+     "root": "0x9b4c27c1b2281aa6ceb806b0c37589d75a1c433399433f136e5af3a6c890435b",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0xa6621ed56adb6fe6b0ce247783a33092143c74a152c3fe4bdebf40325cee9200"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 5,
+     "root": "0x9b4c27c1b2281aa6ceb806b0c37589d75a1c433399433f136e5af3a6c890435b",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0xa6621ed56adb6fe6b0ce247783a33092143c74a152c3fe4bdebf40325cee9200"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 5,
+     "root": "0x9b4c27c1b2281aa6ceb806b0c37589d75a1c433399433f136e5af3a6c890435b",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0xa6621ed56adb6fe6b0ce247783a33092143c74a152c3fe4bdebf40325cee9200"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 5,
+     "root": "0x9b4c27c1b2281aa6ceb806b0c37589d75a1c433399433f136e5af3a6c890435b",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0x458b30c2d72bfd2c6317304a4594ecbafe5f729d3111b65fdc3a33bd48e5432d",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x9b4c27c1b2281aa6ceb806b0c37589d75a1c433399433f136e5af3a6c890435b"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005",
+    "0x0000000000000000000000000000000000000000000000000000000000000006"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x67fd5a843da88fc165a797990d9a7825dcc0af1c9931a6aebababf15e4f2ac41",
+   "n": 6,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 6,
+     "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0xe4ff410e726dd1ac55b7aa9b9fb3972d477bfb69caea0ef621ae29fd917d095e"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 6,
+     "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0xe4ff410e726dd1ac55b7aa9b9fb3972d477bfb69caea0ef621ae29fd917d095e"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 6,
+     "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0xe4ff410e726dd1ac55b7aa9b9fb3972d477bfb69caea0ef621ae29fd917d095e"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 6,
+     "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0xe4ff410e726dd1ac55b7aa9b9fb3972d477bfb69caea0ef621ae29fd917d095e"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 6,
+     "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000006",
+     "leaf_index": 5,
+     "leaf_count": 6,
+     "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xa69e820aa0da547fcd062ec56eff670e9377a59a54507d0d97e5d67b5155f520"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005",
+    "0x0000000000000000000000000000000000000000000000000000000000000006",
+    "0x0000000000000000000000000000000000000000000000000000000000000007"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0xdc0f375e737e67a9da47e3f3d3caafe3435f5bcf1bb0980453eedbd45cd33547",
+   "n": 7,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x0a77bfddbb81fdf8feb1756127375dab6e0d1a2ea2af8aa06c1372d7b49df379"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x0a77bfddbb81fdf8feb1756127375dab6e0d1a2ea2af8aa06c1372d7b49df379"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x0a77bfddbb81fdf8feb1756127375dab6e0d1a2ea2af8aa06c1372d7b49df379"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x0a77bfddbb81fdf8feb1756127375dab6e0d1a2ea2af8aa06c1372d7b49df379"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0xb7c49cceb9f85950584035457a41ebbd8cf93b9b612733ad25aa9731ac43aad6",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000006",
+     "leaf_index": 5,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0xb7c49cceb9f85950584035457a41ebbd8cf93b9b612733ad25aa9731ac43aad6",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000007",
+     "leaf_index": 6,
+     "leaf_count": 7,
+     "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x19956dc4fe07588796db88a77e243a622af9e3ce6ea3ae23f3e3b9c6f5394840"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005",
+    "0x0000000000000000000000000000000000000000000000000000000000000006",
+    "0x0000000000000000000000000000000000000000000000000000000000000007",
+    "0x0000000000000000000000000000000000000000000000000000000000000008"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x12e0d73f973851edba0561680abc52746a7517c1a4d17fd845468ba6a0a5a272",
+   "n": 8,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000006",
+     "leaf_index": 5,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000007",
+     "leaf_index": 6,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000008",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000008",
+     "leaf_index": 7,
+     "leaf_count": 8,
+     "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005",
+    "0x0000000000000000000000000000000000000000000000000000000000000006",
+    "0x0000000000000000000000000000000000000000000000000000000000000007",
+    "0x0000000000000000000000000000000000000000000000000000000000000008",
+    "0x0000000000000000000000000000000000000000000000000000000000000009"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x4ad60bcd85603256afb031f2062ff5820965c4a33399fe14ff9f4ea7299a0e64",
+   "n": 9,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000006",
+     "leaf_index": 5,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000007",
+     "leaf_index": 6,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000008",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000008",
+     "leaf_index": 7,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x709661b60ce6a690868b11953b2fa30127edd2a0a58da6dd7b13284b8d97ea91"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000009",
+     "leaf_index": 8,
+     "leaf_count": 9,
+     "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000009",
+      "0x87e8a52529e8ece4ef759037313542a6429ff494a9fab9027fb79db90124eba6",
+      "0x940ec4fdb27e5717a366d396cef40ff60276f25c9c52803f769b2b230de8cd99",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x580cd0fb123d05df923a528cccce96943f93bbef7a2493f6155d09b1efc48477"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005",
+    "0x0000000000000000000000000000000000000000000000000000000000000006",
+    "0x0000000000000000000000000000000000000000000000000000000000000007",
+    "0x0000000000000000000000000000000000000000000000000000000000000008",
+    "0x0000000000000000000000000000000000000000000000000000000000000009",
+    "0x000000000000000000000000000000000000000000000000000000000000000a",
+    "0x000000000000000000000000000000000000000000000000000000000000000b",
+    "0x000000000000000000000000000000000000000000000000000000000000000c",
+    "0x000000000000000000000000000000000000000000000000000000000000000d"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0x44825b77a449b907cfdfc7c0759441b33bb9da453a6a6e8ecadf1bdf94e83da0",
+   "n": 13,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000006",
+     "leaf_index": 5,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000007",
+     "leaf_index": 6,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000008",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000008",
+     "leaf_index": 7,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x142f70e5eeca1e9a2233287bd25ddedab6c03d1266ce12d421799d60f14aa7ea"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000009",
+     "leaf_index": 8,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000a",
+      "0x6a9911425952520efa6de3784a0ac63c35d3c5bb392028ea0beb0dc41a191957",
+      "0x3eaec2af2f5c9aefb54c70e4b986681efd7aceb55c233c474f4b79f9be61780e",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000a",
+     "leaf_index": 9,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000009",
+      "0x6a9911425952520efa6de3784a0ac63c35d3c5bb392028ea0beb0dc41a191957",
+      "0x3eaec2af2f5c9aefb54c70e4b986681efd7aceb55c233c474f4b79f9be61780e",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000b",
+     "leaf_index": 10,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000c",
+      "0x825eb4cda6b8b44578c55770496c59e6dc3cf2235f690bcdaf51a61898ceb284",
+      "0x3eaec2af2f5c9aefb54c70e4b986681efd7aceb55c233c474f4b79f9be61780e",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000c",
+     "leaf_index": 11,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000b",
+      "0x825eb4cda6b8b44578c55770496c59e6dc3cf2235f690bcdaf51a61898ceb284",
+      "0x3eaec2af2f5c9aefb54c70e4b986681efd7aceb55c233c474f4b79f9be61780e",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000d",
+     "leaf_index": 12,
+     "leaf_count": 13,
+     "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000d",
+      "0xe0af3347aa7e5af384208c9d29458f902f0ceddbc90963608afa77235658b360",
+      "0x008b339675331162c98594ad35ec421b90f288c4ffc0ef30423f6eb3c7f04419",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xcca33ecb610ee36162921003d1f89b2fc66def1becd50bca1d0f238ba7c85bec"
+  },
+  {
+   "hashes": [
+    "0x0000000000000000000000000000000000000000000000000000000000000001",
+    "0x0000000000000000000000000000000000000000000000000000000000000002",
+    "0x0000000000000000000000000000000000000000000000000000000000000003",
+    "0x0000000000000000000000000000000000000000000000000000000000000004",
+    "0x0000000000000000000000000000000000000000000000000000000000000005",
+    "0x0000000000000000000000000000000000000000000000000000000000000006",
+    "0x0000000000000000000000000000000000000000000000000000000000000007",
+    "0x0000000000000000000000000000000000000000000000000000000000000008",
+    "0x0000000000000000000000000000000000000000000000000000000000000009",
+    "0x000000000000000000000000000000000000000000000000000000000000000a",
+    "0x000000000000000000000000000000000000000000000000000000000000000b",
+    "0x000000000000000000000000000000000000000000000000000000000000000c",
+    "0x000000000000000000000000000000000000000000000000000000000000000d",
+    "0x000000000000000000000000000000000000000000000000000000000000000e",
+    "0x000000000000000000000000000000000000000000000000000000000000000f",
+    "0x0000000000000000000000000000000000000000000000000000000000000010",
+    "0x0000000000000000000000000000000000000000000000000000000000000011",
+    "0x0000000000000000000000000000000000000000000000000000000000000012",
+    "0x0000000000000000000000000000000000000000000000000000000000000013",
+    "0x0000000000000000000000000000000000000000000000000000000000000014",
+    "0x0000000000000000000000000000000000000000000000000000000000000015",
+    "0x0000000000000000000000000000000000000000000000000000000000000016",
+    "0x0000000000000000000000000000000000000000000000000000000000000017",
+    "0x0000000000000000000000000000000000000000000000000000000000000018",
+    "0x0000000000000000000000000000000000000000000000000000000000000019",
+    "0x000000000000000000000000000000000000000000000000000000000000001a",
+    "0x000000000000000000000000000000000000000000000000000000000000001b",
+    "0x000000000000000000000000000000000000000000000000000000000000001c",
+    "0x000000000000000000000000000000000000000000000000000000000000001d",
+    "0x000000000000000000000000000000000000000000000000000000000000001e",
+    "0x000000000000000000000000000000000000000000000000000000000000001f",
+    "0x0000000000000000000000000000000000000000000000000000000000000020",
+    "0x0000000000000000000000000000000000000000000000000000000000000021",
+    "0x0000000000000000000000000000000000000000000000000000000000000022",
+    "0x0000000000000000000000000000000000000000000000000000000000000023",
+    "0x0000000000000000000000000000000000000000000000000000000000000024",
+    "0x0000000000000000000000000000000000000000000000000000000000000025",
+    "0x0000000000000000000000000000000000000000000000000000000000000026",
+    "0x0000000000000000000000000000000000000000000000000000000000000027",
+    "0x0000000000000000000000000000000000000000000000000000000000000028"
+   ],
+   "kind": "seq",
+   "leaves_digest": "0xd1be7a0c21b7151f41e6b1cd99d23da1ff671b3dfe711d1a2595e01c938546ab",
+   "n": 40,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000001",
+     "leaf_index": 0,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000002",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000002",
+     "leaf_index": 1,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000001",
+      "0x2e174c10e159ea99b867ce3205125c24a42d128804e4070ed6fcc8cc98166aa0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000003",
+     "leaf_index": 2,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000004",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000004",
+     "leaf_index": 3,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000003",
+      "0xe90b7bceb6e7df5418fb78d8ee546e97c83a08bbccc01a0644d599ccd2a7c2e0",
+      "0x027d4202008bf9d080d976936bdbedf33e9934bc0b1745fd5712497536a83bd9",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000005",
+     "leaf_index": 4,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000006",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000006",
+     "leaf_index": 5,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000005",
+      "0x24cd397636bedc6cf9b490d0edd57c769c19b367fb7d5c2344ae1ddc7d21c144",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000007",
+     "leaf_index": 6,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000008",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000008",
+     "leaf_index": 7,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000007",
+      "0xbfd358e93f18da3ed276c3afdbdba00b8f0b6008a03476a6a86bd6320ee6938b",
+      "0x0c48ddc2b8d6d066c52fc608d4d0254f418bea6cd8424fe95390ac87323f9c9f",
+      "0x6ef0a644a87a300d94f832a67938afd9dfe02332154f1b4898682493040168ae",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000009",
+     "leaf_index": 8,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000a",
+      "0x6a9911425952520efa6de3784a0ac63c35d3c5bb392028ea0beb0dc41a191957",
+      "0x53c73db6967e101d6f39da17ff1ecf5717761acac868fd03d0cb2be7282e132c",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000a",
+     "leaf_index": 9,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000009",
+      "0x6a9911425952520efa6de3784a0ac63c35d3c5bb392028ea0beb0dc41a191957",
+      "0x53c73db6967e101d6f39da17ff1ecf5717761acac868fd03d0cb2be7282e132c",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000b",
+     "leaf_index": 10,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000c",
+      "0x825eb4cda6b8b44578c55770496c59e6dc3cf2235f690bcdaf51a61898ceb284",
+      "0x53c73db6967e101d6f39da17ff1ecf5717761acac868fd03d0cb2be7282e132c",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000c",
+     "leaf_index": 11,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000b",
+      "0x825eb4cda6b8b44578c55770496c59e6dc3cf2235f690bcdaf51a61898ceb284",
+      "0x53c73db6967e101d6f39da17ff1ecf5717761acac868fd03d0cb2be7282e132c",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000d",
+     "leaf_index": 12,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000e",
+      "0xad6509bb0b6dc44cf2f1c6595da7ff5ec660b594001258d15cd32de4206f0af0",
+      "0x008b339675331162c98594ad35ec421b90f288c4ffc0ef30423f6eb3c7f04419",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000e",
+     "leaf_index": 13,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000d",
+      "0xad6509bb0b6dc44cf2f1c6595da7ff5ec660b594001258d15cd32de4206f0af0",
+      "0x008b339675331162c98594ad35ec421b90f288c4ffc0ef30423f6eb3c7f04419",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000000f",
+     "leaf_index": 14,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000010",
+      "0x9d0231707eb2041153c28e130d22114ee38b252cf17233585036af02278e4181",
+      "0x008b339675331162c98594ad35ec421b90f288c4ffc0ef30423f6eb3c7f04419",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000010",
+     "leaf_index": 15,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000000f",
+      "0x9d0231707eb2041153c28e130d22114ee38b252cf17233585036af02278e4181",
+      "0x008b339675331162c98594ad35ec421b90f288c4ffc0ef30423f6eb3c7f04419",
+      "0xca06f8324669a77a3ef9a7bcf15421d7bb5618a79dbe5590117ba5f5a4e72bc1",
+      "0xfb6d492cd30a2bf2fa4753ab9e9e3c015ca1274881f1b03f0870c566d13ceb22",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000011",
+     "leaf_index": 16,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000012",
+      "0x9d65b2ac638bfdb1cdd2019bc3f18ae2e26430f483705fbd511f5505697829d9",
+      "0x0a000cfd63dbbcc0ce90da1b59e620a0977e9edf71a2957c6c229f9226b442fe",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000012",
+     "leaf_index": 17,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000011",
+      "0x9d65b2ac638bfdb1cdd2019bc3f18ae2e26430f483705fbd511f5505697829d9",
+      "0x0a000cfd63dbbcc0ce90da1b59e620a0977e9edf71a2957c6c229f9226b442fe",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000013",
+     "leaf_index": 18,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000014",
+      "0x6b485436b9b234417e59960d9ab1366322cfad1c365f281a05863557ce7f5ce4",
+      "0x0a000cfd63dbbcc0ce90da1b59e620a0977e9edf71a2957c6c229f9226b442fe",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000014",
+     "leaf_index": 19,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000013",
+      "0x6b485436b9b234417e59960d9ab1366322cfad1c365f281a05863557ce7f5ce4",
+      "0x0a000cfd63dbbcc0ce90da1b59e620a0977e9edf71a2957c6c229f9226b442fe",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000015",
+     "leaf_index": 20,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000016",
+      "0x9a42d7147904c13aa9da4b938924233fdd240592bad3fe86ca38ed831cb38e91",
+      "0xc7be30f88cf2ecf57e79e1e1710c411ee9e22587a8053db312e33d3c0cd6c9d4",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000016",
+     "leaf_index": 21,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000015",
+      "0x9a42d7147904c13aa9da4b938924233fdd240592bad3fe86ca38ed831cb38e91",
+      "0xc7be30f88cf2ecf57e79e1e1710c411ee9e22587a8053db312e33d3c0cd6c9d4",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000017",
+     "leaf_index": 22,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000018",
+      "0xe3be994f4df1ce307d3423eeebbbb0cd25598c1b97b848f71392674439a00e37",
+      "0xc7be30f88cf2ecf57e79e1e1710c411ee9e22587a8053db312e33d3c0cd6c9d4",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000018",
+     "leaf_index": 23,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000017",
+      "0xe3be994f4df1ce307d3423eeebbbb0cd25598c1b97b848f71392674439a00e37",
+      "0xc7be30f88cf2ecf57e79e1e1710c411ee9e22587a8053db312e33d3c0cd6c9d4",
+      "0xfae19bd197fc9eb8df93fa930f33adf5e788e05efe7a1fa92aff21538c9995d2",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000019",
+     "leaf_index": 24,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000001a",
+      "0x1286898bf472972e00264d7007626aff0ab2db0c799ec4b8a7cfacefc2ba0de4",
+      "0x7abdac79b857d0922036a870d7915003cffe2aac096dc5ecb11cd06fca502d32",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000001a",
+     "leaf_index": 25,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000019",
+      "0x1286898bf472972e00264d7007626aff0ab2db0c799ec4b8a7cfacefc2ba0de4",
+      "0x7abdac79b857d0922036a870d7915003cffe2aac096dc5ecb11cd06fca502d32",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000001b",
+     "leaf_index": 26,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000001c",
+      "0x86c475ea737f13a5a246616792c8fe016fa512aa588a8c13275a280b7d0cb15a",
+      "0x7abdac79b857d0922036a870d7915003cffe2aac096dc5ecb11cd06fca502d32",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000001c",
+     "leaf_index": 27,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000001b",
+      "0x86c475ea737f13a5a246616792c8fe016fa512aa588a8c13275a280b7d0cb15a",
+      "0x7abdac79b857d0922036a870d7915003cffe2aac096dc5ecb11cd06fca502d32",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000001d",
+     "leaf_index": 28,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000001e",
+      "0x1a9aa7bd83154e3482ce7793ea4b79e9d32d2bea0a2471055a6cff33bba65ae1",
+      "0x7ddb043b34c08620a272871d4edf1926724516c47c4999645eff74be7ab5934b",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000001e",
+     "leaf_index": 29,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000001d",
+      "0x1a9aa7bd83154e3482ce7793ea4b79e9d32d2bea0a2471055a6cff33bba65ae1",
+      "0x7ddb043b34c08620a272871d4edf1926724516c47c4999645eff74be7ab5934b",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x000000000000000000000000000000000000000000000000000000000000001f",
+     "leaf_index": 30,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000020",
+      "0x764104d099bd8eeca4083ffb17dea07928f5b33ecb9e5f5855689fa69803386d",
+      "0x7ddb043b34c08620a272871d4edf1926724516c47c4999645eff74be7ab5934b",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000020",
+     "leaf_index": 31,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x000000000000000000000000000000000000000000000000000000000000001f",
+      "0x764104d099bd8eeca4083ffb17dea07928f5b33ecb9e5f5855689fa69803386d",
+      "0x7ddb043b34c08620a272871d4edf1926724516c47c4999645eff74be7ab5934b",
+      "0xe3e68898625a39e78bd9511a860fe27cc63afdab8432722c5f33717fabdd6eed",
+      "0xf42cd826601338230768c6639257b403d0ed918bb3571278461426a0d7620df4",
+      "0x47353e0e949fda3310e46902681bbddc88e65320e6328cf02c7a9c8776d983e7"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000021",
+     "leaf_index": 32,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000022",
+      "0xfbf4f5f18e3edd6ce8be14dcee0e5d7ee102db12ce23016adb9deb4f1b5718cd",
+      "0x81480cd01669337e77cb7a52b28199551ce213dd1175300a9671e1a2976d8bff",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000022",
+     "leaf_index": 33,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000021",
+      "0xfbf4f5f18e3edd6ce8be14dcee0e5d7ee102db12ce23016adb9deb4f1b5718cd",
+      "0x81480cd01669337e77cb7a52b28199551ce213dd1175300a9671e1a2976d8bff",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000023",
+     "leaf_index": 34,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000024",
+      "0x23f09b9b15701d8667bae6a586e97da1f8fea95e97c1522b22b64c4b0f00cf7e",
+      "0x81480cd01669337e77cb7a52b28199551ce213dd1175300a9671e1a2976d8bff",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000024",
+     "leaf_index": 35,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000023",
+      "0x23f09b9b15701d8667bae6a586e97da1f8fea95e97c1522b22b64c4b0f00cf7e",
+      "0x81480cd01669337e77cb7a52b28199551ce213dd1175300a9671e1a2976d8bff",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000025",
+     "leaf_index": 36,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000026",
+      "0xaf4cff40c88db143835533b949fef236ce81e4cf2ff817bb6fffe79bd6d94f09",
+      "0xf3db6d15f792a6b74ecd38646fa1d5622f6a592778e6ac802f73bec474092e1e",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000026",
+     "leaf_index": 37,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000025",
+      "0xaf4cff40c88db143835533b949fef236ce81e4cf2ff817bb6fffe79bd6d94f09",
+      "0xf3db6d15f792a6b74ecd38646fa1d5622f6a592778e6ac802f73bec474092e1e",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000027",
+     "leaf_index": 38,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000028",
+      "0x720c2bb3eb7d41993f2057f1f125fee5e791bdf939739402e4eed0186bf0655e",
+      "0xf3db6d15f792a6b74ecd38646fa1d5622f6a592778e6ac802f73bec474092e1e",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0000000000000000000000000000000000000000000000000000000000000028",
+     "leaf_index": 39,
+     "leaf_count": 40,
+     "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102",
+     "proof": [
+      "0x0000000000000000000000000000000000000000000000000000000000000027",
+      "0x720c2bb3eb7d41993f2057f1f125fee5e791bdf939739402e4eed0186bf0655e",
+      "0xf3db6d15f792a6b74ecd38646fa1d5622f6a592778e6ac802f73bec474092e1e",
+      "0xfd7d0b1942906f8d3df414164a2cf6dff97977843e91ba5b9b3372ef135eda53",
+      "0xdafddaa2dd42cda54bf0253a82d3d4ce7f7afe098e6cb9d98df9ed6269519926",
+      "0x3148363938d966faf235f952e865775c68989eeb593f4b3b450054a6a1e275fb"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x499c2fc0d5242e1bbd0519e06c6086c41e9d76e012e18713cb70b44ff13ae102"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0x167ec62fb9079cd62ea3c433bdf947569464c2abbd0fb690d51c83f6e8184ed7",
+   "n": 1,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 1,
+     "root": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "proof": [],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0xeaafc236bf6b7418edb1c54322a668e6909df6776dbf315b3ad7bee143b753d3",
+   "n": 2,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 2,
+     "root": "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 2,
+     "root": "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0xf999bc0de90421ce44fa3d8550ef8102f4ae59f56a0dfb410e202f3921b9061e",
+   "n": 3,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 3,
+     "root": "0x128c277055e3665ee74998e356ac9aa8efcba2b1be87ea4b5c6d2d51065540f3",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xa2ff169bd0e070eb6a3b20616b5f5bf4ac97a7d26cd317a9b2336520f9488c83"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 3,
+     "root": "0x128c277055e3665ee74998e356ac9aa8efcba2b1be87ea4b5c6d2d51065540f3",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xa2ff169bd0e070eb6a3b20616b5f5bf4ac97a7d26cd317a9b2336520f9488c83"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 3,
+     "root": "0x128c277055e3665ee74998e356ac9aa8efcba2b1be87ea4b5c6d2d51065540f3",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x128c277055e3665ee74998e356ac9aa8efcba2b1be87ea4b5c6d2d51065540f3"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0x423e6596776acc3d3c8bd55f6da265d82e6d37cdb89c07f5fc82471fc23ad843",
+   "n": 4,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 4,
+     "root": "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 4,
+     "root": "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 4,
+     "root": "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 4,
+     "root": "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0x63a4e29ee5e24f044ec778ca9920129a0f329c343ef703dc257dc981acff8638",
+   "n": 5,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 5,
+     "root": "0x5dcde6f707bca413ca422cdcad126c1bad22723ad89ac633b9b33e1c2a7567cc",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x07e63305012e2fa267b1e78a9511235fdf67ff4d333beb083f590a1ddb28c3a8"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 5,
+     "root": "0x5dcde6f707bca413ca422cdcad126c1bad22723ad89ac633b9b33e1c2a7567cc",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x07e63305012e2fa267b1e78a9511235fdf67ff4d333beb083f590a1ddb28c3a8"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 5,
+     "root": "0x5dcde6f707bca413ca422cdcad126c1bad22723ad89ac633b9b33e1c2a7567cc",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x07e63305012e2fa267b1e78a9511235fdf67ff4d333beb083f590a1ddb28c3a8"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 5,
+     "root": "0x5dcde6f707bca413ca422cdcad126c1bad22723ad89ac633b9b33e1c2a7567cc",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x07e63305012e2fa267b1e78a9511235fdf67ff4d333beb083f590a1ddb28c3a8"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 5,
+     "root": "0x5dcde6f707bca413ca422cdcad126c1bad22723ad89ac633b9b33e1c2a7567cc",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0x51bdae31104580fe6c1a58e19c0fab411bc184026aeff90c761cc852ff8540dc",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x5dcde6f707bca413ca422cdcad126c1bad22723ad89ac633b9b33e1c2a7567cc"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+    "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0x1d6273e4b0d3e4ef0aa362895157c38ddc771f207a97b7144a90323fe1a1d258",
+   "n": 6,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 6,
+     "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x855ddf895fc362dc42f8dd6203e37ce5c304d5d8e423e2ede0a8a79c164e7a39"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 6,
+     "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x855ddf895fc362dc42f8dd6203e37ce5c304d5d8e423e2ede0a8a79c164e7a39"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 6,
+     "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x855ddf895fc362dc42f8dd6203e37ce5c304d5d8e423e2ede0a8a79c164e7a39"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 6,
+     "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x855ddf895fc362dc42f8dd6203e37ce5c304d5d8e423e2ede0a8a79c164e7a39"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 6,
+     "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533",
+     "proof": [
+      "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+     "leaf_index": 5,
+     "leaf_count": 6,
+     "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x8cd6583337273cdeb99c234b1e78b17c0d8ef9a77283bb3a4dfbbd0b44b17533"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+    "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+    "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0x6f4933bfcc829eb975cfcc671cfc9e347fb84a21b947bf447cf4eaddbcaab0e2",
+   "n": 7,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x68fa0b3ead619ebfa85366a43c5279dfe80a62ae5f9e93f1ada391ba3d8a5080"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x68fa0b3ead619ebfa85366a43c5279dfe80a62ae5f9e93f1ada391ba3d8a5080"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x68fa0b3ead619ebfa85366a43c5279dfe80a62ae5f9e93f1ada391ba3d8a5080"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x68fa0b3ead619ebfa85366a43c5279dfe80a62ae5f9e93f1ada391ba3d8a5080"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+      "0x1ec1c5b9775e86a204f0ddc4f3c07659f4e8d830c4e8e915439c245b3a6c8a21",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+     "leaf_index": 5,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0x1ec1c5b9775e86a204f0ddc4f3c07659f4e8d830c4e8e915439c245b3a6c8a21",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+     "leaf_index": 6,
+     "leaf_count": 7,
+     "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b",
+     "proof": [
+      "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xb11314db4b231fc4c173427efef204d01a44df9619a3923ab8fd57fd605e857b"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+    "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+    "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+    "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0xc448f673db5f1955c9e4deccc9f80f9c5823f4381a1e1e7ab5553d00e96d3f4f",
+   "n": 8,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+     "leaf_index": 5,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+     "leaf_index": 6,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+     "leaf_index": 7,
+     "leaf_count": 8,
+     "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+     "proof": [
+      "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+    "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+    "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+    "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+    "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0xb8b2ad3233d2061ee31869c6ee148c4008b2f7859cfe949415e6e0a7f31787e0",
+   "n": 9,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+     "leaf_index": 5,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+     "leaf_index": 6,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+     "leaf_index": 7,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0x444a45ee1a63c0dfaade5158294d935adbe25bacd4f82d316ab9e647ad91e2b1"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+     "leaf_index": 8,
+     "leaf_count": 9,
+     "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392",
+     "proof": [
+      "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+      "0x4b1050a5c16ee61d41cf538bdb36e1d381b53fe1e3770ea7a64772c8fb6e532e",
+      "0x5491d14d08e4db9d52db0425f10e0d0496469c5718341e925c93557fe8fc8657",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0x4913594842a8b86bbe812d803c165ee216df01abf867b4e4ed0faa095cd36392"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+    "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+    "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+    "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+    "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+    "0x5071527ec56141fa110ba13fe3ef5c6b0064b5850d6ede58b7c6fbe0a83e6175",
+    "0xec8ef8e7637a4b858ff1955f622bdc6fdba4cef3317074b0fdc8be446c906ef9",
+    "0xb104b2ca6a2e43ab5bd9be8f6ce63d082e02f8a7eef2d273b498c9ffd6762118",
+    "0xe264f9f76314dd301aacf4b259a3369d1bc1ac9e657765e7aa6269589a225e4b"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0x49914540e801252ea0c8b8195a7e0591fca49d323cf2356216a72d0290c73097",
+   "n": 13,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+     "leaf_index": 5,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+     "leaf_index": 6,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+     "leaf_index": 7,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xc55386f62c535684b4407cfac694b844e55f12d90e9f2ff5fbde177d937c7219"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+     "leaf_index": 8,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x5071527ec56141fa110ba13fe3ef5c6b0064b5850d6ede58b7c6fbe0a83e6175",
+      "0x1512ab439f692f96f8a5dfbd608a04623c14cdf485e33e9fcd49c6c301335276",
+      "0x8f24db10d2452407dcffd9a7f26868e821ccbf667f5eadcc4e0e87f7357af3e8",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x5071527ec56141fa110ba13fe3ef5c6b0064b5850d6ede58b7c6fbe0a83e6175",
+     "leaf_index": 9,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+      "0x1512ab439f692f96f8a5dfbd608a04623c14cdf485e33e9fcd49c6c301335276",
+      "0x8f24db10d2452407dcffd9a7f26868e821ccbf667f5eadcc4e0e87f7357af3e8",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xec8ef8e7637a4b858ff1955f622bdc6fdba4cef3317074b0fdc8be446c906ef9",
+     "leaf_index": 10,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0xb104b2ca6a2e43ab5bd9be8f6ce63d082e02f8a7eef2d273b498c9ffd6762118",
+      "0x664ec6d094526b622e01747f2830454b4bc3750bdf17be49a66d958a126d5676",
+      "0x8f24db10d2452407dcffd9a7f26868e821ccbf667f5eadcc4e0e87f7357af3e8",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xb104b2ca6a2e43ab5bd9be8f6ce63d082e02f8a7eef2d273b498c9ffd6762118",
+     "leaf_index": 11,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0xec8ef8e7637a4b858ff1955f622bdc6fdba4cef3317074b0fdc8be446c906ef9",
+      "0x664ec6d094526b622e01747f2830454b4bc3750bdf17be49a66d958a126d5676",
+      "0x8f24db10d2452407dcffd9a7f26868e821ccbf667f5eadcc4e0e87f7357af3e8",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xe264f9f76314dd301aacf4b259a3369d1bc1ac9e657765e7aa6269589a225e4b",
+     "leaf_index": 12,
+     "leaf_count": 13,
+     "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35",
+     "proof": [
+      "0xe264f9f76314dd301aacf4b259a3369d1bc1ac9e657765e7aa6269589a225e4b",
+      "0x78d7a3ebda2a21ec2e7f904ba9d6ad436b653d2307d2fb430318fa25dc5f600f",
+      "0x8ebbbe6c1f52b16fb6fee5406bf9490474959c4944b4f9eff8ae76b1c8b4460c",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xab3779d8668b1604ea87b306f1cd4be4374a3f2ea44c87c381b3cc335e773c35"
+  },
+  {
+   "hashes": [
+    "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+    "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+    "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+    "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+    "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+    "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+    "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+    "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+    "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+    "0x5071527ec56141fa110ba13fe3ef5c6b0064b5850d6ede58b7c6fbe0a83e6175",
+    "0xec8ef8e7637a4b858ff1955f622bdc6fdba4cef3317074b0fdc8be446c906ef9",
+    "0xb104b2ca6a2e43ab5bd9be8f6ce63d082e02f8a7eef2d273b498c9ffd6762118",
+    "0xe264f9f76314dd301aacf4b259a3369d1bc1ac9e657765e7aa6269589a225e4b",
+    "0xd0ee50dc2466d499765fd9168a1518dd79f60cd288179eddfab74a553e65b448",
+    "0x33ca988e4c201ada1e436f2d9037667bcae425b87dfef7bc73a1ae2f52eccc9f",
+    "0xc46541076775fcfc4be70ecc2e247390b96447f3262ac46bb72a7ff648c67201",
+    "0x62767509453b36bc3112e28a634764635b352afc276c01251d6526659e0e674c",
+    "0xd0119a67a633f0d111a2dc06ea2786e67c248953c8954b51246de83657df727d",
+    "0x2a85dd0afab46b81dcaa66bdc2545ab8960c9a5ed34349ab71c845812249294e",
+    "0x1326df381c666a7b48e338c8e535864f4cbf3b0cc91f2425c5a370eec5ed77a7",
+    "0x686a3b56bc40700df1556b2c23f838bd4854233510447b0b77188b05c8455072",
+    "0x788eee409896db63ba5dcb7832813c89c8a585221729677a0b675b8b07c179da",
+    "0x2ddcb70b026f9309be318cdfe6ba537c7e6d4aa5c6ea6cb1f5754ee3a031f4ad",
+    "0xf96483dab1fdfed5ddfdddfd9015dd36ef172586ba8e9e6343e342b88d00fbce",
+    "0x92f35d7df90ca4527dfde405c9184856b4691f6dad856454ced22b7a94cc45ba",
+    "0x4a22768174685c02365df13af9db6a24556132171e9aa8e584ad92db0d87a24b",
+    "0x361453197f5491250f6a6043234860b2ed5435224034fc4eb996a3f7ea25e756",
+    "0x2629fd742240930b1fb29e2c5f9cc19b09b738e6d6766058a75dd6cbc079d4f0",
+    "0x62c7e3cddd2fcb393a109474bc58f58971e8692ceffe72cb8b214a0a08b9fda3",
+    "0x05d7f74b0596bd22f9bcf832a212ab84dad764c2feaada815a43a0c93b43e030",
+    "0x4efce50536ba1f0d60dfdb96fed966c309d65da53412f831c9fb53519dccf232",
+    "0x4afac530c9d0ac2806780fc96ddd300c50ca1b6ce39d4440afaffd86cefb5395",
+    "0xa8cbef0ebf69b4674bec805591e428cf038f94cf91989e0f81a4ace86480c241",
+    "0x0de45480698b4fa0863c18eacd8413a1a25f67c17b0f4b758c816d9a7ea2b46c",
+    "0xad81484a43bec1ef2d0a390589c0be0cfc753f885c65fc6e9b429277aba7ae89",
+    "0x08469ca703be380726c102d5607c53ca6a2979c0167fbbec5dfe48ec855ba8da",
+    "0x2bdc98de16b98320ebca1455eaddba1cd5999ecba2360a255f065de8c24fab91",
+    "0x8e3ed8ab6bbef91c8b3734a1ccded638c349bd0e1b05e7ac6e93b0496a687aaf",
+    "0x9451b5da265306de54b4984475c1386a13ee17523e22cee8ca6f65d0a1d8da15",
+    "0xfe25bb2fc356cd3bfaa740bc9ed22d56d41d45ce908e96910894f62fc181427c"
+   ],
+   "kind": "hashed",
+   "leaves_digest": "0xa451bfe8d172bcf1106ea3b0292762bd1d22a103ba521e6021667024dd510634",
+   "n": 40,
+   "receipts": [
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+     "leaf_index": 0,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+     "leaf_index": 1,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xda88faf89b518eb4774583fa174f46d7714a1097c24c6bd5357a594d62eec21e",
+      "0xf3760933e5818170b61aefe0523661f93ce1864f874151701953fc607dc4b60c",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+     "leaf_index": 2,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+     "leaf_index": 3,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+      "0xc49a4441f36dd72ae434f26396128198089e2dcca7d118c9fd98aeb9ba8b11cf",
+      "0x69c02873d60469f3cb498d999d428c7a4cb08a214dc7b7392d1c8564e0967b05",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+     "leaf_index": 4,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x76249fe469a264b30483233ea15b51623aa98f77df05ec5ebef5e005c04024a3",
+     "leaf_index": 5,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x0c165b804a4294c8f1b189940bb8b69b41a807ec46741112fd60df7dd62c8ea1",
+      "0xf48e5f9a142f915b15ce137aca3099ca246d716ba5282f618892bd9a98f09171",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+     "leaf_index": 6,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xe2e33f6b2bbd1e851dc72c40f96add4ec38be2fed2e7871d5db01a13544f3de2",
+     "leaf_index": 7,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x1a781601caf452f463e2ffee266417f2880cb4558048ba3cbf13fd4b4279ae10",
+      "0x7c9360ae6110342e34fdc7d8dc639a6edaf8ee33a93fa69acec09968178527eb",
+      "0x2ce3397d89b7f69d8a5ccdc2da249e742b90970c7472177f54b04f3cc33c667d",
+      "0xa134e3933bbe1b11e8ef3a6dc1b23782ec0645c0c96ca60d6767bbcf9ec47283",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+     "leaf_index": 8,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x5071527ec56141fa110ba13fe3ef5c6b0064b5850d6ede58b7c6fbe0a83e6175",
+      "0x1512ab439f692f96f8a5dfbd608a04623c14cdf485e33e9fcd49c6c301335276",
+      "0x3761a594b57b37794cfebd99a900d28296a62e2d3a99fbfb32584e8e01d54251",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x5071527ec56141fa110ba13fe3ef5c6b0064b5850d6ede58b7c6fbe0a83e6175",
+     "leaf_index": 9,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x31c9cc589c4fb66037fd503189fb9b75d7de2032a4cfa8c20f6bcf481f52cad9",
+      "0x1512ab439f692f96f8a5dfbd608a04623c14cdf485e33e9fcd49c6c301335276",
+      "0x3761a594b57b37794cfebd99a900d28296a62e2d3a99fbfb32584e8e01d54251",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xec8ef8e7637a4b858ff1955f622bdc6fdba4cef3317074b0fdc8be446c906ef9",
+     "leaf_index": 10,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xb104b2ca6a2e43ab5bd9be8f6ce63d082e02f8a7eef2d273b498c9ffd6762118",
+      "0x664ec6d094526b622e01747f2830454b4bc3750bdf17be49a66d958a126d5676",
+      "0x3761a594b57b37794cfebd99a900d28296a62e2d3a99fbfb32584e8e01d54251",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xb104b2ca6a2e43ab5bd9be8f6ce63d082e02f8a7eef2d273b498c9ffd6762118",
+     "leaf_index": 11,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xec8ef8e7637a4b858ff1955f622bdc6fdba4cef3317074b0fdc8be446c906ef9",
+      "0x664ec6d094526b622e01747f2830454b4bc3750bdf17be49a66d958a126d5676",
+      "0x3761a594b57b37794cfebd99a900d28296a62e2d3a99fbfb32584e8e01d54251",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xe264f9f76314dd301aacf4b259a3369d1bc1ac9e657765e7aa6269589a225e4b",
+     "leaf_index": 12,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xd0ee50dc2466d499765fd9168a1518dd79f60cd288179eddfab74a553e65b448",
+      "0x3a31f1197c006e77864dfddd44bba6b897ad9b1e7023a6b27ccd6368f70b6e38",
+      "0x8ebbbe6c1f52b16fb6fee5406bf9490474959c4944b4f9eff8ae76b1c8b4460c",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xd0ee50dc2466d499765fd9168a1518dd79f60cd288179eddfab74a553e65b448",
+     "leaf_index": 13,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xe264f9f76314dd301aacf4b259a3369d1bc1ac9e657765e7aa6269589a225e4b",
+      "0x3a31f1197c006e77864dfddd44bba6b897ad9b1e7023a6b27ccd6368f70b6e38",
+      "0x8ebbbe6c1f52b16fb6fee5406bf9490474959c4944b4f9eff8ae76b1c8b4460c",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x33ca988e4c201ada1e436f2d9037667bcae425b87dfef7bc73a1ae2f52eccc9f",
+     "leaf_index": 14,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xc46541076775fcfc4be70ecc2e247390b96447f3262ac46bb72a7ff648c67201",
+      "0x108f5d3c9a2bf4736faf011d02c542f1c2914247ecb805609fc7178208c9a323",
+      "0x8ebbbe6c1f52b16fb6fee5406bf9490474959c4944b4f9eff8ae76b1c8b4460c",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xc46541076775fcfc4be70ecc2e247390b96447f3262ac46bb72a7ff648c67201",
+     "leaf_index": 15,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x33ca988e4c201ada1e436f2d9037667bcae425b87dfef7bc73a1ae2f52eccc9f",
+      "0x108f5d3c9a2bf4736faf011d02c542f1c2914247ecb805609fc7178208c9a323",
+      "0x8ebbbe6c1f52b16fb6fee5406bf9490474959c4944b4f9eff8ae76b1c8b4460c",
+      "0x940ad8a50a83d63b2b51cd1d0308b1ff08c61af917333c144c321183055c0484",
+      "0xd72e2d5b97533a45801907d271af10f2e37a9802728cf7626c7de0c443d3715d",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x62767509453b36bc3112e28a634764635b352afc276c01251d6526659e0e674c",
+     "leaf_index": 16,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xd0119a67a633f0d111a2dc06ea2786e67c248953c8954b51246de83657df727d",
+      "0xddb07a83f48966f513ff17c4ebc8e2252ad66304a0c7554297286aed006131da",
+      "0xdd4df9009cf3be7bb0f348e974ea091debdcebb4d2027e05dc6e0189b0ac8032",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xd0119a67a633f0d111a2dc06ea2786e67c248953c8954b51246de83657df727d",
+     "leaf_index": 17,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x62767509453b36bc3112e28a634764635b352afc276c01251d6526659e0e674c",
+      "0xddb07a83f48966f513ff17c4ebc8e2252ad66304a0c7554297286aed006131da",
+      "0xdd4df9009cf3be7bb0f348e974ea091debdcebb4d2027e05dc6e0189b0ac8032",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x2a85dd0afab46b81dcaa66bdc2545ab8960c9a5ed34349ab71c845812249294e",
+     "leaf_index": 18,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x1326df381c666a7b48e338c8e535864f4cbf3b0cc91f2425c5a370eec5ed77a7",
+      "0xe4fc7ead316e8b2a0c014064b6c24f3bf334fc8faf7a1ede052478929b41c8a4",
+      "0xdd4df9009cf3be7bb0f348e974ea091debdcebb4d2027e05dc6e0189b0ac8032",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x1326df381c666a7b48e338c8e535864f4cbf3b0cc91f2425c5a370eec5ed77a7",
+     "leaf_index": 19,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x2a85dd0afab46b81dcaa66bdc2545ab8960c9a5ed34349ab71c845812249294e",
+      "0xe4fc7ead316e8b2a0c014064b6c24f3bf334fc8faf7a1ede052478929b41c8a4",
+      "0xdd4df9009cf3be7bb0f348e974ea091debdcebb4d2027e05dc6e0189b0ac8032",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x686a3b56bc40700df1556b2c23f838bd4854233510447b0b77188b05c8455072",
+     "leaf_index": 20,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x788eee409896db63ba5dcb7832813c89c8a585221729677a0b675b8b07c179da",
+      "0xb98bde859821d192237d858d8ed76747defd69438de78d2319dc7143cf56a0d3",
+      "0x40bd89fe74ae53cb492f450644ed85963f95462223c067c1f2cd7d6ce198086d",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x788eee409896db63ba5dcb7832813c89c8a585221729677a0b675b8b07c179da",
+     "leaf_index": 21,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x686a3b56bc40700df1556b2c23f838bd4854233510447b0b77188b05c8455072",
+      "0xb98bde859821d192237d858d8ed76747defd69438de78d2319dc7143cf56a0d3",
+      "0x40bd89fe74ae53cb492f450644ed85963f95462223c067c1f2cd7d6ce198086d",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x2ddcb70b026f9309be318cdfe6ba537c7e6d4aa5c6ea6cb1f5754ee3a031f4ad",
+     "leaf_index": 22,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xf96483dab1fdfed5ddfdddfd9015dd36ef172586ba8e9e6343e342b88d00fbce",
+      "0x7a7fe113f9fbb8dae3e62ea4d922a5f5b726e1013ea3ab4859f65589f15f7d0d",
+      "0x40bd89fe74ae53cb492f450644ed85963f95462223c067c1f2cd7d6ce198086d",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xf96483dab1fdfed5ddfdddfd9015dd36ef172586ba8e9e6343e342b88d00fbce",
+     "leaf_index": 23,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x2ddcb70b026f9309be318cdfe6ba537c7e6d4aa5c6ea6cb1f5754ee3a031f4ad",
+      "0x7a7fe113f9fbb8dae3e62ea4d922a5f5b726e1013ea3ab4859f65589f15f7d0d",
+      "0x40bd89fe74ae53cb492f450644ed85963f95462223c067c1f2cd7d6ce198086d",
+      "0x996a5ee45decde12d65bcdc1aa2e29835c18c2dba8321a58e939acc27196d1ab",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x92f35d7df90ca4527dfde405c9184856b4691f6dad856454ced22b7a94cc45ba",
+     "leaf_index": 24,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x4a22768174685c02365df13af9db6a24556132171e9aa8e584ad92db0d87a24b",
+      "0x06a718cecc77a5691277e078843a97fa3588c364753ed8ca5766d6aff34daf2c",
+      "0x65979345317810792e91d93a47fceefd99b139520d5f64c2e932542ebcd5fd38",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x4a22768174685c02365df13af9db6a24556132171e9aa8e584ad92db0d87a24b",
+     "leaf_index": 25,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x92f35d7df90ca4527dfde405c9184856b4691f6dad856454ced22b7a94cc45ba",
+      "0x06a718cecc77a5691277e078843a97fa3588c364753ed8ca5766d6aff34daf2c",
+      "0x65979345317810792e91d93a47fceefd99b139520d5f64c2e932542ebcd5fd38",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x361453197f5491250f6a6043234860b2ed5435224034fc4eb996a3f7ea25e756",
+     "leaf_index": 26,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x2629fd742240930b1fb29e2c5f9cc19b09b738e6d6766058a75dd6cbc079d4f0",
+      "0x5b3df013e18399221dabe2c439cc1626deca5b84cc4d91ecf7d65d1522f9df46",
+      "0x65979345317810792e91d93a47fceefd99b139520d5f64c2e932542ebcd5fd38",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x2629fd742240930b1fb29e2c5f9cc19b09b738e6d6766058a75dd6cbc079d4f0",
+     "leaf_index": 27,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x361453197f5491250f6a6043234860b2ed5435224034fc4eb996a3f7ea25e756",
+      "0x5b3df013e18399221dabe2c439cc1626deca5b84cc4d91ecf7d65d1522f9df46",
+      "0x65979345317810792e91d93a47fceefd99b139520d5f64c2e932542ebcd5fd38",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x62c7e3cddd2fcb393a109474bc58f58971e8692ceffe72cb8b214a0a08b9fda3",
+     "leaf_index": 28,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x05d7f74b0596bd22f9bcf832a212ab84dad764c2feaada815a43a0c93b43e030",
+      "0x799d4a250061ada2cac0a0f707eb2d6d3adfe3c3ac8ec92f42ce7b631a17fff5",
+      "0x711e39aaf8f34f69e411fde0abd82da06987f0664557da2042a28c59cfea485f",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x05d7f74b0596bd22f9bcf832a212ab84dad764c2feaada815a43a0c93b43e030",
+     "leaf_index": 29,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x62c7e3cddd2fcb393a109474bc58f58971e8692ceffe72cb8b214a0a08b9fda3",
+      "0x799d4a250061ada2cac0a0f707eb2d6d3adfe3c3ac8ec92f42ce7b631a17fff5",
+      "0x711e39aaf8f34f69e411fde0abd82da06987f0664557da2042a28c59cfea485f",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x4efce50536ba1f0d60dfdb96fed966c309d65da53412f831c9fb53519dccf232",
+     "leaf_index": 30,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x4afac530c9d0ac2806780fc96ddd300c50ca1b6ce39d4440afaffd86cefb5395",
+      "0x3aeac91013ec5e096472948ee38c068e4133b1bb3751c81e0ff1095a14ee524f",
+      "0x711e39aaf8f34f69e411fde0abd82da06987f0664557da2042a28c59cfea485f",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x4afac530c9d0ac2806780fc96ddd300c50ca1b6ce39d4440afaffd86cefb5395",
+     "leaf_index": 31,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x4efce50536ba1f0d60dfdb96fed966c309d65da53412f831c9fb53519dccf232",
+      "0x3aeac91013ec5e096472948ee38c068e4133b1bb3751c81e0ff1095a14ee524f",
+      "0x711e39aaf8f34f69e411fde0abd82da06987f0664557da2042a28c59cfea485f",
+      "0x4c2128721873d684346c749e55bfd510451ecebdb8db64207f8688e117c03436",
+      "0xb7f2ff21f44415bab06d7172e3d26d3961f2718191f2402d52169c168b78ba72",
+      "0x3308dc3969e1aa11029371401c7aad7164bcdee0821b1bfeb4b160d886910871"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xa8cbef0ebf69b4674bec805591e428cf038f94cf91989e0f81a4ace86480c241",
+     "leaf_index": 32,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x0de45480698b4fa0863c18eacd8413a1a25f67c17b0f4b758c816d9a7ea2b46c",
+      "0x92b88e8ed2d8beaa371369362f3858eea4ab8455f97d042589b892546afea0ab",
+      "0x93bcb880c2ef0aed2f0e6a54f5ad7070e4c7883a966fbadae4170cc868ac8e3c",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x0de45480698b4fa0863c18eacd8413a1a25f67c17b0f4b758c816d9a7ea2b46c",
+     "leaf_index": 33,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xa8cbef0ebf69b4674bec805591e428cf038f94cf91989e0f81a4ace86480c241",
+      "0x92b88e8ed2d8beaa371369362f3858eea4ab8455f97d042589b892546afea0ab",
+      "0x93bcb880c2ef0aed2f0e6a54f5ad7070e4c7883a966fbadae4170cc868ac8e3c",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xad81484a43bec1ef2d0a390589c0be0cfc753f885c65fc6e9b429277aba7ae89",
+     "leaf_index": 34,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x08469ca703be380726c102d5607c53ca6a2979c0167fbbec5dfe48ec855ba8da",
+      "0x0178b47bd58d2ffbfe79e74e816532aad414ad5a322b35e096c07a2b13ec2bae",
+      "0x93bcb880c2ef0aed2f0e6a54f5ad7070e4c7883a966fbadae4170cc868ac8e3c",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x08469ca703be380726c102d5607c53ca6a2979c0167fbbec5dfe48ec855ba8da",
+     "leaf_index": 35,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xad81484a43bec1ef2d0a390589c0be0cfc753f885c65fc6e9b429277aba7ae89",
+      "0x0178b47bd58d2ffbfe79e74e816532aad414ad5a322b35e096c07a2b13ec2bae",
+      "0x93bcb880c2ef0aed2f0e6a54f5ad7070e4c7883a966fbadae4170cc868ac8e3c",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x2bdc98de16b98320ebca1455eaddba1cd5999ecba2360a255f065de8c24fab91",
+     "leaf_index": 36,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x8e3ed8ab6bbef91c8b3734a1ccded638c349bd0e1b05e7ac6e93b0496a687aaf",
+      "0xd97dbac65bbf2478c4bd3dc887d8c177e5c0b316ddd34659bf2bb888777d5353",
+      "0xf374bee497abc73805d93854047169c8e08c7f0f79215f458c816c7eb7688d2d",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x8e3ed8ab6bbef91c8b3734a1ccded638c349bd0e1b05e7ac6e93b0496a687aaf",
+     "leaf_index": 37,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x2bdc98de16b98320ebca1455eaddba1cd5999ecba2360a255f065de8c24fab91",
+      "0xd97dbac65bbf2478c4bd3dc887d8c177e5c0b316ddd34659bf2bb888777d5353",
+      "0xf374bee497abc73805d93854047169c8e08c7f0f79215f458c816c7eb7688d2d",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0x9451b5da265306de54b4984475c1386a13ee17523e22cee8ca6f65d0a1d8da15",
+     "leaf_index": 38,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0xfe25bb2fc356cd3bfaa740bc9ed22d56d41d45ce908e96910894f62fc181427c",
+      "0x9eb9967ff2e9475e45f250fc1971e88f413fb91d8c2d790d82fed5b5c448edbc",
+      "0xf374bee497abc73805d93854047169c8e08c7f0f79215f458c816c7eb7688d2d",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    },
+    {
+     "issuer_did": "did:pila:testnet:0xissuer",
+     "external_tree_id": "t",
+     "vc_hash": "0xfe25bb2fc356cd3bfaa740bc9ed22d56d41d45ce908e96910894f62fc181427c",
+     "leaf_index": 39,
+     "leaf_count": 40,
+     "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257",
+     "proof": [
+      "0x9451b5da265306de54b4984475c1386a13ee17523e22cee8ca6f65d0a1d8da15",
+      "0x9eb9967ff2e9475e45f250fc1971e88f413fb91d8c2d790d82fed5b5c448edbc",
+      "0xf374bee497abc73805d93854047169c8e08c7f0f79215f458c816c7eb7688d2d",
+      "0x4b26f8f81b3a4684e7fdb9bdbbde7426b1aef8f206317c96f0c063c6e4b95e15",
+      "0x9de048ce4e1a80e96cb71950e75cfa4a498d0ed9b4a17dc580e7303ab3729cff",
+      "0x94a00a629c365d33c996ee1a485f8ef64edce19ecdc4e5df398a97547d085e41"
+     ],
+     "tx_hash": "0xtx",
+     "hash_scheme": "keccak256-sorted-pairs-no-leaf-hash-v1"
+    }
+   ],
+   "root": "0xf978bf196a95dee2b8d65ddf53c0f80753b0843d614c3690997693ca02776257"
+  }
+ ],
+ "calldata": {
+  "getTreeRoot": "0xf1a4d25c000000000000000000000000abc00000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000007",
+  "treeExists": "0x5e51777d000000000000000000000000abc00000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000007",
+  "verifyVC": "0xed6cf0f3000000000000000000000000abc00000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000005350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f20000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000210a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaaea0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c",
+  "verifyVCEmpty": "0xed6cf0f3000000000000000000000000abc00000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f200000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000"
+ },
+ "fold": {
+  "folded": "0x73af4c5265342a2554293a2485c074ce2eb2562a9a99b99360a659282c56235f",
+  "folded1": "0x1e3abe3bf6ef6cdb58f52a9bec88137c7eb960777c29750049b21975db654128",
+  "leaf": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+  "proof": [
+   "0x10a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae",
+   "0xa0bf632ceb4a2deaac20013613dbf0f70379230f7abcabae85fad54388560d0c"
+  ]
+ },
+ "logdata": {
+  "batch": "0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000abc0000000000000000000000000000000000002000000000000000000000000abc0000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000210a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+  "batchMismatch": "0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000abc0000000000000000000000000000000000001000000000000000000000000abc00000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+  "issuer": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000210a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+  "legacyBatch": "0x000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000002000000000000000000000000abc0000000000000000000000000000000000002000000000000000000000000abc0000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000070000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000210a9efebd232336dd0f7ce1952e6b764c03ab6fc7f81abd938fe95db2a31aaae350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2",
+  "legacySingle": "0x350bb3dca2efdb96db44fe0ad0417cf25bfe6be8ef4c46499b2585bd7001b9f2"
+ },
+ "topics": {
+  "BatchRootsAnchored": "0x9c0087eb68509498a77940d44dc2c57719f324df124ff8333c035564ceacc4c8",
+  "BatchTreesUpdated": "0xdfca0e820844f18511e987f70077b11bc4543e954283a833a15d51abdbbc7cd0",
+  "IssuerRootsAnchored": "0x7489d816cfad0b785f6ef0f1130ba60adaab7e9d258e779eb2cd7dd418b48253",
+  "TreeRootAnchored": "0x17a6e7936b0c10a9e6eab46ef19fb799895f36e5a478b4877166c7277a60b462",
+  "TreeUpdated": "0x6359763dd97d67c7b79a119f0e38c8d995c8b2fd50f10d53b24d9949ca132fdb"
+ }
+}

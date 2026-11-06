@@ -1,6 +1,7 @@
 /**
  * Legacy JwtProof2020 verification — Node port of credential/common/crypto/jwt-proof-2020.go
  */
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { verifySignature } from './crypto';
 import { keyToBytes } from './hex';
 
@@ -18,7 +19,8 @@ export function verifyJwtProof(
   const { signature, message } = getSignatureAndMessage(jwtToken);
 
   const hexed = publicKeyHex.startsWith('0x') ? publicKeyHex : '0x' + publicKeyHex;
-  const pubBytes = keyToBytes(hexed);
+  // Like Go, compress the key first so 65-byte (04||X||Y) keys work too.
+  const pubBytes = secp256k1.ProjectivePoint.fromHex(keyToBytes(hexed).slice(0)).toRawBytes(true);
   return verifySignature(pubBytes, message, signature);
 }
 

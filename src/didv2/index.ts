@@ -1,0 +1,11 @@
+export * from './types';
+export * from './config';
+export * from './signer';
+export * from './document';
+export * from './vm-ops';
+export * from './address';
+export type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
+export * from './issuer';
+export * as didcontract from './didcontract';
+export * as subdid from './subdid';
+export { DIDGenerator, newDIDGenerator } from './generator';

@@ -7,6 +7,13 @@
  */
 import { DIDDocument, parseDIDDocument } from './verification-method';
 
+/** Go's url.PathEscape: like encodeURIComponent but keeps `:@$&+=` and escapes `!'()*`. */
+export function pathEscape(s: string): string {
+  return encodeURIComponent(s)
+    .replace(/%(3A|40|24|26|2B|3D)/g, (m) => String.fromCharCode(parseInt(m.slice(1), 16)))
+    .replace(/[!'()*]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+}
+
 export interface ResolverProvider {
   resolveDocument(did: string): Promise<DIDDocument>;
 }
@@ -30,13 +37,13 @@ export class HTTPResolver implements ResolverProvider {
 
   async resolveDocument(did: string): Promise<DIDDocument> {
     if (!did) throw new Error('did is empty');
-    const apiURL = `${this.baseURL}/${encodeURIComponent(did)}`;
+    const apiURL = `${this.baseURL}/${pathEscape(did)}`;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       const resp = await this.fetchFn(apiURL, { signal: controller.signal });
-      if (!resp.ok) {
+      if (resp.status !== 200) {
         throw new Error(
           `DID resolver API returned non-200 status: ${resp.status} ${resp.statusText}`,
         );

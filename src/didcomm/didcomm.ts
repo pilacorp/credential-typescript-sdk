@@ -40,13 +40,12 @@ export function encryptJWE(
     cipher.final(),
   ]);
   const tag = cipher.getAuthTag();
-  const sealed = Buffer.concat([ciphertext, tag]);
 
   return {
     protected: protectedHeader,
     iv: base64UrlEncode(iv),
-    ciphertext: base64UrlEncode(sealed),
-    tag: base64UrlEncode(Buffer.from(sharedSecret.subarray(0, 16))),
+    ciphertext: base64UrlEncode(ciphertext),
+    tag: base64UrlEncode(tag),
   };
 }
 
@@ -60,26 +59,35 @@ export function decryptJWE(
     key,
     base64UrlDecode(message.iv),
   );
-  const sealed = base64UrlDecode(message.ciphertext);
-  if (sealed.length < 17) {
-    throw new Error('ciphertext is too short');
+  const ciphertext = base64UrlDecode(message.ciphertext);
+  const authTag = base64UrlDecode(message.tag);
+  if (authTag.length !== 16) {
+    throw new Error(`JWE auth tag must be 16 bytes, got ${authTag.length}`);
   }
-  const ciphertext = sealed.subarray(0, sealed.length - 16);
-  const authTag = sealed.subarray(sealed.length - 16);
-  decipher.setAuthTag(authTag);
-
-  const plaintext = Buffer.concat([
-    decipher.update(ciphertext),
-    decipher.final(),
-  ]).toString('utf8');
+  let plaintext: Buffer;
+  try {
+    decipher.setAuthTag(authTag);
+    plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+  } catch (err) {
+    const legacyMockTag = Buffer.from(sharedSecret.subarray(0, 16));
+    if (!Buffer.from(authTag).equals(legacyMockTag) || ciphertext.length < 16) {
+      throw err;
+    }
+    const legacyCipher = createDecipheriv('aes-256-gcm', key, base64UrlDecode(message.iv));
+    legacyCipher.setAuthTag(ciphertext.subarray(ciphertext.length - 16));
+    plaintext = Buffer.concat([
+      legacyCipher.update(ciphertext.subarray(0, ciphertext.length - 16)),
+      legacyCipher.final(),
+    ]);
+  }
 
   return {
     protected: JSON.parse(base64UrlDecode(message.protected).toString('utf8')) as Record<
       string,
       unknown
     >,
-    plaintext,
-    json: tryParseJson(plaintext),
+    plaintext: plaintext.toString('utf8'),
+    json: tryParseJson(plaintext.toString('utf8')),
   };
 }
 
