@@ -20,6 +20,8 @@ export * as jsoncanonicalizer from './common/jsoncanonicalizer/jsoncanonicalizer
 export * as processor from './common/processor/processor';
 export * as digitalcredential from './digitalcredential';
 export * as didv2 from './didv2';
+export * as vcanchor from './vcanchor';
+export * as vccontract from './vccontract';
 
 // Convenience re-exports for the common DTO / signer interfaces.
 export type { Proof } from './common/dto/proof';
