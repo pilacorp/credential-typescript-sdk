@@ -14,6 +14,13 @@ import { sha256 } from '@noble/hashes/sha256';
 const jsonld = require('jsonld');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const rdfCanonize = require('rdf-canonize');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ContextResolver = require('jsonld/lib/ContextResolver');
+import {
+  ContextBudget,
+  type RemoteDocument,
+} from './document-loader';
+import { BlankNodeWorkError, blankNodeWork, maxBlankNodeWork } from './blank-node-work';
 import w3cV2 from './w3c.credential.v2.json';
 import w3cExamplesV2 from './w3c.credential.examples.v2.json';
 import dataIntegrityV2 from './w3c.security.data-integrity.v2.json';
@@ -21,12 +28,6 @@ import w3cV1 from './w3c.credential.v1.json';
 import securityV1 from './w3c.security.v1.json';
 import securityV2 from './w3c.security.v2.json';
 import secp256k1Suite from './w3c.security.secp256k1-2019.v1.json';
-
-type RemoteDocument = {
-  contextUrl: string | null;
-  document: unknown;
-  documentUrl: string;
-};
 
 const wellKnownContexts: Record<string, unknown> = {
   'https://www.w3.org/2018/credentials/v1': w3cV1,
@@ -42,13 +43,13 @@ const wellKnownContexts: Record<string, unknown> = {
   'https://w3id.org/security/suites/secp256k1-2019/v1': secp256k1Suite,
 };
 
+export * from './document-loader';
+export { BlankNodeWorkError, blankNodeWork, maxBlankNodeWork } from './blank-node-work';
+
 export type DocumentLoader = (url: string) => Promise<RemoteDocument> | RemoteDocument;
 
 const extraContexts: Record<string, unknown> = {};
 let injectedLoader: DocumentLoader | null = null;
-
-const fallbackLoader = jsonld.documentLoaders.node({ secure: false });
-const documentCache = new Map<string, RemoteDocument>();
 
 export function registerContext(url: string, document: unknown): void {
   extraContexts[url] = document;
@@ -62,24 +63,63 @@ export function bundledContextUrls(): string[] {
   return Object.keys(wellKnownContexts);
 }
 
-async function documentLoader(url: string): Promise<RemoteDocument> {
-  const extra = extraContexts[url];
-  if (extra) {
-    return { contextUrl: null, document: extra, documentUrl: url };
+const bundledSizes = new Map<unknown, number>();
+function bundledSize(url: string): number | undefined {
+  const doc = extraContexts[url] ?? wellKnownContexts[url];
+  if (!doc) return undefined;
+  let n = bundledSizes.get(doc);
+  if (n === undefined) {
+    n = Buffer.byteLength(JSON.stringify(doc));
+    bundledSizes.set(doc, n);
   }
-  const local = wellKnownContexts[url];
-  if (local) {
-    return { contextUrl: null, document: local, documentUrl: url };
+  return n;
+}
+
+/** One budget per JSON-LD operation; never shared between operations. */
+function newBudget(): ContextBudget {
+  return new ContextBudget({
+    bundledSize,
+    local: (url) => {
+      const doc = extraContexts[url] ?? wellKnownContexts[url];
+      if (doc) return { contextUrl: null, document: doc, documentUrl: url };
+      return injectedLoader ? injectedLoader(url) : undefined;
+    },
+  });
+}
+
+/**
+ * jsonld options for one operation. A resolver of its own keeps jsonld's
+ * process-wide resolved-context cache from skipping this operation's budget.
+ */
+function ldOptions(budget: ContextBudget, extra: Record<string, unknown> = {}) {
+  return {
+    documentLoader: budget.loader,
+    contextResolver: new ContextResolver({ sharedCache: new Map() }),
+    ...extra,
+  };
+}
+
+/** jsonld's stack overflows and type errors on hostile input become clean errors. */
+async function guard<T>(op: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (e instanceof RangeError || e instanceof TypeError) {
+      throw Object.assign(new Error(`${op}: malformed JSON-LD input`), { cause: e });
+    }
+    throw e;
   }
-  if (injectedLoader) {
-    return injectedLoader(url);
+}
+
+/** The one call into URDNA2015, refusing a dataset that would take it factorial time. */
+async function normalizeDataset(
+  dataset: unknown,
+  canonicalIdMap?: Map<string, string>,
+): Promise<string> {
+  if (blankNodeWork(dataset as never) > maxBlankNodeWork) {
+    throw new BlankNodeWorkError();
   }
-  if (documentCache.has(url)) {
-    return documentCache.get(url)!;
-  }
-  const doc = (await fallbackLoader(url)) as RemoteDocument;
-  documentCache.set(url, doc);
-  return doc;
+  return rdfCanonize.canonize(dataset, { algorithm: 'URDNA2015', canonicalIdMap });
 }
 
 /**
@@ -91,14 +131,15 @@ export async function canonicalizeDocument(
 ): Promise<Uint8Array> {
   if (!doc) throw new Error('failed to canonicalize document: document is nil');
   const standardized = standardizeToJSONLD(doc);
+  const budget = newBudget();
 
-  const canonical: string = await jsonld.canonize(standardized, {
-    algorithm: 'URDNA2015',
-    format: 'application/n-quads',
-    documentLoader,
-    // Match Go json-gold behaviour: silently drop properties that don't
-    // expand to an absolute IRI or keyword instead of throwing.
-    safe: false,
+  // The two steps of jsonld.canonize, which cannot stop between them to check
+  // the cost. Like Go, this leaves safe mode off: properties that don't expand
+  // to an absolute IRI or keyword are silently dropped (legacy semantics).
+  const canonical = await guard('failed to normalize document', async () => {
+    budget.limitInline(standardized);
+    const dataset = await jsonld.toRDF(standardized, ldOptions(budget, { safe: false }));
+    return normalizeDataset(dataset);
   });
 
   return new Uint8Array(Buffer.from(canonical, 'utf8'));
@@ -173,11 +214,14 @@ export function splitNQuadsKeepNL(s: string): string[] {
   return s.split(/(?<=\n)/).filter((p) => p.trim() !== '');
 }
 
-const ldOpts = { documentLoader, safe: true };
 
 export async function expandJSONLD(doc: Record<string, unknown>): Promise<unknown[]> {
   if (!doc) throw new Error('expand: document is nil');
-  const out = (await jsonld.expand(doc, ldOpts)) as unknown[];
+  const budget = newBudget();
+  const out = await guard('expand', async () => {
+    budget.limitInline(doc);
+    return (await jsonld.expand(doc, ldOptions(budget, { safe: true }))) as unknown[];
+  });
   checkExpandedTypes(out);
   rejectRelativeIDs(out);
   return out;
@@ -187,14 +231,15 @@ export async function compactJSONLD(
   expanded: unknown,
   ctx: unknown,
 ): Promise<Record<string, unknown>> {
-  return jsonld.compact(expanded, ctx, { documentLoader }) as Promise<Record<string, unknown>>;
+  return guard('compact', () => jsonld.compact(expanded, ctx, ldOptions(newBudget())));
 }
 
 export async function toRDFNQuads(doc: unknown): Promise<string[]> {
-  const nq = (await jsonld.toRDF(doc, {
-    ...ldOpts,
-    format: 'application/n-quads',
-  })) as string;
+  const budget = newBudget();
+  const nq = await guard('to rdf', async () => {
+    budget.limitInline(doc);
+    return (await jsonld.toRDF(doc, ldOptions(budget, { safe: true, format: 'application/n-quads' }))) as string;
+  });
   return splitNQuadsKeepNL(nq);
 }
 
@@ -219,7 +264,11 @@ export async function canonicalizeWithIdMap(
   doc: Record<string, unknown>,
 ): Promise<[string[], Map<string, string>]> {
   if (!doc) throw new Error('canonicalize: document is nil');
-  const dataset = await jsonld.toRDF(doc, ldOpts);
+  const budget = newBudget();
+  const dataset = await guard('canonicalize', async () => {
+    budget.limitInline(doc);
+    return jsonld.toRDF(doc, ldOptions(budget, { safe: true }));
+  });
   return canonicalizeDatasetWithIdMap(dataset);
 }
 
@@ -234,10 +283,7 @@ async function canonicalizeDatasetWithIdMap(
   dataset: unknown,
 ): Promise<[string[], Map<string, string>]> {
   const canonicalIdMap = new Map<string, string>();
-  const nqStr: string = await rdfCanonize.canonize(dataset, {
-    algorithm: 'URDNA2015',
-    canonicalIdMap,
-  });
+  const nqStr = await normalizeDataset(dataset, canonicalIdMap);
   const idMap = new Map<string, string>();
   for (const [k, v] of canonicalIdMap.entries()) {
     const key = k.startsWith('_:') ? k : `_:${k}`;
