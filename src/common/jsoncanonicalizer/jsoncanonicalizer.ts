@@ -11,16 +11,21 @@
  * value. Callers in this repo mostly hand off raw bytes mirroring the Go API.
  */
 
-const INVALID_PATTERN = 0x7ff0000000000000n;
+const MAX_DEPTH = 200;
 
 export function transform(input: string | Uint8Array | unknown): Uint8Array {
-  return Buffer.from(transformToString(input), 'utf8');
+  return new TextEncoder().encode(transformToString(input));
 }
 
 export function transformToString(input: string | Uint8Array | unknown): string {
   let value: unknown = input;
-  if (typeof input === 'string' || input instanceof Uint8Array || Buffer.isBuffer(input)) {
-    const text = typeof input === 'string' ? input : Buffer.from(input as Uint8Array).toString('utf8');
+  if (typeof input === 'string' || input instanceof Uint8Array) {
+    let text: string;
+    try {
+      text = typeof input === 'string' ? input : new TextDecoder('utf-8', { fatal: true }).decode(input);
+    } catch {
+      throw new Error('canonicalizer: input is not valid UTF-8');
+    }
     value = JSON.parse(text);
     rejectDuplicateKeys(text);
   }
@@ -61,22 +66,33 @@ function checkSurrogates(s: string): void {
   }
 }
 
-function serialize(value: unknown): string {
+function serialize(value: unknown, active: object[] = []): string {
   if (value === null) return 'null';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (typeof value === 'number') return numberToJSON(value);
   if (typeof value === 'string') return decorateString(value);
-  if (Array.isArray(value)) {
-    return '[' + value.map(serialize).join(',') + ']';
-  }
-  if (typeof value === 'object') {
+  if (typeof value !== 'object') throw new Error(`canonicalizer: unsupported value type ${typeof value}`);
+  if (active.includes(value)) throw new Error('canonicalizer: circular value');
+  if (active.length >= MAX_DEPTH) throw new Error('canonicalizer: nesting exceeds maximum depth');
+
+  active.push(value);
+  try {
+    if (Array.isArray(value)) {
+      const parts: string[] = [];
+      for (let i = 0; i < value.length; i++) {
+        if (!Object.prototype.hasOwnProperty.call(value, i)) throw new Error('canonicalizer: sparse array');
+        parts.push(serialize(value[i], active));
+      }
+      return '[' + parts.join(',') + ']';
+    }
+    const proto: unknown = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) throw new Error('canonicalizer: expected plain JSON object');
     const obj = value as Record<string, unknown>;
-    const entries: [string, string][] = Object.keys(obj).map((k) => [k, k]);
-    entries.sort((a, b) => compareUTF16(a[0], b[0]));
-    const parts = entries.map(([key]) => decorateString(key) + ':' + serialize(obj[key]));
-    return '{' + parts.join(',') + '}';
+    const keys = Object.keys(obj).sort(compareUTF16);
+    return '{' + keys.map((key) => decorateString(key) + ':' + serialize(obj[key], active)).join(',') + '}';
+  } finally {
+    active.pop();
   }
-  throw new Error(`canonicalizer: unsupported value type ${typeof value}`);
 }
 
 function compareUTF16(a: string, b: string): number {
