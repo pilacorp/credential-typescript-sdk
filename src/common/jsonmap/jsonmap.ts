@@ -620,15 +620,15 @@ async function verifyOneProof(
   proof: Proof,
   raw: unknown = proof,
 ): Promise<boolean> {
+  if (proof.type === JwtProof2020 && rawProofList(m).length !== 1) {
+    throw new Error('JwtProof2020 must be the only proof of the document');
+  }
   // JwtProof2020 reads the single proof it is handed.
   const view: JSONMap = { ...m, [PROOF_FIELD]: raw };
   const signerDID = didForProof(view, proof);
   const doc = await resolver.resolveDocument(signerDID);
 
   if (proof.type === JwtProof2020) {
-    if (Array.isArray(m[PROOF_FIELD])) {
-      throw new Error('JwtProof2020 must be the only proof of the document');
-    }
     return verifyJWTProofImpl(view, doc, proof);
   }
   if (proof.type === EcdsaSecp256k1Signature2019) {

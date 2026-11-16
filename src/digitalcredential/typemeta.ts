@@ -6,6 +6,7 @@ import { httpsURL, parseURL } from './internal/url';
 import { validURI } from './internal/uri';
 import type { Limits } from './internal/safehttp';
 import { StatusError } from './internal/safehttp';
+import { hasOwn } from '../common/util/json';
 
 export const ErrNotFound = Object.assign(new Error('typemeta: no Type Metadata for the type'), { name: 'TypeMetaError' });
 export const ErrInvalid = Object.assign(new Error('typemeta: Type Metadata document is invalid'), { name: 'TypeMetaError' });
@@ -72,7 +73,7 @@ export class Metadata {
   ): void {
     for (const [i, c] of this.claims.entries()) {
       try {
-        checkClaim(c, claims, Boolean(opts.allDisclosures), opts.issued);
+        checkClaim(c, fromIssued(opts.issued ?? claims, claims), Boolean(opts.allDisclosures));
       } catch (err) {
         throw Object.assign(
           new Error(`typemeta: claims[${i}] with path ${JSON.stringify(c.path)}: ${(err as Error).message}`),
@@ -273,69 +274,113 @@ function mergeClaims(inherited: Claim[], child: Claim[]): Claim[] {
   return out;
 }
 
-function checkClaim(c: Claim, root: unknown, _all: boolean, issued?: Record<string, unknown>): void {
-  let sel: unknown[] = [root];
+interface IssuedNode {
+  disclosed: boolean;
+  hidden: boolean;
+  hiddenFields: number;
+  fields?: Record<string, IssuedNode>;
+  elems?: IssuedNode[];
+}
+
+function isPlaceholder(v: unknown): boolean {
+  return Boolean(
+    v &&
+      typeof v === 'object' &&
+      !Array.isArray(v) &&
+      Object.keys(v as object).length === 1 &&
+      hasOwn(v as object, '...'),
+  );
+}
+
+function fromIssued(issued: unknown, rec: unknown, disclosed = false): IssuedNode {
+  if (isPlaceholder(issued)) {
+    if (isPlaceholder(rec) || rec === undefined) {
+      return { disclosed: false, hidden: true, hiddenFields: 0 };
+    }
+    return fromIssued(rec, rec, true);
+  }
+  if (Array.isArray(issued)) {
+    const recArr = Array.isArray(rec) ? rec : [];
+    return {
+      disclosed,
+      hidden: false,
+      hiddenFields: 0,
+      elems: issued.map((e, i) => fromIssued(e, recArr[i])),
+    };
+  }
+  if (issued && typeof issued === 'object') {
+    const recObj =
+      rec && typeof rec === 'object' && !Array.isArray(rec) ? (rec as Record<string, unknown>) : {};
+    const src = issued as Record<string, unknown>;
+    const fields: Record<string, IssuedNode> = {};
+    for (const k of Object.keys(src)) {
+      if (k === '_sd' || k === '_sd_alg') continue;
+      fields[k] = fromIssued(src[k], recObj[k]);
+    }
+    let opened = 0;
+    for (const k of Object.keys(recObj)) {
+      if (k === '_sd' || k === '_sd_alg' || hasOwn(src, k)) continue;
+      fields[k] = fromIssued(recObj[k], recObj[k], true);
+      opened++;
+    }
+    const sd = src._sd;
+    const nSd = Array.isArray(sd) ? sd.length : 0;
+    return {
+      disclosed,
+      hidden: false,
+      hiddenFields: Math.max(0, nSd - opened),
+      fields,
+    };
+  }
+  return { disclosed, hidden: false, hiddenFields: 0 };
+}
+
+function elemsOf(n: IssuedNode, all: boolean): IssuedNode[] {
+  const list = n.elems ?? [];
+  return all ? list.filter((e) => !e.hidden) : list;
+}
+
+function checkClaim(c: Claim, root: IssuedNode, all: boolean): void {
+  let sel: IssuedNode[] = [root];
   for (const el of c.path) {
-    const next: unknown[] = [];
+    const next: IssuedNode[] = [];
     for (const n of sel) {
+      if (n.hidden) continue;
       if (typeof el === 'string') {
-        if (typeof n !== 'object' || n === null || Array.isArray(n)) {
+        if (!n.fields) {
           throw new Error('a key is selected in a value that is not an object (§5.6.1.2)');
         }
-        const obj = n as Record<string, unknown>;
-        if (!Object.prototype.hasOwnProperty.call(obj, el)) {
-          if (c.mandatory) throw new Error('a mandatory claim is not in the credential (§5.6.3)');
+        if (!hasOwn(n.fields, el)) {
+          if (c.mandatory && (all || n.hiddenFields === 0)) {
+            throw new Error('a mandatory claim is not in the credential (§5.6.3)');
+          }
           continue;
         }
-        next.push(obj[el]);
+        next.push(n.fields[el]);
       } else if (el === null) {
-        if (!Array.isArray(n)) throw new Error('every element is selected in a value that is not an array (§5.6.1.2)');
-        next.push(...n);
+        if (!n.elems) throw new Error('every element is selected in a value that is not an array (§5.6.1.2)');
+        next.push(...elemsOf(n, all));
       } else {
-        if (!Array.isArray(n)) throw new Error('an index is selected in a value that is not an array (§5.6.1.2)');
-        if (el >= n.length) {
+        if (!n.elems) throw new Error('an index is selected in a value that is not an array (§5.6.1.2)');
+        const es = elemsOf(n, all);
+        if (el >= es.length) {
           if (c.mandatory) throw new Error('a mandatory claim is not in the credential (§5.6.3)');
           continue;
         }
-        next.push(n[el]);
+        next.push(es[el]);
       }
     }
     sel = next;
   }
-  if (!issued || sel.length === 0) return;
-  const sd = pathIsDisclosed(issued, root, c.path);
-  if (c.sd === 'always' && !sd) {
-    throw new Error('a selected claim is not selectively disclosable, and sd is always');
-  }
-  if (c.sd === 'never' && sd) {
-    throw new Error('a selected claim is selectively disclosable, and sd is never');
-  }
-}
-
-function pathIsDisclosed(issued: unknown, reconstructed: unknown, path: PathEl[]): boolean {
-  let node: unknown = issued;
-  let rec: unknown = reconstructed;
-  for (const el of path) {
-    if (typeof el === 'string') {
-      if (!node || typeof node !== 'object' || Array.isArray(node) || !Object.prototype.hasOwnProperty.call(node, el)) {
-        return rec !== undefined;
-      }
-      node = (node as Record<string, unknown>)[el];
-      rec =
-        rec && typeof rec === 'object' && !Array.isArray(rec) && Object.prototype.hasOwnProperty.call(rec, el)
-          ? (rec as Record<string, unknown>)[el]
-          : undefined;
-    } else if (typeof el === 'number') {
-      if (!Array.isArray(node) || el >= node.length) return rec !== undefined;
-      const item = node[el];
-      if (item && typeof item === 'object' && !Array.isArray(item) && Object.prototype.hasOwnProperty.call(item, '...')) {
-        return true;
-      }
-      node = item;
-      rec = Array.isArray(rec) ? rec[el] : undefined;
+  for (const n of sel) {
+    const sd = n.disclosed || n.hidden;
+    if (c.sd === 'always' && !sd) {
+      throw new Error('a selected claim is not selectively disclosable, and sd is always');
+    }
+    if (c.sd === 'never' && sd) {
+      throw new Error('a selected claim is selectively disclosable, and sd is never');
     }
   }
-  return false;
 }
 
 export type RedirectPolicy = { mode: 'origin' } | { mode: 'any' } | { mode: 'to'; origins: string[] };

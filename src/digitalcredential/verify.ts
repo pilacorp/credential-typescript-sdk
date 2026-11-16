@@ -1,8 +1,8 @@
 import { parseDisclosures, reconstruct } from '../common/sdjwt';
-import type { JSONMap } from '../common/util/json';
+import { hasOwn, type JSONMap } from '../common/util/json';
 import { Credential } from './credential';
 import { Code, DigitalCredentialError, neverDisclosable, PolicyError, TypDCSDJWT, TypKBJWT } from './errors';
-import { decodeJSONSegment, peekHeader, p256FromJWK, typIs, verifyCompactJWS } from './jws-compact';
+import { decodeJSONSegment, isUnsupportedHeader, peekHeader, p256FromJWK, typIs, verifyCompactJWS } from './jws-compact';
 import { ErrIssuerNotSupported, ErrNoUsableKey, selectKey, type Resolver } from './issuerkey';
 import { sdHash, splitSDJWT } from './split';
 import { ErrIndexOutOfBounds, refFromStatus, type Checker, type Ref } from './statuslist';
@@ -53,7 +53,7 @@ export interface Result {
 function dropUndisclosedElements(v: unknown): unknown {
   if (Array.isArray(v)) {
     return v
-      .filter((e) => !(e && typeof e === 'object' && !Array.isArray(e) && Object.keys(e).length === 1 && '...' in e))
+      .filter((e) => !(e && typeof e === 'object' && !Array.isArray(e) && Object.keys(e).length === 1 && hasOwn(e as object, '...')))
       .map(dropUndisclosedElements);
   }
   if (v && typeof v === 'object') {
@@ -68,12 +68,24 @@ export async function verifyCredential(
   opts: VerifyOptions = {},
 ): Promise<Result> {
   if (opts.status && opts.skipStatus) throw new PolicyError('WithStatus and WithoutStatusCheck are both passed');
+  if (opts.extendedVCTMatch && (!opts.acceptedVCTs || !opts.types)) {
+    throw new PolicyError(
+      'WithExtendedVCTMatch needs WithAcceptedVCTs, the types it matches, and WithTypeMetadata or WithOptionalTypeMetadata, the extends chain it matches them on',
+    );
+  }
   const algs = opts.allowedAlgs?.length ? opts.allowedAlgs : ['ES256', 'ES256K'];
   const { issuerJWT, disclosures, kbJWT } = splitSDJWT(c.compact);
   let header: Record<string, unknown>;
   try {
     header = peekHeader(issuerJWT);
   } catch (err) {
+    if (isUnsupportedHeader(err)) {
+      throw new DigitalCredentialError(
+        Code.Malformed,
+        'the Issuer-signed JWT header uses crit or b64, which this SDK does not implement',
+        err,
+      );
+    }
     throw new DigitalCredentialError(Code.Malformed, (err as Error).message, err);
   }
   if (!typIs(header.typ, TypDCSDJWT)) {
@@ -128,7 +140,14 @@ export async function verifyCredential(
   }
   try {
     verifyCompactJWS(issuerJWT, pub.publicKey, algs);
-  } catch {
+  } catch (err) {
+    if (isUnsupportedHeader(err)) {
+      throw new DigitalCredentialError(
+        Code.Malformed,
+        'the Issuer-signed JWT header uses crit or b64, which this SDK does not implement',
+        err,
+      );
+    }
     throw new DigitalCredentialError(Code.SignatureInvalid, 'Issuer-signed JWT signature invalid');
   }
 
@@ -235,12 +254,16 @@ export async function verifyCredential(
       try {
         kbPayload = verifyCompactJWS(kbJWT, p256FromJWK(cnf.jwk), algs);
       } catch (err) {
+        if (isUnsupportedHeader(err)) {
+          throw new DigitalCredentialError(
+            Code.Malformed,
+            'the KB-JWT header uses crit or b64, which this SDK does not implement',
+            err,
+          );
+        }
         throw new DigitalCredentialError(Code.KBInvalid, (err as Error).message, err);
       }
       const kbHeader = peekHeader(kbJWT);
-      if (kbHeader.crit !== undefined || kbHeader.b64 !== undefined) {
-        throw new DigitalCredentialError(Code.Malformed, 'the KB-JWT header uses crit or b64, which this SDK does not implement');
-      }
       if (!typIs(kbHeader.typ, TypKBJWT)) {
         throw new DigitalCredentialError(Code.KBInvalid, 'KB JWT typ must be kb+jwt');
       }

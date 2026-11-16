@@ -81,8 +81,8 @@ function ipv6Bytes(ip: string): number[] {
 
 function embeddedIPv4(ip: string, kind: number): string | null {
   if (kind !== 6) return null;
-  const at = (o: number) => ipv6Bytes(ip).slice(o, o + 4).join('.');
-  if (embedded.check(ip, 'ipv6')) return at(12);
-  if (sixToFour.check(ip, 'ipv6')) return at(2);
+  const ipv4At = (o: number) => ipv6Bytes(ip).slice(o, o + 4).join('.');
+  if (embedded.check(ip, 'ipv6')) return ipv4At(12);
+  if (sixToFour.check(ip, 'ipv6')) return ipv4At(2);
   return null;
 }

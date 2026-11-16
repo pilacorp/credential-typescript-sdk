@@ -1,14 +1,21 @@
+import { deflateSync } from 'node:zlib';
 import { p256 } from '@noble/curves/nist';
+import { secp256k1 } from '@noble/curves/secp256k1';
 import { P256Provider } from '../../src/common/signer/p256-provider';
+import { DefaultProvider } from '../../src/common/signer/default-provider';
 import { bytesToHex } from '../../src/common/crypto/hex';
 import { blockedAddress } from '../../src/digitalcredential/internal/blocked';
 import { metadataURL } from '../../src/digitalcredential/issuermeta';
-import { issue, parse, StaticResolver, Code, PolicyError, DigitalCredentialError } from '../../src/digitalcredential';
+import { issue, parse, StaticResolver, Code, PolicyError } from '../../src/digitalcredential';
 import { ErrIssuerNotSupported } from '../../src/digitalcredential/issuerkey';
-import { typIs, p256FromJWK, decodeJSONSegment } from '../../src/digitalcredential/jws-compact';
+import { typIs, p256FromJWK, decodeJSONSegment, peekHeader, signCompactJWS, verifyCompactJWS } from '../../src/digitalcredential/jws-compact';
 import { deepCopyMap } from '../../src/common/util/json';
 import { hashDisclosure, reconstruct } from '../../src/common/sdjwt';
 import { canonicalizeNQuads } from '../../src/common/processor/processor';
+import { verifyProof } from '../../src/common/jsonmap/jsonmap';
+import { load, staticResolver, integrity, ErrViolated } from '../../src/digitalcredential/typemeta';
+import { decodeList } from '../../src/digitalcredential/statuslist';
+import { get, ErrBodyTooLarge } from '../../src/digitalcredential/internal/safehttp';
 
 function issuer() {
   const priv = p256.utils.randomPrivateKey();
@@ -193,5 +200,139 @@ describe('PR #11 review: N-Quads TAB', () => {
       'http://example/p': { '@value': 'a\tb' },
     });
     expect(nq.join('')).toContain('\\t');
+  });
+});
+
+describe('PR #11 review: compact JWS crit/b64 and typ', () => {
+  it('refuses crit and b64 in peekHeader and verifyCompactJWS', async () => {
+    const ctx = issuer();
+    const token = await signCompactJWS({ alg: 'ES256', typ: 'dc+sd-jwt' }, { iss: ctx.iss }, ctx.key.signer);
+    const parts = token.split('.');
+    const withCrit = `${Buffer.from(JSON.stringify({ alg: 'ES256', crit: ['exp'] })).toString('base64url')}.${parts[1]}.${parts[2]}`;
+    const withB64 = `${Buffer.from(JSON.stringify({ alg: 'ES256', b64: false })).toString('base64url')}.${parts[1]}.${parts[2]}`;
+    expect(() => peekHeader(withCrit)).toThrow(/crit or b64/);
+    expect(() => peekHeader(withB64)).toThrow(/crit or b64/);
+    expect(() => verifyCompactJWS(withCrit, ctx.key.publicKey)).toThrow(/crit or b64/);
+    await expect(parse(withCrit + '~').verify(ctx.resolver)).rejects.toMatchObject({ code: Code.Malformed });
+  });
+
+  it('typIs refuses parameters and matches ASCII case only', () => {
+    expect(typIs('dc+sd-jwt; charset=utf-8', 'dc+sd-jwt')).toBe(false);
+    expect(typIs('DC+SD-JWT', 'dc+sd-jwt')).toBe(true);
+    expect(typIs('application/dc+sd-jwt', 'dc+sd-jwt')).toBe(true);
+  });
+});
+
+describe('PR #11 review: ES256K KB-JWT', () => {
+  it('issues, presents, and verifies secp256k1 Key Binding', async () => {
+    const issPriv = secp256k1.utils.randomPrivateKey();
+    const issPub = secp256k1.getPublicKey(issPriv, false);
+    const holdPriv = secp256k1.utils.randomPrivateKey();
+    const holdPub = secp256k1.getPublicKey(holdPriv, false);
+    const iss = 'https://issuer.example';
+    const key = { signer: new DefaultProvider(bytesToHex(issPriv)), publicKey: issPub, kid: 'k1' as const, alg: 'ES256K' as const };
+    const cred = await issue(
+      {
+        issuer: iss,
+        vct: 'https://credentials.example/id',
+        issuedAt: new Date(),
+        holderKey: holdPub,
+        claims: { given_name: 'Erika' },
+      },
+      key,
+    );
+    const presented = await cred.present({
+      keyBinding: {
+        signer: new DefaultProvider(bytesToHex(holdPriv)),
+        audience: 'https://verifier.example',
+        nonce: 'n1',
+        issuedAt: new Date(),
+      },
+    });
+    const res = await presented.verify(new StaticResolver(iss, [{ kid: 'k1', publicKey: issPub }]), {
+      audience: 'https://verifier.example',
+      nonce: 'n1',
+    });
+    expect(res.keyBound).toBe(true);
+  });
+});
+
+describe('PR #11 review: JwtProof2020 proof set', () => {
+  const resolver = { resolveDocument: async () => ({ id: 'did:ex:1', verificationMethod: [] }) };
+  it('allows a one-element proof array', async () => {
+    try {
+      await verifyProof({ proof: [{ type: 'JwtProof2020', jwt: 'a.b.c' }] }, resolver as never);
+    } catch (err) {
+      expect((err as Error).message).not.toMatch(/only proof/);
+    }
+  });
+  it('refuses JwtProof2020 when another proof is present', async () => {
+    await expect(
+      verifyProof(
+        {
+          proof: [
+            { type: 'JwtProof2020', jwt: 'a.b.c' },
+            { type: 'DataIntegrityProof', cryptosuite: 'ecdsa-rdfc-2019' },
+          ],
+        },
+        resolver as never,
+      ),
+    ).rejects.toThrow(/only proof/);
+  });
+});
+
+describe('PR #11 review: type metadata sd/mandatory', () => {
+  async function meta(claim: object) {
+    const doc = Buffer.from(
+      JSON.stringify({
+        vct: 'https://a.example/t',
+        claims: [claim],
+      }),
+    );
+    return load(staticResolver(doc), { vct: 'https://a.example/t', integrity: integrity(doc) });
+  }
+
+  it('fails sd always on a clear claim and sd never on a disclosed claim', async () => {
+    const always = await meta({ path: ['x'], sd: 'always' });
+    expect(() => always.validateClaims({ x: 1 }, { issued: { x: 1 } })).toThrow();
+    try {
+      always.validateClaims({ x: 1 }, { issued: { x: 1 } });
+    } catch (err) {
+      expect((err as { cause?: unknown }).cause).toBe(ErrViolated);
+    }
+    const never = await meta({ path: ['x'], sd: 'never' });
+    expect(() => never.validateClaims({ x: 1 }, { issued: { _sd: ['d'] } })).toThrow();
+  });
+
+  it('does not treat a still-hidden mandatory claim as missing', async () => {
+    const m = await meta({ path: ['x'], mandatory: true });
+    m.validateClaims({}, { issued: { _sd: ['a', 'b'] } });
+    expect(() => m.validateClaims({}, { issued: {} })).toThrow();
+  });
+});
+
+describe('PR #11 review: WithExtendedVCTMatch policy', () => {
+  it('errors when the flag is set without accepted VCTs and type metadata', async () => {
+    const ctx = issuer();
+    const cred = await issue({ issuer: ctx.iss, vct: 'https://example/t', claims: { n: 'x' } }, ctx.key);
+    await expect(cred.verify(ctx.resolver, { extendedVCTMatch: true })).rejects.toBeInstanceOf(PolicyError);
+  });
+});
+
+describe('PR #11 review: status-list inflate and fetch cap', () => {
+  it('refuses an lst that inflates past the output cap', () => {
+    const raw = deflateSync(Buffer.alloc(17 << 20));
+    expect(() => decodeList(raw.toString('base64url'), 1)).toThrow(/inflates past/);
+  });
+
+  it('refuses a custom fetch with no readable body', async () => {
+    await expect(
+      get('https://example.invalid/x', ['application/json'], {
+        timeoutMs: 1000,
+        maxRedirects: 0,
+        maxBytes: 16,
+        fetch: (async () => ({ status: 200, headers: new Headers(), body: null }) as never),
+      }),
+    ).rejects.toBe(ErrBodyTooLarge);
   });
 });

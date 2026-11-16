@@ -100,8 +100,11 @@ async function oneRequest(
     });
     const chunks: Buffer[] = [];
     let n = 0;
-    const reader = res.body?.getReader();
-    while (reader) {
+    const reader = res.body?.getReader?.();
+    if (!reader) {
+      throw ErrBodyTooLarge;
+    }
+    while (true) {
       const { done, value } = await reader.read();
       if (done) break;
       n += value.length;
@@ -111,7 +114,7 @@ async function oneRequest(
       }
       chunks.push(Buffer.from(value));
     }
-    const buf = reader ? Buffer.concat(chunks) : Buffer.from(await res.arrayBuffer());
+    const buf = Buffer.concat(chunks);
     const headers: http.IncomingHttpHeaders = {};
     res.headers.forEach((v, k) => {
       headers[k.toLowerCase()] = v;

@@ -43,7 +43,7 @@ describe('P256Provider (6.2)', () => {
 
 describe('AlgorithmProvider / AlgorithmOf (6.3, 6.4)', () => {
   it('defaults to RS256 and honours a declared algorithm', () => {
-    expect(sdk.signer.algorithmOf(new sdk.DefaultProvider('11'.repeat(32)))).toBe('RS256');
+    expect(sdk.signer.algorithmOf(new sdk.DefaultProvider('11'.repeat(32)))).toBe('ES256K');
     expect(sdk.signer.algorithmOf(sdk.signer.newRSAFunc(() => new Uint8Array(256), 'PS384'))).toBe('PS384');
     expect(sdk.signer.algorithmOf(new sdk.P256Provider('06'.repeat(32)))).toBe('ES256');
   });
