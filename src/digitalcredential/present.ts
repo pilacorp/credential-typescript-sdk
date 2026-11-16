@@ -1,10 +1,11 @@
-import { reconstruct } from '../common/sdjwt';
+import { anyDisclosed, reconstructIssued } from '../common/sdjwt';
 import { hasOwn, type JSONMap } from '../common/util/json';
-import { decodeDisclosures, hashDisclosure } from '../common/sdjwt';
+import { decodeDisclosures, hashDisclosure, isArrayPlaceholder } from '../common/sdjwt';
 import type { SignerProvider } from '../common/signer/signer';
 import { Credential } from './credential';
 import { TypKBJWT } from './errors';
-import { algForECJWK, decodeJSONSegment, p256FromJWK, signCompactJWS, verifyCompactJWS } from './jws-compact';
+import { cnfKey } from './cnf';
+import { algForECJWK, jsonForm, decodeJSONSegment, isValidDate, signCompactJWS, verifyCompactJWS } from './jws-compact';
 import { sdHash, splitSDJWT } from './split';
 import type { Path } from './issue';
 
@@ -31,14 +32,18 @@ export async function presentCredential(c: Credential, req: PresentRequest): Pro
   for (const d of selected) compact += d + '~';
 
   if (req.keyBinding) {
-    reconstruct(payload, disclosures, true);
-    const cnf = payload.cnf as { jwk?: { kty?: string; crv?: string; x?: string; y?: string } } | undefined;
-    if (!cnf?.jwk) throw new Error('credential has no cnf.jwk for Key Binding');
-    const holderKey = p256FromJWK(cnf.jwk);
-    const kbAlg = algForECJWK(cnf.jwk);
+    const { issued } = reconstructIssued(payload, disclosures, true, true);
+    // draft-ietf-oauth-sd-jwt-vc-19 §2.2.2.3: no part of cnf comes in a Disclosure.
+    if (issued.fields && hasOwn(issued.fields, 'cnf') && anyDisclosed(issued.fields.cnf)) {
+      throw new Error("the credential's cnf, or a claim inside it, is in a disclosure, which is not allowed");
+    }
+    if (!hasOwn(payload, 'cnf')) throw new Error('credential has no cnf for Key Binding');
+    const holderKey = cnfKey(payload.cnf);
+    const kbAlg = algForECJWK((payload.cnf as { jwk: { crv?: string } }).jwk);
     const kb = req.keyBinding;
     if (!kb.audience || !kb.nonce) throw new Error('KeyBinding audience and nonce are required');
-    const extra = { ...(kb.claims ?? {}) };
+    if (!isValidDate(kb.issuedAt)) throw new Error('KeyBinding issuedAt is not a valid Date');
+    const extra = jsonForm(kb.claims ?? {}, 'KeyBinding claims');
     for (const forbidden of ['iat', 'aud', 'nonce', 'sd_hash']) {
       if (forbidden in extra) throw new Error(`KeyBinding claims must not hold ${forbidden}`);
     }
@@ -95,10 +100,9 @@ function selectDisclosures(payload: JSONMap, disclosures: string[], reveal: Path
     if (!Array.isArray(node)) throw notIn(path);
     const elems: Array<() => unknown> = [];
     for (const el of node) {
-      const concealed = el && typeof el === 'object' && !Array.isArray(el) && hasOwn(el as object, '...');
-      if (!concealed) elems.push(() => el);
-      else if (byDigest.has((el as JSONMap)['...'] as string)) {
-        elems.push(() => openDigest((el as JSONMap)['...'], path));
+      if (!isArrayPlaceholder(el)) elems.push(() => el);
+      else if (byDigest.has(el['...'])) {
+        elems.push(() => openDigest(el['...'], path));
       }
     }
     let n = 0;

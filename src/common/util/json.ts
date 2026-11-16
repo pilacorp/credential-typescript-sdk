@@ -8,6 +8,14 @@ export function hasOwn(obj: object, key: PropertyKey): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }
 
+/**
+ * Sets obj[key] as an own property. A plain assignment of the key "__proto__"
+ * would set the prototype of obj instead, and a JSON object may hold that key.
+ */
+export function setOwn(obj: object, key: string, value: unknown): void {
+  Object.defineProperty(obj, key, { value, enumerable: true, writable: true, configurable: true });
+}
+
 export function shallowCopyObj(obj: JSONMap): JSONMap {
   return { ...obj };
 }
@@ -29,12 +37,7 @@ function deepCopyValue(v: unknown): unknown {
   if (isPlainObject(v)) {
     const out: JSONMap = {};
     for (const [k, val] of Object.entries(v)) {
-      Object.defineProperty(out, k, {
-        value: deepCopyValue(val),
-        enumerable: true,
-        writable: true,
-        configurable: true,
-      });
+      setOwn(out, k, deepCopyValue(val));
     }
     return out;
   }

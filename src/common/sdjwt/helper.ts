@@ -22,6 +22,16 @@ export const supportedHashAlgorithms: Record<string, boolean> = {
 
 const JWT_REGEX = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+(\.[A-Za-z0-9\-_]+)?$/;
 
+/**
+ * Reports whether el is {"...": "<digest>"}: an array element with exactly one
+ * key, "...", holding a string (RFC 9901 §4.2.4.2, §7.1 step 3.b.ii).
+ */
+export function isArrayPlaceholder(el: unknown): el is { '...': string } {
+  if (!el || typeof el !== 'object' || Array.isArray(el)) return false;
+  const keys = Object.keys(el);
+  return keys.length === 1 && keys[0] === '...' && typeof (el as Record<string, unknown>)['...'] === 'string';
+}
+
 export function isJWT(s: string): boolean {
   let trimmed = s.trim();
   if (trimmed.endsWith('.')) trimmed = trimmed.slice(0, -1);

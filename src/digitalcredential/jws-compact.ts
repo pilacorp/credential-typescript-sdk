@@ -57,20 +57,68 @@ export function base64urlStrict(s: string): Buffer {
   return b;
 }
 
-export function decodeJSONSegment(segment: string, what = 'JWS segment'): Record<string, unknown> {
+/**
+ * checkDepth false reads a segment before its signature is checked, when only
+ * a claim such as iss is needed; the depth rule then waits for the signature.
+ */
+export function decodeJSONSegment(segment: string, what = 'JWS segment', checkDepth = true): Record<string, unknown> {
   let text: string;
   try {
     text = utf8.decode(base64urlStrict(segment));
   } catch {
     throw new Error(`${what} is not valid UTF-8`);
   }
+  let v: unknown;
   try {
-    const v = JSON.parse(text);
-    if (v && typeof v === 'object' && !Array.isArray(v)) return v as Record<string, unknown>;
+    v = JSON.parse(text);
   } catch {
-    /* fall through */
+    throw new Error(`${what} is not a JSON object`);
   }
-  throw new Error(`${what} is not a JSON object`);
+  if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error(`${what} is not a JSON object`);
+  if (checkDepth) checkJSONDepth(v, what);
+  return v as Record<string, unknown>;
+}
+
+// The deepest nesting of objects and arrays a header or payload may have
+// (RFC 8259 §9 lets a parser limit it), the Go SDK's jose.MaxJSONDepth.
+const maxJSONDepth = 64;
+
+/** A header, a payload or claims for one nest deeper than both SDKs read. */
+export class JSONDepthError extends Error {}
+
+/** Throws JSONDepthError when v, counted as the first level, nests deeper than 64. */
+export function checkJSONDepth(v: unknown, what: string): void {
+  if (nestsDeeper(v, maxJSONDepth)) throw new JSONDepthError(`${what}: nesting deeper than ${maxJSONDepth}`);
+}
+
+/**
+ * What the caller gave, as the JSON it serializes to: every check after this
+ * reads what is signed, not an object whose toJSON says something else.
+ * Refuses nesting deeper than 64 first, which also bounds the serializer.
+ */
+export function jsonForm(v: object, what: string): Record<string, unknown> {
+  checkJSONDepth(v, what);
+  let copy: unknown;
+  try {
+    copy = JSON.parse(JSON.stringify(v));
+  } catch (err) {
+    throw Object.assign(new Error(`${what} does not serialize to JSON`), { cause: err });
+  }
+  if (!copy || typeof copy !== 'object' || Array.isArray(copy)) throw new Error(`${what} is not a JSON object`);
+  // The serializer asks toJSON again, with the key; the copy is what it answered then.
+  checkJSONDepth(copy, what);
+  return copy as Record<string, unknown>;
+}
+
+// Counts the JSON form: a value with toJSON (a Date, a Buffer) is what it serializes to.
+function nestsDeeper(v: unknown, levels: number): boolean {
+  if (v && typeof (v as { toJSON?: unknown }).toJSON === 'function') v = (v as { toJSON(): unknown }).toJSON();
+  if (!v || typeof v !== 'object') return false;
+  if (levels === 0) return true;
+  for (const child of Array.isArray(v) ? v : Object.values(v)) {
+    if (nestsDeeper(child, levels - 1)) return true;
+  }
+  return false;
 }
 
 export function encodeJWKFromP256Uncompressed(
@@ -154,3 +202,18 @@ export function peekHeader(token: string): Record<string, unknown> {
 }
 
 export { P256Provider };
+
+// The seconds a NumericDate may hold (RFC 7519 §2), within the dates the Go
+// SDK computes: -292277022400-03-01 to 292277024627-12-06.
+const minUnix = -9223372028741760000;
+const maxUnix = 9223371974719179007;
+
+/** A Date whose seconds are a NumericDate; an Invalid Date would be signed as null. */
+export function isValidDate(d: unknown): d is Date {
+  return d instanceof Date && isNumericDate(Math.floor(d.getTime() / 1000));
+}
+
+/** Whether v is a NumericDate both SDKs read: a number, a fraction allowed, within that range. */
+export function isNumericDate(v: unknown): v is number {
+  return typeof v === 'number' && v >= minUnix && v < maxUnix;
+}

@@ -1,7 +1,7 @@
 import { deflateSync, inflateSync } from 'node:zlib';
 import type { SigningKey } from './issuerkey';
 import { selectKey, type Resolver } from './issuerkey';
-import { base64urlStrict, peekHeader, signCompactJWS, typIs, verifyCompactJWS } from './jws-compact';
+import { base64urlStrict, isValidDate, jsonForm, peekHeader, signCompactJWS, typIs, verifyCompactJWS } from './jws-compact';
 import { nonNegativeInt } from './internal/jsonint';
 import { checkURI } from './internal/uri';
 import { allows, get, StatusError } from './internal/safehttp';
@@ -87,10 +87,13 @@ export class List {
     if (!claims.sub) throw new Error('statuslist: Sub is required');
     checkURI(claims.sub);
     if (!claims.issuedAt) throw new Error('statuslist: IssuedAt is required');
+    if (!isValidDate(claims.issuedAt)) throw new Error('statuslist: IssuedAt is not a valid Date');
+    if (claims.expiry !== undefined && !isValidDate(claims.expiry)) throw new Error('statuslist: Expiry is not a valid Date');
     if ((claims.ttlSeconds ?? 0) < 0) throw new Error('statuslist: TTL is negative');
-    const payload: Record<string, unknown> = { ...(claims.other ?? {}) };
+    if (!Number.isFinite(claims.ttlSeconds ?? 0)) throw new Error('statuslist: TTL is not a finite number of seconds');
+    const payload = jsonForm(claims.other ?? {}, 'statuslist: Other');
     for (const name of ['sub', 'iat', 'exp', 'ttl', 'status_list']) {
-      if (name in (claims.other ?? {})) throw new Error(`statuslist: Other holds ${name}`);
+      if (name in payload) throw new Error(`statuslist: Other holds ${name}`);
     }
     payload.sub = claims.sub;
     payload.iat = Math.floor(claims.issuedAt.getTime() / 1000);

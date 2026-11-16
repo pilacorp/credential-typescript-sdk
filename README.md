@@ -360,6 +360,80 @@ didv2.hashDIDDocument(doc); // DocHash, byte-identical to Go (keeps `revoked` of
 
 Lưu ý: `didv2.DefaultProvider` (có `getAddress()`, `sign` trả recovery id `v` 0/1 như Go) khác `DefaultProvider` top-level dùng cho VC/VP. Các hàm thao tác VM của `didv2` vẫn được export dưới tên cũ trong namespace `did` (alias). `didv2.generateDualCurveKeyPair()` là keygen dual-curve chuẩn (`generateDualCurveDIDKeyPair` là alias deprecated); `did.generateDualCurveKeyPair` giữ shape cũ. Lỗi Sub-DID có thể so sánh kiểu `errors.Is`: `didv2.subdid.errorIs(err, didv2.subdid.ErrConsentInvalid)`.
 
+### Digital Credential (dc+sd-jwt)
+
+Module `digitalcredential` phát hành, trình và verify SD-JWT VC (`typ: dc+sd-jwt`) theo RFC 9901 và draft-ietf-oauth-sd-jwt-vc-19, port từ package `digitalcredential` của Go SDK. Issuer được nhận diện bằng `iss` và khóa do `Resolver` trả về, không qua DID document. Khóa là P-256 (`ES256`) hoặc secp256k1 (`ES256K`).
+
+```ts
+import { p256 } from '@noble/curves/nist';
+import { digitalcredential, P256Provider } from '@pilacorp/credential-sdk';
+
+const { issue, parse, StaticResolver, typemeta } = digitalcredential;
+
+const iss = 'https://issuer.example';
+const vct = 'https://issuer.example/types/id-card';
+const issuerPriv = p256.utils.randomPrivateKey();
+const issuerPub = p256.getPublicKey(issuerPriv, false);   // 65 bytes, uncompressed
+const holderPriv = p256.utils.randomPrivateKey();
+const holderPub = p256.getPublicKey(holderPriv, false);
+
+// Type Metadata (SD-JWT VC draft 19 §5): what each claim of the type must look like.
+const typeDoc = JSON.stringify({
+  vct,
+  claims: [
+    { path: ['name'], sd: 'always' },
+    { path: ['nationalities', null], sd: 'allowed' },
+    { path: ['id_number'], mandatory: true, sd: 'never' },
+  ],
+});
+const types = typemeta.staticResolver(typeDoc);
+
+// Issuer
+const credential = await issue(
+  {
+    issuer: iss,
+    vct,
+    issuedAt: new Date(),
+    expiry: new Date(Date.now() + 365 * 24 * 3600 * 1000),
+    holderKey: holderPub,                                   // → cnf.jwk
+    claims: { name: 'Alice', nationalities: ['VN', 'DE'], id_number: '0123' },
+    disclose: [['name'], ['nationalities', 0]],             // selectively disclosable
+    minDigests: 4,                                          // decoy digests (RFC 9901 §4.2.5)
+    typeMetadata: await typemeta.load(types, { vct }),      // check the claims before signing
+  },
+  { signer: new P256Provider(issuerPriv), publicKey: issuerPub, kid: 'key-1' },
+);
+const sdJwt = credential.serialize();                       // "<jwt>~<disclosure>~<disclosure>~"
+
+// Holder: reveal name only, bound to this Verifier and this request
+const presented = await parse(sdJwt).present({
+  reveal: [['name']],
+  keyBinding: {
+    signer: new P256Provider(holderPriv),
+    audience: 'https://verifier.example',
+    nonce: 'n-0S6_WzA2Mj',
+    issuedAt: new Date(),
+  },
+});
+
+// Verifier
+const result = await parse(presented.serialize()).verify(
+  new StaticResolver(iss, [{ kid: 'key-1', publicKey: issuerPub }]),
+  { audience: 'https://verifier.example', nonce: 'n-0S6_WzA2Mj', types },
+);
+result.claims.name;          // "Alice"
+result.claims.nationalities; // ["DE"]: the element not revealed is left out
+result.keyBound;             // true
+```
+
+Cần biết khi dùng:
+
+- `disclose` và `reveal` là path dạng mảng: tên claim là chuỗi, phần tử mảng là chỉ số. Các claim `iss`, `nbf`, `exp`, `cnf`, `vct`, `vct#integrity`, `aka_vcts`, `status` không che được (draft 19 §2.2.2.3).
+- `minDigests` thêm decoy vào mọi object và mọi mảng, trừ tám claim không bao giờ được che (`iss`, `nbf`, `exp`, `cnf`, `vct`, `vct#integrity`, `aka_vcts`, `status`). Decoy trong mảng làm lệch chỉ số mà Type Metadata đếm, nên type có claim trỏ vào phần tử mảng thì truyền `typeMetadata` lúc issue: SDK kiểm claims theo metadata trước khi ký và không chèn decoy vào mảng.
+- Credential có `cnf` thì `verify` đòi Key Binding JWT, kèm `audience` và `nonce`. SDK chỉ bind với `cnf.jwk` là khóa EC P-256 hoặc secp256k1.
+- Credential có `status.status_list` thì `verify` đòi `status` (một `statuslist.Checker`) hoặc `skipStatus: true`.
+- `verify` chỉ kiểm Type Metadata khi có `types`. Lỗi verify là `DigitalCredentialError` với `code` lấy từ `digitalcredential.Code` (ví dụ `DISCLOSURE_INVALID`, `KB_MISSING`, `TYPE_METADATA_VIOLATED`); thiếu option bắt buộc là `PolicyError`.
+
 ## Credential options
 
 | Option | Type | Default | Description |
@@ -391,6 +465,7 @@ Lưu ý: `didv2.DefaultProvider` (có `getAddress()`, `sign` trả recovery id `
 | `credentialStatus` | `isRevoked`, `fetchAndCheckRevocation`, `StatusListClient` |
 | `did` | `parsePublicKeyToDid`, `buildDidDocument`, `createDidFromPublicKey`, `createDidFromPublicKeyWithTransaction`, `submitDidRegistration`, `DIDGenerator`, VM-op aliases |
 | `didv2` | `newDIDGenerator`, `With*` options, `DefaultProvider`, `generateDIDDocument`, `hashDIDDocument`, `validateDIDDocument`, `generateDualCurveKeyPair`, VM operations (`addVerificationMethod`, `rotateVerificationMethod`, `revokeVerificationMethod`, `*VerificationMethodPurposes`), `didcontract`, `subdid` |
+| `digitalcredential` | `issue`, `parse`, `Credential` (`present`, `verify`, `serialize`, `hash`), `StaticResolver`, `Code`, `DigitalCredentialError`, `PolicyError`, `statuslist`, `issuermeta`, `typemeta` |
 | `didcomm` | `getSharedSecret`, `encrypt`, `decrypt`, `encryptJWE`, `decryptJWE` |
 | `jsoncanonicalizer` | `transform` (RFC 8785 JCS) |
 | top-level | `SignerProvider`, `DefaultProvider`, `P256Provider`, `RSAProvider`, `Proof`, `CredentialError`, `ErrorCode` |

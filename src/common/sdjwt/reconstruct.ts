@@ -2,10 +2,11 @@
  * Reconstruct an SD-JWT payload from digests + disclosures — Node port of
  * credential/common/sdjwt/reconstruct.go
  */
-import { deepCopyMap, JSONMap } from '../util/json';
+import { deepCopyMap, hasOwn, JSONMap, setOwn } from '../util/json';
 import {
   DefaultHashAlgorithm,
   hashDisclosure,
+  isArrayPlaceholder,
   parseDisclosure,
   supportedHashAlgorithms,
 } from './helper';
@@ -20,21 +21,36 @@ export interface IssuedNode {
   elems?: IssuedNode[];
 }
 
-export function reconstruct(vcMap: JSONMap, disclosures: string[], validateAlg: boolean): JSONMap {
-  return reconstructIssued(vcMap, disclosures, validateAlg).claims;
+// Nesting of objects and arrays a strict read walks, disclosed values in place.
+const maxDepth = 32;
+
+/** Whether n, or anything inside it, came in a Disclosure. */
+export function anyDisclosed(n: IssuedNode): boolean {
+  return n.disclosed || Object.values(n.fields ?? {}).some(anyDisclosed) || (n.elems ?? []).some(anyDisclosed);
+}
+
+/**
+ * strict applies the RFC 9901 rules on where "..." and _sd_alg may stand, and
+ * bounds nesting. dc+sd-jwt reads strictly. The vc module does not: a VC
+ * may carry those names as ordinary data.
+ */
+
+export function reconstruct(vcMap: JSONMap, disclosures: string[], validateAlg: boolean, strict = false): JSONMap {
+  return reconstructIssued(vcMap, disclosures, validateAlg, strict).claims;
 }
 
 export function reconstructIssued(
   vcMap: JSONMap,
   disclosures: string[],
   validateAlg: boolean,
+  strict = false,
 ): { claims: JSONMap; issued: IssuedNode } {
   const sdAlg = validateAndGetAlgorithm(vcMap, validateAlg);
   const disclosureMap = buildDisclosureMap(disclosures, sdAlg);
   const used = new Set<string>();
 
   const rootCopy = deepCopyMap(vcMap);
-  const [processed, issued] = processNode(rootCopy, disclosureMap, used);
+  const [processed, issued] = processNode(rootCopy, disclosureMap, used, 0, strict);
   for (const digest of disclosureMap.keys()) {
     if (!used.has(digest)) {
       throw new Error(`disclosure for digest "${digest}" matches nothing in the payload`);
@@ -79,20 +95,19 @@ function processNode(
   node: unknown,
   disclosureMap: Map<string, DisclosureInfo>,
   used: Set<string>,
+  depth: number,
+  strict: boolean,
 ): [unknown, IssuedNode] {
+  if (strict && depth + 1 > maxDepth && node && typeof node === 'object') {
+    throw new Error(`nesting deeper than ${maxDepth}`);
+  }
   if (Array.isArray(node)) {
     const out: unknown[] = [];
     const elems: IssuedNode[] = [];
     const arrayDigests = new Set<string>();
     for (const elem of node) {
-      if (
-        elem &&
-        typeof elem === 'object' &&
-        !Array.isArray(elem) &&
-        Object.keys(elem as JSONMap).length === 1 &&
-        typeof (elem as JSONMap)['...'] === 'string'
-      ) {
-        const h = (elem as JSONMap)['...'] as string;
+      if (isArrayPlaceholder(elem)) {
+        const h = elem['...'];
         if (arrayDigests.has(h)) {
           throw new Error(`duplicate digest "${h}" found in array`);
         }
@@ -109,13 +124,13 @@ function processNode(
         if (!info.isArrayElem) {
           throw new Error('object field disclosure used in array context');
         }
-        const [v, n] = processNode(info.value, disclosureMap, used);
+        const [v, n] = processNode(info.value, disclosureMap, used, depth + 1, strict);
         n.disclosed = true;
         out.push(v);
         elems.push(n);
         continue;
       }
-      const [v, n] = processNode(elem, disclosureMap, used);
+      const [v, n] = processNode(elem, disclosureMap, used, depth + 1, strict);
       out.push(v);
       elems.push(n);
     }
@@ -124,19 +139,25 @@ function processNode(
 
   if (node && typeof node === 'object') {
     const obj = node as JSONMap;
+    // RFC 9901 §4.2.4.2: "..." is the one key of an array element placeholder
+    // and nothing else. §4.1.1: _sd_alg is a top-level claim only.
+    if (strict) {
+      if (hasOwn(obj, '...')) throw new Error('"..." is in an object that is not an array element placeholder');
+      if (depth > 0 && hasOwn(obj, '_sd_alg')) throw new Error('_sd_alg below the top level of the payload');
+    }
     const rawSd = obj._sd;
     const issued: IssuedNode = { disclosed: false, hidden: false, hiddenFields: 0, fields: {} };
     for (const [k, v] of Object.entries(obj)) {
       if (k === '_sd') continue;
-      const [nv, n] = processNode(v, disclosureMap, used);
-      obj[k] = nv;
-      issued.fields![k] = n;
+      const [nv, n] = processNode(v, disclosureMap, used, depth + 1, strict);
+      setOwn(obj, k, nv);
+      setOwn(issued.fields!, k, n);
     }
     if (rawSd !== undefined) {
       if (!Array.isArray(rawSd) || !rawSd.every((x): x is string => typeof x === 'string')) {
         throw new Error('_sd must be an array of digests');
       }
-      applySDHashes(rawSd, obj, issued, disclosureMap, new Set<string>(), used);
+      applySDHashes(rawSd, obj, issued, disclosureMap, new Set<string>(), used, depth, strict);
       delete obj._sd;
     }
     return [obj, issued];
@@ -152,6 +173,8 @@ function applySDHashes(
   disclosureMap: Map<string, DisclosureInfo>,
   objectDigests: Set<string>,
   used: Set<string>,
+  depth: number,
+  strict: boolean,
 ): void {
   for (const h of hashes) {
     if (objectDigests.has(h)) {
@@ -177,9 +200,9 @@ function applySDHashes(
       );
     }
 
-    const [value, n] = processNode(info.value, disclosureMap, used);
+    const [value, n] = processNode(info.value, disclosureMap, used, depth + 1, strict);
     n.disclosed = true;
-    v[info.objectField] = value;
-    issued.fields![info.objectField] = n;
+    setOwn(v, info.objectField, value);
+    setOwn(issued.fields!, info.objectField, n);
   }
 }
