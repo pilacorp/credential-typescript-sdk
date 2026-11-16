@@ -104,10 +104,11 @@ function padMinDigests(vc: JSONMap, min: number, sdAlg: string): void {
     }
     if (n && typeof n === 'object') {
       const o = n as JSONMap;
-      if (Array.isArray(o._sd)) {
-        while (o._sd.length < min) o._sd.push(hashDisclosure(sdAlg, randomSalt()));
-      }
-      for (const v of Object.values(o)) walk(v);
+      if (Object.keys(o).length === 1 && typeof o['...'] === 'string') return;
+      for (const [k, v] of Object.entries(o)) if (k !== '_sd') walk(v);
+      const sd: unknown[] = Array.isArray(o._sd) ? o._sd : [];
+      while (sd.length < min) sd.push(hashDisclosure(sdAlg, randomSalt()));
+      o._sd = sd;
     }
   };
   walk(vc);

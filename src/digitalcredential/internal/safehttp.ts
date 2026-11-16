@@ -125,8 +125,15 @@ async function oneRequest(
   const u = parseURL(rawURL);
   const ac = signal ?? AbortSignal.timeout(limits.timeoutMs);
   const lib = u.protocol === 'http:' ? http : https;
-  const addrs = await dns.lookup(u.hostname, { all: true });
-  if (ac.aborted) throw ac.reason ?? new Error('aborted');
+  const lookupAll = (host: string) => dns.lookup(host, { all: true });
+  const addrs = await new Promise<Awaited<ReturnType<typeof lookupAll>>>((resolve, reject) => {
+    const onAbort = () => reject(ac.reason ?? new Error('aborted'));
+    if (ac.aborted) return onAbort();
+    ac.addEventListener('abort', onAbort, { once: true });
+    lookupAll(u.hostname)
+      .then(resolve, reject)
+      .finally(() => ac.removeEventListener('abort', onAbort));
+  });
   const usable = addrs.filter((a) => !blockedAddress(a.address));
   if (!usable.length) throw ErrAddressBlocked;
   const chosen = usable[0];

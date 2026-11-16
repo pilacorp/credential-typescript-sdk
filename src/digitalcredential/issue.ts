@@ -2,7 +2,8 @@ import { buildDisclosures } from '../common/sdjwt';
 import { hasOwn, type JSONMap } from '../common/util/json';
 import { neverDisclosable, TypDCSDJWT } from './errors';
 import { Credential } from './credential';
-import { encodeJWKFromP256Uncompressed, signCompactJWS, verifyCompactJWS } from './jws-compact';
+import { encodeJWKFromP256Uncompressed, p256FromJWK, signCompactJWS, verifyCompactJWS } from './jws-compact';
+import { refFromStatus } from './statuslist';
 import type { SigningKey } from './issuerkey';
 import { checkAkaVCTs } from './aka';
 import { wellFormed } from './typemeta';
@@ -40,7 +41,11 @@ const owned: Record<string, keyof IssueRequest> = {
 
 export async function issue(req: IssueRequest, key: SigningKey): Promise<Credential> {
   if (!req.vct) throw new Error('VCT is required');
-  if ((req.minDigests ?? 0) > 0 && !(req.disclose && req.disclose.length)) {
+  const minDigests = req.minDigests ?? 0;
+  if (!Number.isInteger(minDigests) || minDigests < 0 || minDigests > 1000) {
+    throw new Error(`MinDigests ${minDigests} is not an integer in [0, 1000]`);
+  }
+  if (minDigests > 0 && !(req.disclose && req.disclose.length)) {
     throw new Error('MinDigests requires at least one Disclose path');
   }
   for (const [claim, field] of Object.entries(owned)) {
@@ -54,6 +59,31 @@ export async function issue(req: IssueRequest, key: SigningKey): Promise<Credent
   }
   refuseReserved(req.claims);
   if (req.claims) {
+    for (const name of ['iat', 'nbf', 'exp']) {
+      const v = req.claims[name];
+      if (hasOwn(req.claims, name) && (typeof v !== 'number' || !Number.isFinite(v))) {
+        throw new Error(`claims ${name} is not a NumericDate; give a number of seconds, or set the field`);
+      }
+    }
+    if (hasOwn(req.claims, 'status')) {
+      try {
+        refFromStatus(req.claims.status);
+      } catch (err) {
+        throw Object.assign(new Error(`claims ${(err as Error).message}; set status for a Status List entry`), {
+          cause: err,
+        });
+      }
+    }
+    if (hasOwn(req.claims, 'cnf')) {
+      const jwk = (req.claims.cnf as { jwk?: unknown } | null)?.jwk;
+      try {
+        if (jwk !== undefined) p256FromJWK(jwk as Parameters<typeof p256FromJWK>[0]);
+      } catch (err) {
+        throw Object.assign(new Error(`claims ${(err as Error).message}; set holderKey for a cnf.jwk`), {
+          cause: err,
+        });
+      }
+    }
     if (hasOwn(req.claims, 'aka_vcts')) checkAkaVCTs(req.claims.aka_vcts, req.vct);
     if (hasOwn(req.claims, 'vct#integrity')) {
       const v = req.claims['vct#integrity'];
@@ -63,6 +93,9 @@ export async function issue(req: IssueRequest, key: SigningKey): Promise<Credent
     }
   }
   for (const p of req.disclose ?? []) {
+    if (p.some((seg) => seg === null)) {
+      throw new Error(`Disclose path ${JSON.stringify(p)} holds null; name each array element by its index`);
+    }
     const first = p[0];
     if (typeof first === 'string' && neverDisclosable.has(first)) {
       throw new Error(`claim ${first} MUST NOT be concealed`);
@@ -72,14 +105,14 @@ export async function issue(req: IssueRequest, key: SigningKey): Promise<Credent
   const concealable: JSONMap = { ...(req.claims ?? {}) };
   if (req.issuedAt) concealable.iat = Math.floor(req.issuedAt.getTime() / 1000);
 
-  const selectivePathSegments = [...(req.disclose ?? [])]
-    .sort((a, b) => b.length - a.length)
-    .map((p) => p.filter((seg): seg is string | number => seg !== null));
+  const selectivePathSegments = ([...(req.disclose ?? [])] as Array<Array<string | number>>).sort(
+    (a, b) => b.length - a.length,
+  );
   const { processedVC, disclosures } = buildDisclosures({
     vc: concealable,
     selectivePathSegments,
-    shuffle: false,
-    minDigests: req.minDigests,
+    shuffle: true,
+    minDigests,
   });
 
   const payload: JSONMap = { ...processedVC };
@@ -87,7 +120,17 @@ export async function issue(req: IssueRequest, key: SigningKey): Promise<Credent
   payload.vct = req.vct;
   if (req.notBefore) payload.nbf = Math.floor(req.notBefore.getTime() / 1000);
   if (req.expiry) payload.exp = Math.floor(req.expiry.getTime() / 1000);
-  if (req.holderKey) payload.cnf = { jwk: encodeJWKFromP256Uncompressed(req.holderKey, req.holderKeyAlg ?? 'ES256') };
+  if (req.holderKey) {
+    const holderAlg = req.holderKeyAlg ?? 'ES256';
+    try {
+      payload.cnf = { jwk: encodeJWKFromP256Uncompressed(req.holderKey, holderAlg) };
+    } catch (err) {
+      const curve = holderAlg === 'ES256K' ? 'secp256k1' : 'P-256';
+      throw Object.assign(new Error(`holderKey is not a ${curve} public key; set holderKeyAlg to the curve of the key`), {
+        cause: err,
+      });
+    }
+  }
   if (req.status) {
     if (req.status.idx < 0 || !req.status.uri) throw new Error('status ref is invalid');
     payload.status = { status_list: { idx: req.status.idx, uri: req.status.uri } };

@@ -1,4 +1,4 @@
-import { parseDisclosures, reconstruct } from '../common/sdjwt';
+import { parseDisclosures, reconstructIssued } from '../common/sdjwt';
 import { hasOwn, type JSONMap } from '../common/util/json';
 import { Credential } from './credential';
 import { Code, DigitalCredentialError, neverDisclosable, PolicyError, TypDCSDJWT, TypKBJWT } from './errors';
@@ -82,9 +82,11 @@ export async function verifyCredential(
     );
   }
   const skew = opts.clockSkewSeconds ?? 60;
-  if (!(skew >= 0)) throw new PolicyError(`clockSkewSeconds ${skew} is negative or not a number`);
+  if (!(skew >= 0) || !Number.isFinite(skew)) {
+    throw new PolicyError(`clockSkewSeconds ${skew} is negative or not a number`);
+  }
   const maxAge = opts.maxKBAgeSeconds ?? 300;
-  if (!(maxAge > 0)) throw new PolicyError(`maxKBAgeSeconds ${maxAge} is not positive`);
+  if (!(maxAge > 0) || !Number.isFinite(maxAge)) throw new PolicyError(`maxKBAgeSeconds ${maxAge} is not positive`);
   const algs = opts.allowedAlgs?.length ? opts.allowedAlgs : ['ES256', 'ES256K'];
   const { issuerJWT, disclosures, kbJWT } = splitSDJWT(c.compact);
   let header: Record<string, unknown>;
@@ -105,12 +107,6 @@ export async function verifyCredential(
   }
   if (header.alg && !algs.includes(String(header.alg))) {
     throw new DigitalCredentialError(Code.AlgNotAllowed, `alg ${String(header.alg)} is not allowed`);
-  }
-  if (header.crit !== undefined || header.b64 !== undefined) {
-    throw new DigitalCredentialError(
-      Code.Malformed,
-      'the Issuer-signed JWT header uses crit or b64, which this SDK does not implement',
-    );
   }
   let payload: JSONMap;
   try {
@@ -183,8 +179,9 @@ export async function verifyCredential(
   }
 
   let reconstructed: JSONMap;
+  let issued;
   try {
-    reconstructed = reconstruct(payload, disclosures, true) as JSONMap;
+    ({ claims: reconstructed, issued } = reconstructIssued(payload, disclosures, true));
   } catch (err) {
     throw new DigitalCredentialError(Code.DisclosureInvalid, (err as Error).message, err);
   }
@@ -323,17 +320,17 @@ export async function verifyCredential(
     keyBound,
   };
 
-  if (opts.types && claims['vct#integrity'] === '') {
-    throw new DigitalCredentialError(
-      Code.TypeMetadataInvalid,
-      'vct#integrity is present and empty, so no hash can check the Type Metadata document',
-    );
-  }
   if (opts.types) {
     const integrityVal = typeof claims['vct#integrity'] === 'string' ? (claims['vct#integrity'] as string) : '';
     try {
+      if (claims['vct#integrity'] === '') {
+        throw Object.assign(
+          new Error('vct#integrity is present and empty, so no hash can check the Type Metadata document'),
+          { cause: typemeta.ErrInvalid },
+        );
+      }
       const m = await typemeta.load(opts.types, { vct, integrity: integrityVal || undefined });
-      m.validateClaims(reconstructed, { issued: payload });
+      m.validateClaims(reconstructed, { issued });
       res.typeMetadata = m;
     } catch (err) {
       const cause = (err as { cause?: unknown }).cause;

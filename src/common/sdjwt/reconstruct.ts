@@ -11,17 +11,30 @@ import {
 } from './helper';
 import { DisclosureInfo } from './types';
 
-export function reconstruct(
+/** How one value of the payload was issued: in the clear, behind a digest that was opened, or still hidden. */
+export interface IssuedNode {
+  disclosed: boolean;
+  hidden: boolean;
+  hiddenFields: number;
+  fields?: Record<string, IssuedNode>;
+  elems?: IssuedNode[];
+}
+
+export function reconstruct(vcMap: JSONMap, disclosures: string[], validateAlg: boolean): JSONMap {
+  return reconstructIssued(vcMap, disclosures, validateAlg).claims;
+}
+
+export function reconstructIssued(
   vcMap: JSONMap,
   disclosures: string[],
   validateAlg: boolean,
-): JSONMap {
+): { claims: JSONMap; issued: IssuedNode } {
   const sdAlg = validateAndGetAlgorithm(vcMap, validateAlg);
   const disclosureMap = buildDisclosureMap(disclosures, sdAlg);
   const used = new Set<string>();
 
   const rootCopy = deepCopyMap(vcMap);
-  const processed = processNode(rootCopy, disclosureMap, used);
+  const [processed, issued] = processNode(rootCopy, disclosureMap, used);
   for (const digest of disclosureMap.keys()) {
     if (!used.has(digest)) {
       throw new Error(`disclosure for digest "${digest}" matches nothing in the payload`);
@@ -30,9 +43,10 @@ export function reconstruct(
   if (typeof processed !== 'object' || processed === null || Array.isArray(processed)) {
     throw new Error('processed payload is not an object');
   }
-  const result = processed as JSONMap;
-  delete result._sd_alg;
-  return result;
+  const claims = processed as JSONMap;
+  delete claims._sd_alg;
+  if (issued.fields) delete issued.fields._sd_alg;
+  return { claims, issued };
 }
 
 function validateAndGetAlgorithm(vcMap: JSONMap, validateAlg: boolean): string {
@@ -65,12 +79,12 @@ function processNode(
   node: unknown,
   disclosureMap: Map<string, DisclosureInfo>,
   used: Set<string>,
-): unknown {
+): [unknown, IssuedNode] {
   if (Array.isArray(node)) {
     const out: unknown[] = [];
+    const elems: IssuedNode[] = [];
     const arrayDigests = new Set<string>();
     for (const elem of node) {
-      // Placeholder { "...": h }
       if (
         elem &&
         typeof elem === 'object' &&
@@ -89,41 +103,52 @@ function processNode(
         const info = disclosureMap.get(h);
         if (!info) {
           out.push({ '...': h });
+          elems.push({ disclosed: false, hidden: true, hiddenFields: 0 });
           continue;
         }
         if (!info.isArrayElem) {
           throw new Error('object field disclosure used in array context');
         }
-        out.push(processNode(info.value, disclosureMap, used));
+        const [v, n] = processNode(info.value, disclosureMap, used);
+        n.disclosed = true;
+        out.push(v);
+        elems.push(n);
         continue;
       }
-      out.push(processNode(elem, disclosureMap, used));
+      const [v, n] = processNode(elem, disclosureMap, used);
+      out.push(v);
+      elems.push(n);
     }
-    return out;
+    return [out, { disclosed: false, hidden: false, hiddenFields: 0, elems }];
   }
 
   if (node && typeof node === 'object') {
     const obj = node as JSONMap;
     const rawSd = obj._sd;
+    const issued: IssuedNode = { disclosed: false, hidden: false, hiddenFields: 0, fields: {} };
     for (const [k, v] of Object.entries(obj)) {
-      if (k !== '_sd') obj[k] = processNode(v, disclosureMap, used);
+      if (k === '_sd') continue;
+      const [nv, n] = processNode(v, disclosureMap, used);
+      obj[k] = nv;
+      issued.fields![k] = n;
     }
     if (rawSd !== undefined) {
       if (!Array.isArray(rawSd) || !rawSd.every((x): x is string => typeof x === 'string')) {
         throw new Error('_sd must be an array of digests');
       }
-      applySDHashes(rawSd, obj, disclosureMap, new Set<string>(), used);
+      applySDHashes(rawSd, obj, issued, disclosureMap, new Set<string>(), used);
       delete obj._sd;
     }
-    return obj;
+    return [obj, issued];
   }
 
-  return node;
+  return [node, { disclosed: false, hidden: false, hiddenFields: 0 }];
 }
 
 function applySDHashes(
   hashes: string[],
   v: JSONMap,
+  issued: IssuedNode,
   disclosureMap: Map<string, DisclosureInfo>,
   objectDigests: Set<string>,
   used: Set<string>,
@@ -137,7 +162,10 @@ function applySDHashes(
     used.add(h);
 
     const info = disclosureMap.get(h);
-    if (!info) continue;
+    if (!info) {
+      issued.hiddenFields++;
+      continue;
+    }
 
     if (info.isArrayElem || info.objectField === '') {
       throw new Error('array element disclosure used in object context');
@@ -149,6 +177,9 @@ function applySDHashes(
       );
     }
 
-    v[info.objectField] = processNode(info.value, disclosureMap, used);
+    const [value, n] = processNode(info.value, disclosureMap, used);
+    n.disclosed = true;
+    v[info.objectField] = value;
+    issued.fields![info.objectField] = n;
   }
 }

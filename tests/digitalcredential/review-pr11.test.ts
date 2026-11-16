@@ -15,6 +15,7 @@ import { hashDisclosure, reconstruct } from '../../src/common/sdjwt';
 import { canonicalizeNQuads } from '../../src/common/processor/processor';
 import { verifyProof } from '../../src/common/jsonmap/jsonmap';
 import { load, staticResolver, integrity, ErrViolated } from '../../src/digitalcredential/typemeta';
+import type { IssuedNode } from '../../src/common/sdjwt';
 import { decodeList } from '../../src/digitalcredential/statuslist';
 import { get, ErrBodyTooLarge } from '../../src/digitalcredential/internal/safehttp';
 import { normalizeCredentialData } from '../../src/vc/credential-helper';
@@ -280,22 +281,52 @@ describe('PR #11 review: type metadata sd/mandatory', () => {
     return load(staticResolver(doc), { vct: 'https://a.example/t', integrity: integrity(doc) });
   }
 
+  const clear = (): IssuedNode => ({ disclosed: false, hidden: false, hiddenFields: 0 });
+  const opened = (): IssuedNode => ({ disclosed: true, hidden: false, hiddenFields: 0 });
+
   it('fails sd always on a clear claim and sd never on a disclosed claim', async () => {
     const always = await meta({ path: ['x'], sd: 'always' });
-    expect(() => always.validateClaims({ x: 1 }, { issued: { x: 1 } })).toThrow();
+    const clearX: IssuedNode = { ...clear(), fields: { x: clear() } };
+    expect(() => always.validateClaims({ x: 1 }, { issued: clearX })).toThrow();
     try {
-      always.validateClaims({ x: 1 }, { issued: { x: 1 } });
+      always.validateClaims({ x: 1 }, { issued: clearX });
     } catch (err) {
       expect((err as { cause?: unknown }).cause).toBe(ErrViolated);
     }
     const never = await meta({ path: ['x'], sd: 'never' });
-    expect(() => never.validateClaims({ x: 1 }, { issued: { _sd: ['d'] } })).toThrow();
+    expect(() => never.validateClaims({ x: 1 }, { issued: { ...clear(), fields: { x: opened() } } })).toThrow();
   });
 
   it('does not treat a still-hidden mandatory claim as missing', async () => {
     const m = await meta({ path: ['x'], mandatory: true });
-    m.validateClaims({}, { issued: { _sd: ['a', 'b'] } });
-    expect(() => m.validateClaims({}, { issued: {} })).toThrow();
+    m.validateClaims({}, { issued: { ...clear(), hiddenFields: 2, fields: {} } });
+    expect(() => m.validateClaims({}, { issued: clear() })).toThrow();
+  });
+
+  it('keeps a nested disclosure distinct from its parent', async () => {
+    const ctx = issuer();
+    const cred = await issue(
+      {
+        issuer: ctx.iss,
+        vct: 'https://a.example/t',
+        claims: { address: { street: 'A', city: 'B' } },
+        disclose: [['address'], ['address', 'street']],
+      },
+      ctx.key,
+    );
+    const doc = (claim: object) =>
+      Buffer.from(JSON.stringify({ vct: 'https://a.example/t', claims: [claim] }));
+    const alwaysDoc = doc({ path: ['address', 'street'], sd: 'always' });
+    const revealed = await cred.present({ reveal: [['address'], ['address', 'street']] });
+    const ok = await revealed.verify(ctx.resolver, { types: staticResolver(alwaysDoc) });
+    expect((ok.claims.address as { street: string }).street).toBe('A');
+    const neverDoc = doc({ path: ['address', 'street'], sd: 'never' });
+    await expect(revealed.verify(ctx.resolver, { types: staticResolver(neverDoc) })).rejects.toMatchObject({
+      code: Code.TypeMetadataViolated,
+    });
+    const mandatoryDoc = doc({ path: ['address', 'street'], mandatory: true });
+    const withheld = await cred.present({ reveal: [] });
+    await withheld.verify(ctx.resolver, { types: staticResolver(mandatoryDoc) });
   });
 });
 
@@ -330,6 +361,9 @@ describe('PR #11 review: verify option numbers', () => {
     const ctx = issuer();
     const cred = await issue({ issuer: ctx.iss, vct: 'https://example/t', claims: { n: 'x' } }, ctx.key);
     await expect(cred.verify(ctx.resolver, { clockSkewSeconds: Number.NaN })).rejects.toBeInstanceOf(PolicyError);
+    await expect(cred.verify(ctx.resolver, { clockSkewSeconds: Number.POSITIVE_INFINITY })).rejects.toBeInstanceOf(
+      PolicyError,
+    );
     await expect(cred.verify(ctx.resolver, { maxKBAgeSeconds: 0 })).rejects.toBeInstanceOf(PolicyError);
   });
 });

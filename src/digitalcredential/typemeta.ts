@@ -7,6 +7,7 @@ import { validURI } from './internal/uri';
 import type { Limits } from './internal/safehttp';
 import { StatusError } from './internal/safehttp';
 import { hasOwn } from '../common/util/json';
+import type { IssuedNode } from '../common/sdjwt';
 
 export const ErrNotFound = Object.assign(new Error('typemeta: no Type Metadata for the type'), { name: 'TypeMetaError' });
 export const ErrInvalid = Object.assign(new Error('typemeta: Type Metadata document is invalid'), { name: 'TypeMetaError' });
@@ -69,11 +70,12 @@ export class Metadata {
 
   validateClaims(
     claims: Record<string, unknown>,
-    opts: { allDisclosures?: boolean; issued?: Record<string, unknown> } = {},
+    opts: { allDisclosures?: boolean; issued?: IssuedNode } = {},
   ): void {
+    const issued = opts.issued ?? inTheClear(claims);
     for (const [i, c] of this.claims.entries()) {
       try {
-        checkClaim(c, fromIssued(opts.issued ?? claims, claims), Boolean(opts.allDisclosures));
+        checkClaim(c, issued, Boolean(opts.allDisclosures));
       } catch (err) {
         throw Object.assign(
           new Error(`typemeta: claims[${i}] with path ${JSON.stringify(c.path)}: ${(err as Error).message}`),
@@ -274,65 +276,15 @@ function mergeClaims(inherited: Claim[], child: Claim[]): Claim[] {
   return out;
 }
 
-interface IssuedNode {
-  disclosed: boolean;
-  hidden: boolean;
-  hiddenFields: number;
-  fields?: Record<string, IssuedNode>;
-  elems?: IssuedNode[];
-}
-
-function isPlaceholder(v: unknown): boolean {
-  return Boolean(
-    v &&
-      typeof v === 'object' &&
-      !Array.isArray(v) &&
-      Object.keys(v as object).length === 1 &&
-      hasOwn(v as object, '...'),
-  );
-}
-
-function fromIssued(issued: unknown, rec: unknown, disclosed = false): IssuedNode {
-  if (isPlaceholder(issued)) {
-    if (isPlaceholder(rec) || rec === undefined) {
-      return { disclosed: false, hidden: true, hiddenFields: 0 };
-    }
-    return fromIssued(rec, rec, true);
+/** The shape of claims nothing was concealed in: no value is disclosed or hidden. */
+function inTheClear(v: unknown): IssuedNode {
+  const n: IssuedNode = { disclosed: false, hidden: false, hiddenFields: 0 };
+  if (Array.isArray(v)) n.elems = v.map(inTheClear);
+  else if (v && typeof v === 'object') {
+    n.fields = {};
+    for (const [k, child] of Object.entries(v)) n.fields[k] = inTheClear(child);
   }
-  if (Array.isArray(issued)) {
-    const recArr = Array.isArray(rec) ? rec : [];
-    return {
-      disclosed,
-      hidden: false,
-      hiddenFields: 0,
-      elems: issued.map((e, i) => fromIssued(e, recArr[i])),
-    };
-  }
-  if (issued && typeof issued === 'object') {
-    const recObj =
-      rec && typeof rec === 'object' && !Array.isArray(rec) ? (rec as Record<string, unknown>) : {};
-    const src = issued as Record<string, unknown>;
-    const fields: Record<string, IssuedNode> = {};
-    for (const k of Object.keys(src)) {
-      if (k === '_sd' || k === '_sd_alg') continue;
-      fields[k] = fromIssued(src[k], recObj[k]);
-    }
-    let opened = 0;
-    for (const k of Object.keys(recObj)) {
-      if (k === '_sd' || k === '_sd_alg' || hasOwn(src, k)) continue;
-      fields[k] = fromIssued(recObj[k], recObj[k], true);
-      opened++;
-    }
-    const sd = src._sd;
-    const nSd = Array.isArray(sd) ? sd.length : 0;
-    return {
-      disclosed,
-      hidden: false,
-      hiddenFields: Math.max(0, nSd - opened),
-      fields,
-    };
-  }
-  return { disclosed, hidden: false, hiddenFields: 0 };
+  return n;
 }
 
 function elemsOf(n: IssuedNode, all: boolean): IssuedNode[] {

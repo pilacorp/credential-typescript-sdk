@@ -105,10 +105,14 @@ function normalizeMap(input: JSONMap): JSONMap {
 
 function normalizeValue(v: unknown): unknown {
   if (Array.isArray(v)) return v.map(normalizeValue);
-  if (Object.prototype.toString.call(v) === '[object Object]') {
-    return normalizeMap(v as JSONMap);
-  }
+  if (isPlainObject(v)) return normalizeMap(v as JSONMap);
   return v;
+}
+
+function isPlainObject(v: unknown): boolean {
+  if (v === null || typeof v !== 'object') return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === null || Object.getPrototypeOf(proto) === null;
 }
 
 function serializeSubjects(subjects: Subject[]): unknown {

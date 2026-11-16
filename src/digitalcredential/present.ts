@@ -4,7 +4,7 @@ import { decodeDisclosures, hashDisclosure } from '../common/sdjwt';
 import type { SignerProvider } from '../common/signer/signer';
 import { Credential } from './credential';
 import { TypKBJWT } from './errors';
-import { algForECJWK, decodeJSONSegment, p256FromJWK, signCompactJWS } from './jws-compact';
+import { algForECJWK, decodeJSONSegment, p256FromJWK, signCompactJWS, verifyCompactJWS } from './jws-compact';
 import { sdHash, splitSDJWT } from './split';
 import type { Path } from './issue';
 
@@ -34,7 +34,7 @@ export async function presentCredential(c: Credential, req: PresentRequest): Pro
     reconstruct(payload, disclosures, true);
     const cnf = payload.cnf as { jwk?: { kty?: string; crv?: string; x?: string; y?: string } } | undefined;
     if (!cnf?.jwk) throw new Error('credential has no cnf.jwk for Key Binding');
-    p256FromJWK(cnf.jwk);
+    const holderKey = p256FromJWK(cnf.jwk);
     const kbAlg = algForECJWK(cnf.jwk);
     const kb = req.keyBinding;
     if (!kb.audience || !kb.nonce) throw new Error('KeyBinding audience and nonce are required');
@@ -50,6 +50,14 @@ export async function presentCredential(c: Credential, req: PresentRequest): Pro
       sd_hash: sdHash(compact),
     };
     const kbToken = await signCompactJWS({ alg: kbAlg, typ: TypKBJWT }, kbPayload, kb.signer);
+    try {
+      verifyCompactJWS(kbToken, holderKey, [kbAlg]);
+    } catch (err) {
+      throw Object.assign(
+        new Error(`KeyBinding signer's signature does not verify as ${kbAlg} under the credential's cnf.jwk`),
+        { cause: err },
+      );
+    }
     compact += kbToken;
   }
   return new Credential(compact);
@@ -85,14 +93,17 @@ function selectDisclosures(payload: JSONMap, disclosures: string[], reveal: Path
     }
     if (seg !== null && (!Number.isInteger(seg) || (seg as number) < 0)) throw notIn(path);
     if (!Array.isArray(node)) throw notIn(path);
-    let n = 0;
-    const indexes = seg === null ? [...node.keys()] : [seg as number];
-    for (const i of indexes) {
-      if (i >= node.length) continue;
-      const el = node[i];
+    const elems: Array<() => unknown> = [];
+    for (const el of node) {
       const concealed = el && typeof el === 'object' && !Array.isArray(el) && hasOwn(el as object, '...');
-      n += walk(concealed ? openDigest((el as JSONMap)['...'], path) : el, path, at + 1);
+      if (!concealed) elems.push(() => el);
+      else if (byDigest.has((el as JSONMap)['...'] as string)) {
+        elems.push(() => openDigest((el as JSONMap)['...'], path));
+      }
     }
+    let n = 0;
+    const picks = seg === null ? elems : elems.slice(seg as number, (seg as number) + 1);
+    for (const open of picks) n += walk(open(), path, at + 1);
     return n;
   };
   for (const path of reveal) {

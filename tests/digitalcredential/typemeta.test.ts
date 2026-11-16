@@ -1,4 +1,5 @@
 import { integrity, load, staticResolver, ErrViolated } from '../../src/digitalcredential/typemeta';
+import type { IssuedNode } from '../../src/common/sdjwt';
 import { metadataURL } from '../../src/digitalcredential/issuermeta';
 
 describe('typemeta', () => {
@@ -14,7 +15,16 @@ describe('typemeta', () => {
     const m = await load(r, { vct: 'https://credentials.example/identity_credential', integrity: integrity(doc) });
     expect(m.vct).toBe('https://credentials.example/identity_credential');
     expect(m.chain).toEqual(['https://credentials.example/identity_credential']);
-    m.validateClaims({ given_name: 'Erika' }, { issued: {} });
+    const disclosed = (fields?: Record<string, IssuedNode>): IssuedNode => ({
+      disclosed: true,
+      hidden: false,
+      hiddenFields: 0,
+      fields,
+    });
+    m.validateClaims(
+      { given_name: 'Erika' },
+      { issued: { disclosed: false, hidden: false, hiddenFields: 0, fields: { given_name: disclosed() } } },
+    );
     try {
       m.validateClaims({ family_name: 'Mustermann' });
       throw new Error('expected violation');
