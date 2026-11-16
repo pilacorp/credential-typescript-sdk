@@ -2,7 +2,7 @@
  * VP helpers — Node port of vp/presentation_helper.go.
  */
 import { JSONMap } from '../common/util/json';
-import { formatRFC3339 } from '../common/util/time';
+import { formatRFC3339, isTimeSet } from '../common/util/time';
 import { checkJwtTimeClaims, checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
 import { parseCredential } from '../vc/credential';
 import type { Credential } from '../vc/types';
@@ -76,8 +76,8 @@ export async function serializePresentationContents(
     vpJSON.type = serializeTypes(vpc.types);
   }
   if (vpc.holder) vpJSON.holder = vpc.holder;
-  if (vpc.validFrom) vpJSON.validFrom = formatRFC3339(vpc.validFrom);
-  if (vpc.validUntil) vpJSON.validUntil = formatRFC3339(vpc.validUntil);
+  if (isTimeSet(vpc.validFrom)) vpJSON.validFrom = formatRFC3339(vpc.validFrom);
+  if (isTimeSet(vpc.validUntil)) vpJSON.validUntil = formatRFC3339(vpc.validUntil);
 
   if (vpc.verifiableCredentials && vpc.verifiableCredentials.length > 0) {
     const list: unknown[] = [];

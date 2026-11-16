@@ -12,7 +12,9 @@ export function getSharedSecret(
     throw new Error(`private key must be 32 bytes, got ${privateKey.length}`);
   }
 
-  const publicKey = normalizePublicKey(hexToBytes(normalizeHex(publicKeyHex)));
+  // Go hex.DecodeString + secp256k1.ParsePubKey: plain hex, 33 or 65 bytes.
+  if (/^0x/i.test(publicKeyHex)) throw new Error('public key must be plain hex, without a 0x prefix');
+  const publicKey = normalizePublicKey(hexToBytes(publicKeyHex));
   return secp256k1.getSharedSecret(privateKey, publicKey, true).subarray(1);
 }
 
@@ -108,9 +110,6 @@ export function decrypt(
 }
 
 function normalizePublicKey(publicKey: Uint8Array) {
-  if (publicKey.length === 64) {
-    return new Uint8Array([0x04, ...publicKey]);
-  }
   if (
     publicKey.length === 33 ||
     (publicKey.length === 65 && publicKey[0] === 0x04)
@@ -118,7 +117,7 @@ function normalizePublicKey(publicKey: Uint8Array) {
     return publicKey;
   }
   throw new Error(
-    `public key must be 33, 64, or 65 bytes, got ${publicKey.length}`,
+    `public key must be 33 or 65 bytes, got ${publicKey.length}`,
   );
 }
 

@@ -62,17 +62,19 @@ export async function parseCredential(
     return JSONCredential.parse(asString, opts);
   }
 
-  if (isSDJWT(asString) || isJWTCredentialString(asString)) {
-    const typ = peekJwtTyp(asString);
+  // Go: strings.TrimSpace(strings.Trim(raw, `"`)).
+  const valStr = asString.replace(/^"+|"+$/g, '').trim();
+  if (isSDJWT(valStr) || isJWTCredentialString(valStr)) {
+    const typ = peekJwtTyp(valStr);
     if (typ && typ.endsWith('+sd-jwt') && !isJOSECredentialTyp(typ)) {
       throw new Error(
         `failed to parse credential: unsupported SD-JWT typ "${typ}": only vc+sd-jwt is read`,
       );
     }
     if (isJOSECredentialTyp(typ)) {
-      return JOSECredential.parse(asString, opts);
+      return JOSECredential.parse(valStr, opts);
     }
-    return JWTCredential.parse(asString, opts);
+    return JWTCredential.parse(valStr, opts);
   }
 
   throw new Error('failed to parse credential: not a valid JSON, SD-JWT, or JWT credential');

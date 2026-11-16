@@ -4,6 +4,7 @@
  */
 import { secp256k1 } from '@noble/curves/secp256k1';
 import type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
+import { parseRFC3339Strict } from '../common/verification-method/verification-method';
 import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
 import { canonicalVMID as canonicalVmId, findVerificationMethod } from './document';
 import type { VerificationPurpose } from './types';
@@ -56,7 +57,7 @@ export function rotateVerificationMethod(
   oldKid: string,
   newVM: Partial<VerificationMethodEntry>,
   reason = 'superseded',
-  revokedAt: Date = new Date(),
+  revokedAt: Date | string = new Date(),
 ): string {
   if (!doc) throw new Error('document is nil');
   if (!oldKid) throw new Error('old_kid is required');
@@ -67,7 +68,7 @@ export function rotateVerificationMethod(
   const newID = addVerificationMethod(doc, newVM, purposes);
   const after = findVerificationMethod(doc, oldKid);
   if (!after) throw new Error(`verification method index mismatch after append: ${oldKid}`);
-  after.revoked = revokedAt;
+  setRevoked(after, revokedAt);
   after.revocationReason = reason || 'superseded';
   ensureContext(doc, CID_CONTEXT);
   return newID;
@@ -77,7 +78,7 @@ export function revokeVerificationMethod(
   doc: DIDDocument,
   kid: string,
   reason: string,
-  revokedAt: Date = new Date(),
+  revokedAt: Date | string = new Date(),
 ): void {
   if (!doc) throw new Error('document is nil');
   if (!kid) throw new Error('kid is required');
@@ -89,9 +90,25 @@ export function revokeVerificationMethod(
       `verification method ${JSON.stringify(vm.id)} is already revoked at ${vm.revoked.toISOString()} (reason: ${vm.revocationReason})`,
     );
   }
-  vm.revoked = revokedAt;
+  setRevoked(vm, revokedAt);
   vm.revocationReason = reason;
   ensureContext(doc, CID_CONTEXT);
+}
+
+/**
+ * Go keeps revokedAt as a time.Time and hashes it as RFC3339Nano with its own
+ * offset and nanoseconds, which a Date cannot hold: an RFC3339 string is kept
+ * verbatim as the serialized `revoked` value.
+ */
+function setRevoked(vm: VerificationMethodEntry, at: Date | string): void {
+  if (typeof at === 'string') {
+    const { date, text } = parseRFC3339Strict(at);
+    vm.revoked = date;
+    vm.revokedText = text;
+  } else {
+    vm.revoked = at;
+    delete vm.revokedText;
+  }
 }
 
 export function addVerificationMethodPurposes(

@@ -18,6 +18,7 @@ import {
   publicKeyHexFromVM,
   ResolverProvider,
   VerificationMethodEntry,
+  vmKeyKind,
 } from '../verification-method';
 
 export class JWTVerifier {
@@ -88,14 +89,10 @@ export class JWTVerifier {
 
 /** JOSE algorithm the verification method's key can produce (go AlgForKeyKind). */
 function algForVM(vm: VerificationMethodEntry): string {
-  if (vm.publicKeyJwk) {
-    if (vm.publicKeyJwk.crv === 'P-256') return 'ES256';
-    if (vm.publicKeyJwk.crv === 'secp256k1') return 'ES256K';
-    throw new Error(`verification method '${vm.id}' has unsupported JWK curve ${vm.publicKeyJwk.crv}`);
-  }
-  if (vm.publicKeyMultibase) return 'ES256'; // P-256 Multikey
-  if (vm.publicKeyHex) return 'ES256K'; // secp256k1 only (see publicKeyHexFromVM)
-  if (vm.type === 'EcdsaSecp256k1VerificationKey2019') return 'ES256K';
+  // Go VMKeyKind: publicKeyHex wins over publicKeyMultibase, as in signing and publicKeyHexFromVM.
+  const kind = vmKeyKind(vm);
+  if (kind === 'secp256k1') return 'ES256K';
+  if (kind === 'P-256') return 'ES256';
   throw new Error(`verification method '${vm.id}' has an unrecognized key type for JWT`);
 }
 
@@ -247,7 +244,7 @@ function jwtIssuedAt(payloadB64: string): Date | null {
   if (raw === undefined || raw === null) return null;
   if (typeof raw !== 'number') throw new Error(`invalid iat type: ${typeof raw}`);
   const sec = Math.floor(raw);
-  if (!Number.isFinite(sec) || sec <= 0) {
+  if (!Number.isFinite(sec) || sec <= 0 || sec >= 2 ** 63) {
     throw new Error(`invalid iat value: ${raw}`);
   }
   return new Date(sec * 1000);

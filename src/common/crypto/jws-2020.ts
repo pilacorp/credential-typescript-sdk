@@ -3,6 +3,7 @@ import { p256 } from '@noble/curves/nist';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha384, sha512 } from '@noble/hashes/sha512';
 import type { JWK } from '../verification-method/verification-method';
+import { decodeRawBase64URL } from '../verification-method/key-material';
 
 export function hashForJWSAlg(alg: string, input: Uint8Array): Uint8Array {
   switch (alg) {
@@ -26,8 +27,8 @@ export function p256PubFromJwk(jwk: JWK): Uint8Array {
     throw new Error('expected P-256 EC JWK');
   }
   if (!jwk.x || !jwk.y) throw new Error('P-256 JWK missing x/y');
-  const x = Buffer.from(jwk.x, 'base64url');
-  const y = Buffer.from(jwk.y, 'base64url');
+  const x = decodeRawBase64URL(jwk.x);
+  const y = decodeRawBase64URL(jwk.y);
   if (x.length > 32 || y.length > 32) throw new Error('P-256 JWK coordinate longer than 32 bytes');
   // Left-pad short coordinates (a JWK may drop leading zero bytes).
   const uncompressed = new Uint8Array(65);

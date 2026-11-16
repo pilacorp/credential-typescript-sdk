@@ -734,6 +734,13 @@ function detachedJWSAlg(encHeader: string): string {
     b64?: unknown;
     crit?: string[];
   };
+  // Go decodes alg into a string and crit into []string: any other JSON type fails.
+  if (hdr.alg !== undefined && hdr.alg !== null && typeof hdr.alg !== 'string') {
+    throw new Error('parse jws header: alg must be a string');
+  }
+  if (Array.isArray(hdr.crit) && hdr.crit.some((c) => typeof c !== 'string')) {
+    throw new Error('parse jws header: crit must be an array of strings');
+  }
   if (hdr.b64 !== false) throw new Error('jws header b64 must be false');
   if (!Array.isArray(hdr.crit) || !hdr.crit.includes('b64')) {
     throw new Error('jws header crit must include b64');
@@ -786,7 +793,8 @@ async function verifyDataIntegrityProof(
     ok = verifyRawEcdsa(publicKey, digest, signature);
   } else {
     const digest = await canonicalize(m);
-    ok = ecdsaVerifySignature(publicKey, proof.proofValue, digest);
+    // Go ecdsa.Verify takes the VM's curve, so a legacy hex proof by a P-256 key verifies too.
+    ok = ecdsaVerifySignature(publicKey, proof.proofValue, digest, vmIsP256(vm) ? p256 : secp256k1);
   }
   if (!ok) return false;
   strictPurposeCheck(doc, vm, proof.proofPurpose, proof.created);
@@ -870,7 +878,9 @@ export function parseRawToProof(proof: unknown): Proof {
   // still hashes what the issuer signed; typed fields fall back to "".
   const result = { ...p } as unknown as Proof;
   result.type = typeof p.type === 'string' ? p.type : '';
-  result.created = typeof p.created === 'string' ? p.created : '';
+  // Go ProofFromMap keeps a non-string created in Extra, so it stays in the
+  // proof configuration; only an absent one reads as "".
+  if (p.created === undefined || p.created === null) result.created = '';
   result.verificationMethod = typeof p.verificationMethod === 'string' ? p.verificationMethod : '';
   result.proofPurpose = typeof p.proofPurpose === 'string' ? p.proofPurpose : '';
   for (const k of ['proofValue', 'cryptosuite', 'challenge', 'jws'] as const) {

@@ -5,6 +5,7 @@
  * as vc+sd-jwt through JOSECredential. Anything SD-shaped is refused with
  * ErrorCode.SDJWTRequiresJOSE.
  */
+import { isTimeSet } from '../common/util/time';
 import { acceptSignature, JWTVerifier, resolveSigningKey, SigningKey } from '../common/jwt';
 import { DefaultProvider } from '../common/signer/default-provider';
 import type { SignerProvider } from '../common/signer/signer';
@@ -80,10 +81,10 @@ export class JWTCredential implements SignableCredential {
     if (vcc.subject && vcc.subject.length > 0 && vcc.subject[0].id) {
       otherClaims.sub = vcc.subject[0].id;
     }
-    if (vcc.validUntil) {
+    if (isTimeSet(vcc.validUntil)) {
       otherClaims.exp = Math.floor(vcc.validUntil.getTime() / 1000);
     }
-    if (vcc.validFrom) {
+    if (isTimeSet(vcc.validFrom)) {
       const iat = Math.floor(vcc.validFrom.getTime() / 1000);
       otherClaims.iat = iat;
       otherClaims.nbf = iat;

@@ -71,6 +71,8 @@ function decodeAt(data: Uint8Array, offset: number): { value: unknown; offset: n
   const major = b >> 5;
   let ai = b & 31;
   offset += 1;
+  // Go's encoder writes a nil slice/map as CBOR null (0xf6); Go's decoder reads it back as empty.
+  if (b === 0xf6) return { value: null, offset };
   let n: number;
   if (ai < 24) n = ai;
   else if (ai === 24) {

@@ -21,7 +21,8 @@ export function checkValidityPeriod(
   const leeway = BigInt(Math.trunc(Math.max(leewayMs, 0))) * 1_000_000n;
   for (const [field, kind] of [['validFrom', 'start'], ['validUntil', 'end']] as const) {
     const value = data[field];
-    if (value === undefined || value === null || value === '') continue;
+    // Go parseStringField: an absent key is unset, but a present null is not a string.
+    if (value === undefined || value === '') continue;
     if (typeof value !== 'string') throw new Error(`field "${field}" must be a string`);
     let time: bigint;
     try {
@@ -41,7 +42,8 @@ export function checkJwtTimeClaims(claims: JSONMap, leewayMs = 0): void {
   for (const [claim, kind] of [['nbf', 'start'], ['exp', 'end']] as const) {
     const value = claims[claim];
     if (value === undefined || value === null) continue;
-    if (typeof value !== 'number' || !Number.isFinite(value) || Math.trunc(value) <= 0) {
+    // Go jwtutil.NumericClaim: positive and within int64 seconds.
+    if (typeof value !== 'number' || !Number.isFinite(value) || Math.trunc(value) <= 0 || value >= 2 ** 63) {
       throw new Error(`invalid JWT ${claim} claim`);
     }
     const time = Math.trunc(value) * 1000;

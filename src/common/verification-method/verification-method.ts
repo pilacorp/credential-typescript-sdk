@@ -42,7 +42,8 @@ export interface DIDDocument {
   didDocumentMetadata?: Record<string, unknown>;
 }
 
-const RFC3339 = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}:\d{2})$/;
+// Go's time.Parse also takes ',' as the fraction separator.
+const RFC3339 = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:[.,](\d+))?(Z|[+-]\d{2}:\d{2})$/;
 
 /**
  * Strict RFC3339 parse like Go's time.Parse(time.RFC3339): returns the instant
@@ -90,19 +91,37 @@ export function revokedNanos(vm: VerificationMethodEntry): bigint {
   return ms * 1_000_000n;
 }
 
+// Go decodes the document into typed fields with encoding/json: null leaves a
+// field unset, any other value of the wrong JSON type fails the whole document.
+function typed<T>(v: unknown, field: string, ok: (x: unknown) => boolean, unset: T): T {
+  if (v === undefined || v === null) return unset;
+  if (!ok(v)) throw new Error(`invalid DID document: field "${field}" has the wrong type`);
+  return v as T;
+}
+const isString = (x: unknown) => typeof x === 'string';
+const isObject = (x: unknown) => typeof x === 'object' && x !== null && !Array.isArray(x);
+const isStringArray = (x: unknown) => Array.isArray(x) && x.every(isString);
+const str = (v: unknown, field: string) => typed(v, field, isString, '');
+
 /** Parse a raw resolver response into a typed DIDDocument. */
 export function parseDIDDocument(raw: Record<string, unknown>): DIDDocument {
-  const vms = (raw.verificationMethod as unknown[]) ?? [];
+  const vms = typed<unknown[]>(raw.verificationMethod, 'verificationMethod', Array.isArray, []);
   const verificationMethod: VerificationMethodEntry[] = vms.map((entry) => {
-    const e = entry as Record<string, unknown>;
+    const e = typed<Record<string, unknown>>(entry, 'verificationMethod[]', isObject, {});
     const out: VerificationMethodEntry = {
-      id: (e.id as string) ?? '',
-      type: (e.type as string) ?? '',
-      controller: (e.controller as string) ?? '',
+      id: str(e.id, 'id'),
+      type: str(e.type, 'type'),
+      controller: str(e.controller, 'controller'),
     };
-    if (typeof e.publicKeyHex === 'string') out.publicKeyHex = e.publicKeyHex;
-    if (e.publicKeyJwk) out.publicKeyJwk = e.publicKeyJwk as JWK;
-    if (typeof e.publicKeyMultibase === 'string') out.publicKeyMultibase = e.publicKeyMultibase;
+    const hex = str(e.publicKeyHex, 'publicKeyHex');
+    if (hex) out.publicKeyHex = hex;
+    const jwk = typed<Record<string, unknown> | undefined>(e.publicKeyJwk, 'publicKeyJwk', isObject, undefined);
+    if (jwk) {
+      for (const k of ['kty', 'crv', 'x', 'y', 'n', 'e']) str(jwk[k], `publicKeyJwk.${k}`);
+      out.publicKeyJwk = jwk as unknown as JWK;
+    }
+    const mb = str(e.publicKeyMultibase, 'publicKeyMultibase');
+    if (mb) out.publicKeyMultibase = mb;
     // Go unmarshals `revoked` as a strict RFC3339 *time.Time and fails the whole
     // document on a bad value or a non-string; ignoring it would treat a revoked
     // key as active.
@@ -120,17 +139,19 @@ export function parseDIDDocument(raw: Record<string, unknown>): DIDDocument {
         );
       }
     }
-    if (typeof e.revocationReason === 'string') out.revocationReason = e.revocationReason;
+    const reason = str(e.revocationReason, 'revocationReason');
+    if (reason) out.revocationReason = reason;
     return out;
   });
 
   return {
-    '@context': (raw['@context'] as string[]) ?? [],
-    id: (raw.id as string) ?? '',
+    '@context': typed(raw['@context'], '@context', isStringArray, [] as string[]),
+    id: str(raw.id, 'id'),
     verificationMethod,
-    authentication: (raw.authentication as string[]) ?? [],
-    assertionMethod: (raw.assertionMethod as string[]) ?? [],
+    authentication: typed(raw.authentication, 'authentication', isStringArray, [] as string[]),
+    assertionMethod: typed(raw.assertionMethod, 'assertionMethod', isStringArray, [] as string[]),
     controller: raw.controller as string | string[] | undefined,
-    didDocumentMetadata: raw.didDocumentMetadata as Record<string, unknown> | undefined,
+    didDocumentMetadata: typed<Record<string, unknown> | undefined>(
+      raw.didDocumentMetadata, 'didDocumentMetadata', isObject, undefined),
   };
 }

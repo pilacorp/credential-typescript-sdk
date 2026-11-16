@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from 'ethers';
+import { Interface, JsonRpcProvider, Transaction } from 'ethers';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { p256 } from '@noble/curves/nist';
 import {
@@ -58,7 +58,7 @@ describe('parsePublicKeyToDid', () => {
     );
 
     expect(parsed.curve).toBe('hash');
-    expect(parsed.did.startsWith('did:nda:testnet:0x')).toBe(true);
+    expect(parsed.did.startsWith('did:nda:0x')).toBe(true);
   });
 });
 
@@ -81,10 +81,7 @@ describe('DID document helpers', () => {
     });
     expect(document.authentication).toEqual([`${did}#key-1`]);
     expect(document.assertionMethod).toEqual([`${did}#key-1`]);
-    expect(document.didDocumentMetadata).toEqual({
-      type: 'people',
-      hash: '',
-    });
+    expect(document.didDocumentMetadata).toEqual({ type: 'people' });
   });
 
   it('uses Multikey publicKeyMultibase when the input is a P-256 public key', () => {
@@ -280,7 +277,6 @@ describe('DIDGenerator', () => {
     expect(generated.document.didDocumentMetadata).toEqual({
       name: 'User 1',
       type: 'people',
-      hash: '',
     });
     expect(generated.transaction.txHash.startsWith('0x')).toBe(true);
     expect(generated.transaction.txHex.length).toBeGreaterThan(0);
@@ -312,5 +308,34 @@ describe('DIDGenerator', () => {
 
     expect(tx.txHash.startsWith('0x')).toBe(true);
     expect(tx.txHex.length).toBeGreaterThan(0);
+  });
+});
+
+describe('DIDGenerator Go parity (did v1)', () => {
+  it('defaults to the did:nda method', async () => {
+    const generated = await new DIDGenerator().generateDID({ type: 'people' });
+    expect(generated.did).toMatch(/^did:nda:0x[0-9a-f]{40}$/);
+  });
+
+  it('keeps a metadata hash and writes hash only when given, like generateDIDDocument', async () => {
+    const generator = new DIDGenerator();
+    const kept = await generator.generateDID({ type: 'people', metadata: { hash: '0xabc', name: 'x' } });
+    expect(kept.document.didDocumentMetadata).toEqual({ hash: '0xabc', name: 'x', type: 'people' });
+    const set = await generator.generateDID({ type: 'item', hash: '0xdef' });
+    expect(set.document.didDocumentMetadata).toEqual({ type: 'item', hash: '0xdef' });
+  });
+
+  it('encodes the bytes32 attribute name right-padded, as Go copy() does', async () => {
+    const generator = new DIDGenerator();
+    const tx = await generator.generateSetAttributeTx(
+      '0x' + '11'.repeat(32),
+      '0x' + '22'.repeat(20),
+      'people',
+    );
+    const parsed = Transaction.from('0x' + tx.txHex);
+    const [, name] = new Interface([
+      'function setAttribute(address identity, bytes32 name, bytes value, uint256 validity)',
+    ]).decodeFunctionData('setAttribute', parsed.data);
+    expect(name).toBe('0x74797065' + '0'.repeat(56));
   });
 });

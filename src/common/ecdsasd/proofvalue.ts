@@ -40,8 +40,8 @@ export function parseBaseProofValue(proofValue: string): SpecBaseProof {
     baseSignature: asBytes(arr[0]),
     publicKey: asBytes(arr[1]),
     hmacKey: asBytes(arr[2]),
-    signatures: (arr[3] as unknown[]).map(asBytes),
-    mandatoryPointers: arr[4] as string[],
+    signatures: ((arr[3] ?? []) as unknown[]).map(asBytes),
+    mandatoryPointers: (arr[4] ?? []) as string[],
   };
 }
 
@@ -66,9 +66,9 @@ export function parseDisclosureProofValue(proofValue: string): SpecDerivedProof 
   return {
     baseSignature: asBytes(arr[0]),
     publicKey: asBytes(arr[1]),
-    signatures: (arr[2] as unknown[]).map(asBytes),
-    labelMap: decompressLabelMap(arr[3] as Record<string, Uint8Array>),
-    mandatoryIndexes: (arr[4] as number[]).map((n) => Number(n)),
+    signatures: ((arr[2] ?? []) as unknown[]).map(asBytes),
+    labelMap: decompressLabelMap((arr[3] ?? new Map()) as Record<string, Uint8Array>),
+    mandatoryIndexes: ((arr[4] ?? []) as number[]).map((n) => Number(n)),
   };
 }
 

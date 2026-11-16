@@ -13,7 +13,6 @@ import {
   id,
   keccak256,
   toUtf8Bytes,
-  zeroPadValue,
 } from 'ethers';
 import type { DIDDocument, VerificationMethodEntry } from '../common/verification-method';
 import { bytesToHex, hexToBytes, normalizeHex } from '../common/crypto/hex';
@@ -35,7 +34,7 @@ import type {
   SubmitDidRegistrationResult,
 } from './types';
 
-const DEFAULT_DID_METHOD = 'did:nda:testnet';
+const DEFAULT_DID_METHOD = 'did:nda';
 const DEFAULT_DID_TYPE = 'people';
 const CID_CONTEXT = 'https://www.w3.org/ns/cid/v1';
 const SECP256K1_VM_TYPE = 'EcdsaSecp256k1VerificationKey2019';
@@ -209,10 +208,7 @@ export function buildDidDocument(
     verificationMethod: [vm],
     authentication: [vm.id],
     assertionMethod: [vm.id],
-    didDocumentMetadata: {
-      type: didType,
-      hash: '',
-    },
+    didDocumentMetadata: didType ? { type: didType } : {},
   };
 }
 
@@ -241,10 +237,7 @@ export function buildMixedCurveDidDocument(
     verificationMethod: [key1, key2],
     authentication: [key1.id, key2.id],
     assertionMethod: [key1.id, key2.id],
-    didDocumentMetadata: {
-      type: didType,
-      hash: '',
-    },
+    didDocumentMetadata: didType ? { type: didType } : {},
   };
 }
 
@@ -360,13 +353,12 @@ export class DIDGenerator {
         )
       : buildDidDocument(publicKeyHex, did, createDID.type);
 
-    if (createDID.metadata && Object.keys(createDID.metadata).length > 0) {
-      document.didDocumentMetadata = {
-        ...createDID.metadata,
-        type: createDID.type,
-        hash: createDID.hash ?? '',
-      };
-    }
+    // Go generateDIDDocument: copy metadata, then set type and hash only when non-empty.
+    document.didDocumentMetadata = {
+      ...createDID.metadata,
+      ...(createDID.type ? { type: createDID.type } : {}),
+      ...(createDID.hash ? { hash: createDID.hash } : {}),
+    };
 
     const transaction = await this.generateSetAttributeTx(
       privateKey,
@@ -476,13 +468,17 @@ export class DIDGenerator {
   }
 
   private prepareAttributeName(name: string) {
-    if (name.length === 0) {
+    const bytes = toUtf8Bytes(name);
+    if (bytes.length === 0) {
       throw new Error('name is empty');
     }
-    if (name.length > 32) {
+    if (bytes.length > 32) {
       throw new Error('name exceeds 32 bytes');
     }
-    return zeroPadValue(hexlify(toUtf8Bytes(name)), 32);
+    // Go copy(nameBytes[:], name): the name sits at the start, zero-padded on the right.
+    const out = new Uint8Array(32);
+    out.set(bytes);
+    return hexlify(out);
   }
 }
 

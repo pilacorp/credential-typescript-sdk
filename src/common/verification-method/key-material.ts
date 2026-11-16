@@ -34,6 +34,12 @@ export function publicKeyHexFromVM(vm: VerificationMethodEntry | null): string {
   throw new Error(`verification method '${vm.id}' has no public key material`);
 }
 
+/** Go base64.RawURLEncoding: URL alphabet, no padding (Buffer would also take '+/' and '='). */
+export function decodeRawBase64URL(s: string, what = 'JWK coordinate'): Buffer {
+  if (!/^[A-Za-z0-9_-]*$/.test(s) || s.length % 4 === 1) throw new Error(`${what} is not unpadded base64url`);
+  return Buffer.from(s, 'base64url');
+}
+
 /**
  * Convert an EC JWK (secp256k1, P-256 or P-384) to uncompressed hex (0x04 || X || Y).
  */
@@ -45,8 +51,8 @@ export function jwkToHex(jwk: JWK): string {
   if (!jwk.x || !jwk.y) throw new Error('JWK x/y are required');
 
   if (jwk.crv === 'P-384') return p384JwkToHex(jwk.x, jwk.y);
-  const x = Buffer.from(jwk.x, 'base64url');
-  const y = Buffer.from(jwk.y, 'base64url');
+  const x = decodeRawBase64URL(jwk.x);
+  const y = decodeRawBase64URL(jwk.y);
   if (x.length !== 32 || y.length !== 32) {
     throw new Error('JWK x/y must each decode to 32 bytes');
   }
@@ -64,8 +70,8 @@ export function jwkToHex(jwk: JWK): string {
 
 /** Go ECPubFromJWK on P-384: short coordinates are left-padded, longer than 48 bytes refused. */
 function p384JwkToHex(xb64: string, yb64: string): string {
-  const x = Buffer.from(xb64, 'base64url');
-  const y = Buffer.from(yb64, 'base64url');
+  const x = decodeRawBase64URL(xb64);
+  const y = decodeRawBase64URL(yb64);
   if (x.length > 48 || y.length > 48) {
     throw new Error(`jwk P-384: coordinates must be at most 48 bytes, got x=${x.length} y=${y.length}`);
   }

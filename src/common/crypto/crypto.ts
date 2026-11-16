@@ -8,6 +8,7 @@
  * Recovery byte (V) is appended when signing so legacy proofs that include it
  * remain interoperable. Verification accepts both 64- and 65-byte signatures.
  */
+import type { CurveFn } from '@noble/curves/abstract/weierstrass';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import { transform } from '../jsoncanonicalizer/jsoncanonicalizer';
@@ -78,12 +79,13 @@ export function ecdsaVerifySignature(
   publicKeyHex: string,
   signatureHex: string,
   msg: Uint8Array,
+  curve: CurveFn = secp256k1,
 ): boolean {
   let pubBytes = hexToBytes(publicKeyHex);
   let pubKey: Uint8Array;
   if (pubBytes.length === 33 && (pubBytes[0] === 0x02 || pubBytes[0] === 0x03)) {
     // compressed → derive uncompressed using @noble/curves point recovery
-    const point = secp256k1.ProjectivePoint.fromHex(pubBytes);
+    const point = curve.ProjectivePoint.fromHex(pubBytes);
     pubKey = point.toRawBytes(false); // uncompressed
   } else if (pubBytes.length === 65 && pubBytes[0] === 0x04) {
     pubKey = pubBytes;
@@ -95,6 +97,8 @@ export function ecdsaVerifySignature(
     throw new Error('unsupported public key format');
   }
 
+  // Go hex.DecodeString: no "0x" prefix (hexToBytes would strip it).
+  if (/^0x/i.test(signatureHex)) throw new Error('signature must be plain hex, without a 0x prefix');
   const sigBytes = hexToBytes(signatureHex);
   let rs: Uint8Array;
   if (sigBytes.length === 65) {
@@ -109,7 +113,7 @@ export function ecdsaVerifySignature(
 
   // Verify against raw `msg` (no hashing) so callers control digest derivation.
   // @noble exposes verify(sig, msg, pub) where msg is the raw digest bytes.
-  return secp256k1.verify(rs, msg, pubKey, { lowS: false });
+  return curve.verify(rs, msg, pubKey, { lowS: false });
 }
 
 export function verifyKeyPairFromHex(privHex: string, pubHex: string): boolean {

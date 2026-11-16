@@ -1,6 +1,7 @@
 /**
  * JWT verifiable presentation — Node port of vp/jwt_presentation.go.
  */
+import { isTimeSet } from '../common/util/time';
 import type { Proof } from '../common/dto/proof';
 import { acceptSignature, JWTVerifier, resolveSigningKey, SigningKey } from '../common/jwt';
 import { sha256 } from '@noble/hashes/sha256';
@@ -59,8 +60,8 @@ export class JWTPresentation implements SignablePresentation {
       otherClaims.iss = vpc.holder;
       otherClaims.sub = vpc.holder;
     }
-    if (vpc.validUntil) otherClaims.exp = Math.floor(vpc.validUntil.getTime() / 1000);
-    if (vpc.validFrom) {
+    if (isTimeSet(vpc.validUntil)) otherClaims.exp = Math.floor(vpc.validUntil.getTime() / 1000);
+    if (isTimeSet(vpc.validFrom)) {
       const iat = Math.floor(vpc.validFrom.getTime() / 1000);
       otherClaims.iat = iat;
       otherClaims.nbf = iat;

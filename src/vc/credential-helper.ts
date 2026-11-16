@@ -6,7 +6,7 @@
  */
 import { fetchAndCheckRevocation, parseStatusListIndex } from '../common/credential-status';
 import { copyExcept, JSONMap, shallowCopyObj, splitJSONObj } from '../common/util/json';
-import { formatRFC3339 } from '../common/util/time';
+import { formatRFC3339, isTimeSet } from '../common/util/time';
 import { checkValidityPeriod, serializeContexts, serializeTypes } from '../common/util/vc';
 import { newGoAjv, prepareSchema, renderGoErrors } from './schema-validate';
 import type { ResolvedCredentialOptions } from './options';
@@ -76,10 +76,10 @@ export function serializeCredentialContents(
     });
     vcJSON.termsOfUse = vcc.termsOfUse.map(serializeTermsOfUse);
   }
-  if (vcc.validFrom) {
+  if (isTimeSet(vcc.validFrom)) {
     vcJSON.validFrom = formatRFC3339(vcc.validFrom);
   }
-  if (vcc.validUntil) {
+  if (isTimeSet(vcc.validUntil)) {
     vcJSON.validUntil = formatRFC3339(vcc.validUntil);
   }
   requireCredentialProperties(vcJSON);
@@ -135,11 +135,9 @@ function serializeSchemas(schemas: Schema[]): unknown {
   return schemas.map(serializeSchema);
 }
 
+// Go writes both fields, empty or not.
 function serializeSchema(schema: Schema): CredentialData {
-  const out: CredentialData = {};
-  if (schema.id) out.id = schema.id;
-  if (schema.type) out.type = schema.type;
-  return out;
+  return { id: schema.id ?? '', type: schema.type ?? '' };
 }
 
 function serializeStatuses(statuses: Status[]): unknown {

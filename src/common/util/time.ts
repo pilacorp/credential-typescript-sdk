@@ -7,11 +7,19 @@
  * to keep sub-second precision.
  */
 
+/** Go's zero time.Time (0001-01-01T00:00:00Z), which Go treats as "not set". */
+const GO_ZERO_TIME_MS = -62135596800000;
+
+/** A date that is present and not Go's zero time (Go `!t.IsZero()`). */
+export function isTimeSet(date: Date | null | undefined): date is Date {
+  return !!date && date.getTime() !== GO_ZERO_TIME_MS;
+}
+
 /** Format date in RFC3339 — seconds precision, always UTC ("Z"). */
 export function formatRFC3339(date: Date): string {
   const pad = (n: number, w = 2) => n.toString().padStart(w, '0');
   return (
-    `${date.getUTCFullYear()}-` +
+    `${pad(date.getUTCFullYear(), 4)}-` +
     `${pad(date.getUTCMonth() + 1)}-` +
     `${pad(date.getUTCDate())}T` +
     `${pad(date.getUTCHours())}:` +
