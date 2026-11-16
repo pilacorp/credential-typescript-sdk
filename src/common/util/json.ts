@@ -4,6 +4,10 @@
 
 export type JSONMap = Record<string, unknown>;
 
+export function hasOwn(obj: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
 export function shallowCopyObj(obj: JSONMap): JSONMap {
   return { ...obj };
 }
@@ -12,14 +16,25 @@ export function deepCopyMap(src: JSONMap): JSONMap {
   return deepCopyValue(src) as JSONMap;
 }
 
+function isPlainObject(v: unknown): v is JSONMap {
+  if (v === null || typeof v !== 'object') return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+}
+
 function deepCopyValue(v: unknown): unknown {
   if (Array.isArray(v)) {
     return v.map(deepCopyValue);
   }
-  if (v && typeof v === 'object' && (v as object).constructor === Object) {
+  if (isPlainObject(v)) {
     const out: JSONMap = {};
-    for (const [k, val] of Object.entries(v as JSONMap)) {
-      out[k] = deepCopyValue(val);
+    for (const [k, val] of Object.entries(v)) {
+      Object.defineProperty(out, k, {
+        value: deepCopyValue(val),
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
     }
     return out;
   }

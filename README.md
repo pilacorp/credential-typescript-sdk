@@ -395,17 +395,15 @@ Lưu ý: `didv2.DefaultProvider` (có `getAddress()`, `sign` trả recovery id `
 | `jsoncanonicalizer` | `transform` (RFC 8785 JCS) |
 | top-level | `SignerProvider`, `DefaultProvider`, `P256Provider`, `RSAProvider`, `Proof`, `CredentialError`, `ErrorCode` |
 
-`Credential` interface (cả JWT và JSON-LD đều implement):
+`Credential` (đọc): `verify`, `serialize`, `hash`, `getContents`, `getType`, `extractField`.
+
+`SignableCredential` thêm ký:
 
 ```ts
 addProof(priv, opts?)              // ký với in-memory key
 addProofByProvider(signer, opts?)  // ký qua external SignerProvider
 addCustomProof(proof, opts?)       // gắn proof do caller tự tạo
 getSigningInput()                  // bytes thực sự được ký (debug)
-verify(opts?)                      // throw nếu invalid
-serialize()                        // JWT string hoặc JSON object
-getContents() / getType()
-extractField(path)                 // "credentialSubject.email"
 addSelectiveDisclosures(paths)     // chỉ JWT
 ```
 
@@ -417,7 +415,7 @@ Xem [`src/index.ts`](src/index.ts) để có public surface đầy đủ và [`e
 - Options dùng một object duy nhất thay cho variadic `WithX()` builders của Go (DIDv2 giữ nguyên `WithX()` options).
 - Dựng VP (`newJWTPresentation` / `newJSONPresentation` / `newJOSEPresentation`) **không** verify các VC bên trong, giống Go. Muốn verify các VC thì truyền `validateVC` (`true` hoặc `CredentialOptions`) cùng `resolver` bạn chọn; `vc.init(baseURL)` / `vp.init(baseURL)` đặt resolver mặc định.
 - `DIDDocument` ở TS là interface dữ liệu; các thao tác VM của Go (`doc.RotateVerificationMethod`, …) là hàm tự do trong `didv2`.
-- Gói chỉ có CommonJS (chưa có `exports` map). RSA chỉ verify; ký RSA qua `signer.newRSAFunc` (callback).
+- RSA chỉ verify; ký RSA qua `signer.newRSAFunc` (callback).
 - JSON-LD canonicalization (URDNA2015 + SHA-256) được test với `piprate/json-gold` của Go trên các fixtures string / số / boolean / unicode / nested / key reorder; số lớn/nhỏ của proof legacy (hex) được xử lý riêng — xem `tests/common/go-rdfc-numeric-interop.test.ts`.
 
 ## License

@@ -49,13 +49,19 @@ export async function generateSubDID(
   try {
     verifyRootConsent(doc, rootDID);
   } catch (e) {
-    throw new Error(`subdid: the root signer does not hold the primary key of ${rootDID}: ${(e as Error).message}`);
+    throw Object.assign(
+      new Error(`subdid: the root signer does not hold the primary key of ${rootDID}: ${(e as Error).message}`),
+      { cause: e },
+    );
   }
   const sig = await signDocument(doc, subSigner);
   try {
     verifyDocumentSignature(doc, sig);
   } catch (e) {
-    throw new Error(`subdid: the Sub-DID signer does not hold the key of ${subDID}: ${(e as Error).message}`);
+    throw Object.assign(
+      new Error(`subdid: the Sub-DID signer does not hold the key of ${subDID}: ${(e as Error).message}`),
+      { cause: e },
+    );
   }
   return {
     did: subDID,

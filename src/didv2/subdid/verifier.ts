@@ -114,6 +114,7 @@ function consistentProof(proof: ProofResponse, subDID: string): boolean {
     return false;
   }
   if (didPrefix(proof.root_did) !== didPrefix(subDID) || proof.root_did === subDID) return false;
+  if (!Array.isArray(proof.chains)) return false;
   return hash32Pattern.test(proof.tree_index) || (proof.tree_index === '' && proof.chains.length === 0);
 }
 
@@ -127,6 +128,7 @@ function chainEntry(proof: ProofResponse, code: string): ChainProof {
 
 function parseChainProof(entry: ChainProof): { txHash: string; root: string; path: string[] } | null {
   if (!hash32Pattern.test(entry.tx_hash) || !hash32Pattern.test(entry.root)) return null;
+  if (!Array.isArray(entry.path)) return null;
   const path: string[] = [];
   for (const s of entry.path) {
     if (!hash32Pattern.test(s)) return null;

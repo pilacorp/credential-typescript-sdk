@@ -2,7 +2,6 @@ import { createHash, randomBytes } from 'node:crypto';
 import { p256 } from '@noble/curves/nist';
 import { sha256 } from '@noble/hashes/sha256';
 import type { SignerProvider } from '../signer/signer';
-import { P256Provider } from '../signer/p256-provider';
 import {
   canonicalizeNQuadsWithIdMap,
   canonicalizeRDF,
@@ -42,8 +41,10 @@ function signStatement(priv: Uint8Array, statement: string): Uint8Array {
 }
 
 function verifyP256(pubUncompressed: Uint8Array, digest: Uint8Array, signature: Uint8Array): boolean {
+  const rs = signature.length === 65 ? signature.subarray(0, 64) : signature;
+  if (rs.length !== 64) return false;
   try {
-    return p256.verify(signature, digest, pubUncompressed, { lowS: false });
+    return p256.verify(rs, digest, pubUncompressed, { lowS: false });
   } catch {
     return false;
   }
@@ -73,16 +74,10 @@ export async function createBaseProof(
   toSign.set(mandatoryHash, proofHash.length + ephPub.length);
   const digest = sha256(toSign);
   const baseSig = await issuerSigner.sign(digest);
-  if (issuerPub) {
-    const ok =
-      issuerSigner instanceof P256Provider
-        ? verifyP256(issuerPub, digest, baseSig)
-        : true;
-    if (issuerSigner instanceof P256Provider && !ok) {
-      throw new Error(
-        'ecdsasd: the base signature does not verify against the verification method; the signer does not hold that key',
-      );
-    }
+  if (issuerPub && !verifyP256(issuerPub, digest, baseSig)) {
+    throw new Error(
+      'ecdsasd: the base signature does not verify against the verification method; the signer does not hold that key',
+    );
   }
   return serializeBaseProofValue({
     baseSignature: baseSig,
@@ -219,10 +214,12 @@ async function verifyDerivedProof(
 }
 
 function verifyIssuer(pub: Uint8Array, digest: Uint8Array, signature: Uint8Array): boolean {
-  if (verifyP256(pub, digest, signature)) return true;
+  const rs = signature.length === 65 ? signature.subarray(0, 64) : signature;
+  if (rs.length !== 64) return false;
+  if (verifyP256(pub, digest, rs)) return true;
   try {
     const { secp256k1 } = require('@noble/curves/secp256k1');
-    return secp256k1.verify(signature.subarray(0, 64), digest, pub, { lowS: false });
+    return secp256k1.verify(rs, digest, pub, { lowS: false });
   } catch {
     return false;
   }

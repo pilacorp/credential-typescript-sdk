@@ -66,10 +66,13 @@ export class Metadata {
     readonly documents: Buffer[],
   ) {}
 
-  validateClaims(issued: Record<string, unknown>, opts: { allDisclosures?: boolean } = {}): void {
+  validateClaims(
+    claims: Record<string, unknown>,
+    opts: { allDisclosures?: boolean; issued?: Record<string, unknown> } = {},
+  ): void {
     for (const [i, c] of this.claims.entries()) {
       try {
-        checkClaim(c, issued, Boolean(opts.allDisclosures));
+        checkClaim(c, claims, Boolean(opts.allDisclosures), opts.issued);
       } catch (err) {
         throw Object.assign(
           new Error(`typemeta: claims[${i}] with path ${JSON.stringify(c.path)}: ${(err as Error).message}`),
@@ -270,7 +273,7 @@ function mergeClaims(inherited: Claim[], child: Claim[]): Claim[] {
   return out;
 }
 
-function checkClaim(c: Claim, root: unknown, _all: boolean): void {
+function checkClaim(c: Claim, root: unknown, _all: boolean, issued?: Record<string, unknown>): void {
   let sel: unknown[] = [root];
   for (const el of c.path) {
     const next: unknown[] = [];
@@ -280,7 +283,7 @@ function checkClaim(c: Claim, root: unknown, _all: boolean): void {
           throw new Error('a key is selected in a value that is not an object (§5.6.1.2)');
         }
         const obj = n as Record<string, unknown>;
-        if (!(el in obj)) {
+        if (!Object.prototype.hasOwnProperty.call(obj, el)) {
           if (c.mandatory) throw new Error('a mandatory claim is not in the credential (§5.6.3)');
           continue;
         }
@@ -299,6 +302,40 @@ function checkClaim(c: Claim, root: unknown, _all: boolean): void {
     }
     sel = next;
   }
+  if (!issued || sel.length === 0) return;
+  const sd = pathIsDisclosed(issued, root, c.path);
+  if (c.sd === 'always' && !sd) {
+    throw new Error('a selected claim is not selectively disclosable, and sd is always');
+  }
+  if (c.sd === 'never' && sd) {
+    throw new Error('a selected claim is selectively disclosable, and sd is never');
+  }
+}
+
+function pathIsDisclosed(issued: unknown, reconstructed: unknown, path: PathEl[]): boolean {
+  let node: unknown = issued;
+  let rec: unknown = reconstructed;
+  for (const el of path) {
+    if (typeof el === 'string') {
+      if (!node || typeof node !== 'object' || Array.isArray(node) || !Object.prototype.hasOwnProperty.call(node, el)) {
+        return rec !== undefined;
+      }
+      node = (node as Record<string, unknown>)[el];
+      rec =
+        rec && typeof rec === 'object' && !Array.isArray(rec) && Object.prototype.hasOwnProperty.call(rec, el)
+          ? (rec as Record<string, unknown>)[el]
+          : undefined;
+    } else if (typeof el === 'number') {
+      if (!Array.isArray(node) || el >= node.length) return rec !== undefined;
+      const item = node[el];
+      if (item && typeof item === 'object' && !Array.isArray(item) && Object.prototype.hasOwnProperty.call(item, '...')) {
+        return true;
+      }
+      node = item;
+      rec = Array.isArray(rec) ? rec[el] : undefined;
+    }
+  }
+  return false;
 }
 
 export type RedirectPolicy = { mode: 'origin' } | { mode: 'any' } | { mode: 'to'; origins: string[] };
@@ -327,7 +364,28 @@ export function newHTTPResolver(cfg: HTTPResolverConfig = {}): Resolver {
     if (!p.origins.length) throw new Error('typemeta: Config.Redirects is RedirectTo with no origin');
     redirects = redirectsTo(p.origins);
   }
+  const maxCacheBytes = 4 << 20;
+  let cacheBytes = 0;
   const cache = new Map<string, { doc: Buffer; expires: number }>();
+  const rank = (e: { expires: number }, now: number) => (e.expires !== 0 && now >= e.expires ? 0 : e.expires === 0 ? 1 : 2);
+  const remember = (ck: string, doc: Buffer, expires: number): void => {
+    if (doc.length > maxCacheBytes) return;
+    const old = cache.get(ck);
+    if (old) {
+      cache.delete(ck);
+      cacheBytes -= old.doc.length;
+    }
+    const now = Date.now();
+    const victims = [...cache].sort(([, a], [, b]) => rank(a, now) - rank(b, now));
+    for (const [k, v] of victims) {
+      if (cacheBytes + doc.length <= maxCacheBytes) break;
+      cache.delete(k);
+      cacheBytes -= v.doc.length;
+    }
+    if (cacheBytes + doc.length > maxCacheBytes) return;
+    cache.set(ck, { doc, expires });
+    cacheBytes += doc.length;
+  };
   return {
     async metadata(ref, signal) {
       if (!validURI(ref.vct)) {
@@ -375,12 +433,12 @@ export function newHTTPResolver(cfg: HTTPResolverConfig = {}): Resolver {
         if (ref.integrity) {
           try {
             checkIntegrity(body, ref.integrity);
-            cache.set(ck, { doc: body, expires: 0 });
+            remember(ck, body, 0);
           } catch {
             /* Load rejects */
           }
         } else if (freshMs > 0) {
-          cache.set(ck, { doc: body, expires: Date.now() + freshMs });
+          remember(ck, body, Date.now() + freshMs);
         }
       }
       return body;

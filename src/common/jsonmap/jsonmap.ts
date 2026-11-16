@@ -468,7 +468,8 @@ export async function deriveECDSASD(m: JSONMap, selectivePointers: string[]): Pr
   }
   const { revealDoc, proofValue } = await deriveProof(docNoProof, baseProof.proofValue, selectivePointers);
   const derived: JSONMap = { ...revealDoc };
-  derived[PROOF_FIELD] = serializeProofs([{ ...baseProof, proofValue }]);
+  const rawBase = getFirstProof(m) as JSONMap;
+  derived[PROOF_FIELD] = { ...rawBase, proofValue };
   return derived;
 }
 
@@ -490,7 +491,7 @@ function ecdsaProofConfig(m: JSONMap, proof: Proof): JSONMap {
   delete cfg.signature; // raw signature bytes of the external-signing flow, never serialized
   for (const k of Object.keys(cfg)) {
     // Go omitempty on typed fields; an empty or unset one is not on the wire.
-    if (cfg[k] === undefined || (cfg[k] === '' && PROOF_TYPED_KEYS.includes(k))) delete cfg[k];
+    if (cfg[k] === undefined || (cfg[k] === '' && k !== 'domain' && PROOF_TYPED_KEYS.includes(k))) delete cfg[k];
   }
   delete cfg[proof.type === EcdsaSecp256k1Signature2019 ? 'jws' : 'proofValue'];
   cfg['@context'] = ctx;
@@ -625,6 +626,9 @@ async function verifyOneProof(
   const doc = await resolver.resolveDocument(signerDID);
 
   if (proof.type === JwtProof2020) {
+    if (Array.isArray(m[PROOF_FIELD])) {
+      throw new Error('JwtProof2020 must be the only proof of the document');
+    }
     return verifyJWTProofImpl(view, doc, proof);
   }
   if (proof.type === EcdsaSecp256k1Signature2019) {

@@ -91,6 +91,8 @@ export interface CallSource {
 export interface RegistryDeps {
   receipts?: ReceiptSource;
   caller?: CallSource;
+  /** Chain id of rpcUrl; fixes the network so ethers never polls eth_chainId. */
+  chainId?: bigint | number;
 }
 
 const norm = (s: string): string => s.toLowerCase();
@@ -243,7 +245,12 @@ export class CredentialRegistry {
       }
     });
     // JsonRpcProvider connects lazily, so constructing without a chain is fine.
-    this.provider = deps.receipts && deps.caller ? null : new JsonRpcProvider(rpcUrl);
+    this.provider =
+      deps.receipts && deps.caller
+        ? null
+        : new JsonRpcProvider(rpcUrl, deps.chainId === undefined ? undefined : Number(deps.chainId), {
+            staticNetwork: deps.chainId !== undefined,
+          });
     this.receipts = deps.receipts ?? this.provider;
     this.caller = deps.caller ?? this.provider;
   }

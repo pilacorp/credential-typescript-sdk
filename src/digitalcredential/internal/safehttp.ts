@@ -57,9 +57,12 @@ export async function get(
   if (!allows(limits, start)) {
     throw ErrRedirectTargetNotAllowed;
   }
+  const deadline = AbortSignal.any(
+    [AbortSignal.timeout(limits.timeoutMs), signal].filter(Boolean) as AbortSignal[],
+  );
   let current = start.href;
   for (let hops = 0; hops <= limits.maxRedirects; hops++) {
-    const res = await oneRequest(current, mediaTypes, limits, signal);
+    const res = await oneRequest(current, mediaTypes, limits, deadline);
     if (res.status >= 300 && res.status < 400 && res.headers.location) {
       if (hops >= limits.maxRedirects) throw ErrTooManyRedirects;
       const next = new URL(String(res.headers.location), current);
@@ -90,15 +93,25 @@ async function oneRequest(
   signal?: AbortSignal,
 ): Promise<{ status: number; headers: http.IncomingHttpHeaders; body: Buffer }> {
   if (limits.fetch) {
-    const ac = AbortSignal.any(
-      [AbortSignal.timeout(limits.timeoutMs), signal].filter(Boolean) as AbortSignal[],
-    );
     const res = await limits.fetch(rawURL, {
       redirect: 'manual',
-      signal: ac,
+      signal,
       headers: { Accept: mediaTypes.join(', ') },
     });
-    const buf = Buffer.from(await res.arrayBuffer());
+    const chunks: Buffer[] = [];
+    let n = 0;
+    const reader = res.body?.getReader();
+    while (reader) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      n += value.length;
+      if (n > limits.maxBytes) {
+        await reader.cancel();
+        throw ErrBodyTooLarge;
+      }
+      chunks.push(Buffer.from(value));
+    }
+    const buf = reader ? Buffer.concat(chunks) : Buffer.from(await res.arrayBuffer());
     const headers: http.IncomingHttpHeaders = {};
     res.headers.forEach((v, k) => {
       headers[k.toLowerCase()] = v;
@@ -107,9 +120,7 @@ async function oneRequest(
   }
 
   const u = parseURL(rawURL);
-  const ac = AbortSignal.any(
-    [AbortSignal.timeout(limits.timeoutMs), signal].filter(Boolean) as AbortSignal[],
-  );
+  const ac = signal ?? AbortSignal.timeout(limits.timeoutMs);
   const lib = u.protocol === 'http:' ? http : https;
   const addrs = await dns.lookup(u.hostname, { all: true });
   const usable = addrs.filter((a) => !blockedAddress(a.address));

@@ -1,6 +1,6 @@
 import { reconstruct } from '../common/sdjwt';
-import type { JSONMap } from '../common/util/json';
-import { decodeDisclosures } from '../common/sdjwt';
+import { hasOwn, type JSONMap } from '../common/util/json';
+import { decodeDisclosures, hashDisclosure } from '../common/sdjwt';
 import type { SignerProvider } from '../common/signer/signer';
 import { Credential } from './credential';
 import { TypKBJWT } from './errors';
@@ -26,14 +26,7 @@ export async function presentCredential(c: Credential, req: PresentRequest): Pro
   const { issuerJWT, disclosures, kbJWT } = splitSDJWT(c.compact);
   if (kbJWT) throw new Error('Present takes an SD-JWT, not an SD-JWT+KB');
   const payload = JSON.parse(Buffer.from(issuerJWT.split('.')[1], 'base64url').toString('utf8')) as JSONMap;
-  const names = new Set(
-    (req.reveal ?? []).map((p) => (typeof p[0] === 'string' ? p[0] : '')).filter(Boolean),
-  );
-  const selected = names.size
-    ? decodeDisclosures(disclosures)
-        .filter((d) => names.has(d.fieldName))
-        .map((d) => d.disclosure)
-    : [];
+  const selected = selectDisclosures(payload, disclosures, req.reveal ?? []);
   let compact = issuerJWT + '~';
   for (const d of selected) compact += d + '~';
 
@@ -59,4 +52,56 @@ export async function presentCredential(c: Credential, req: PresentRequest): Pro
     compact += kbToken;
   }
   return new Credential(compact);
+}
+
+function selectDisclosures(payload: JSONMap, disclosures: string[], reveal: Path[]): string[] {
+  const alg = typeof payload._sd_alg === 'string' ? payload._sd_alg : 'sha-256';
+  const decoded = decodeDisclosures(disclosures);
+  const byDigest = new Map(decoded.map((d) => [hashDisclosure(alg, d.disclosure), d]));
+  const picked = new Set<string>();
+  const open = (digest: unknown, path: Path): unknown => {
+    const d = typeof digest === 'string' ? byDigest.get(digest) : undefined;
+    if (!d) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+    picked.add(d.disclosure);
+    return d.value;
+  };
+  for (const path of reveal) {
+    let node: unknown = payload;
+    for (const seg of path) {
+      if (typeof seg === 'string') {
+        if (!node || typeof node !== 'object' || Array.isArray(node)) {
+          throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+        }
+        const obj = node as JSONMap;
+        if (hasOwn(obj, seg)) {
+          node = obj[seg];
+          continue;
+        }
+        const sd = obj._sd;
+        if (!Array.isArray(sd)) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+        let found: (typeof decoded)[number] | undefined;
+        for (const h of sd) {
+          const d = typeof h === 'string' ? byDigest.get(h) : undefined;
+          if (d && d.fieldName === seg) {
+            found = d;
+            break;
+          }
+        }
+        if (!found) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+        picked.add(found.disclosure);
+        node = found.value;
+      } else if (typeof seg === 'number') {
+        if (!Array.isArray(node)) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+        const el = node[seg];
+        if (el && typeof el === 'object' && !Array.isArray(el) && hasOwn(el as object, '...')) {
+          node = open((el as JSONMap)['...'], path);
+        } else {
+          node = el;
+        }
+      } else {
+        throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+      }
+    }
+  }
+  return [...picked];
 }

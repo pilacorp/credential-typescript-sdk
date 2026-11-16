@@ -27,6 +27,7 @@ export const Code = {
   Suspended: 'SUSPENDED',
   StatusNotAccepted: 'STATUS_NOT_ACCEPTED',
   StatusUnavailable: 'STATUS_UNAVAILABLE',
+  IATCheckFailed: 'IAT_CHECK_FAILED',
 } as const;
 
 export type CodeValue = (typeof Code)[keyof typeof Code];

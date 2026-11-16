@@ -123,7 +123,9 @@ async function normalizeDataset(
   if (blankNodeWork(dataset as never) > maxBlankNodeWork) {
     throw new BlankNodeWorkError();
   }
-  return rdfCanonize.canonize(dataset, { algorithm: 'URDNA2015', canonicalIdMap });
+  const nquads: string = await rdfCanonize.canonize(dataset, { algorithm: 'URDNA2015', canonicalIdMap });
+  // RDFC-1.0 canonical N-Quads write TAB as \t; rdf-canonize 3.x leaves it raw.
+  return nquads.replace(/\t/g, '\\t');
 }
 
 /**

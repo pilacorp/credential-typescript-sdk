@@ -143,7 +143,7 @@ function applySDHashes(
       throw new Error('array element disclosure used in object context');
     }
 
-    if (info.objectField in v) {
+    if (Object.prototype.hasOwnProperty.call(v, info.objectField)) {
       throw new Error(
         `duplicate field "${info.objectField}" when reconstructing SD-JWT object`,
       );

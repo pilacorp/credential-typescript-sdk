@@ -129,7 +129,7 @@ export class JOSECredential implements SignableCredential {
   ): Promise<JOSECredential> {
     vcc = { ...vcc, context: requireV2Context(vcc.context) };
     if (!vcc.types || vcc.types.length === 0) {
-      vcc = { ...vcc, types: ['VerifiableCredential'] };
+      throw new Error('credential type is required and must include VerifiableCredential');
     }
     const m = serializeCredentialContents(vcc);
     let vcMap = normalizeCredentialData(m);

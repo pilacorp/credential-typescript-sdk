@@ -2,6 +2,12 @@ import { BlockList, isIP } from 'node:net';
 
 const v4 = new BlockList();
 const v6 = new BlockList();
+const embedded = new BlockList();
+embedded.addSubnet('::', 96, 'ipv6');
+embedded.addSubnet('::ffff:0:0', 96, 'ipv6');
+embedded.addSubnet('64:ff9b::', 96, 'ipv6');
+const sixToFour = new BlockList();
+sixToFour.addSubnet('2002::', 16, 'ipv6');
 
 for (const p of [
   '0.0.0.0/8',
@@ -46,18 +52,37 @@ export const ErrAddressBlocked = Object.assign(new Error('safehttp: blocked addr
 export function blockedAddress(ip: string): boolean {
   const kind = isIP(ip);
   if (!kind) return true;
-  const mapped = embeddedIPv4(ip, kind);
-  if (mapped) return v4.check(mapped, 'ipv4');
-  if (kind === 4) return v4.check(ip, 'ipv4');
-  return v6.check(ip, 'ipv6');
+  try {
+    const mapped = embeddedIPv4(ip, kind);
+    if (mapped) return v4.check(mapped, 'ipv4');
+    if (kind === 4) return v4.check(ip, 'ipv4');
+    return v6.check(ip, 'ipv6');
+  } catch {
+    return true;
+  }
+}
+
+function ipv6Bytes(ip: string): number[] {
+  let s = ip.split('%')[0];
+  const dotted = /(\d+)\.(\d+)\.(\d+)\.(\d+)$/.exec(s);
+  if (dotted) {
+    const [a, b, c, d] = dotted.slice(1).map(Number);
+    s = s.slice(0, dotted.index) + ((a << 8) | b).toString(16) + ':' + ((c << 8) | d).toString(16);
+  }
+  const [head, tail] = s.split('::');
+  const h = head ? head.split(':') : [];
+  const t = tail ? tail.split(':') : [];
+  const groups = tail === undefined ? h : [...h, ...Array(8 - h.length - t.length).fill('0'), ...t];
+  return groups.flatMap((g) => {
+    const n = parseInt(g, 16);
+    return [n >> 8, n & 0xff];
+  });
 }
 
 function embeddedIPv4(ip: string, kind: number): string | null {
   if (kind !== 6) return null;
-  const lower = ip.toLowerCase();
-  if (lower.startsWith('::ffff:')) {
-    const rest = ip.slice(7);
-    if (isIP(rest) === 4) return rest;
-  }
+  const at = (o: number) => ipv6Bytes(ip).slice(o, o + 4).join('.');
+  if (embedded.check(ip, 'ipv6')) return at(12);
+  if (sixToFour.check(ip, 'ipv6')) return at(2);
   return null;
 }

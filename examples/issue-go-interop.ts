@@ -58,7 +58,7 @@ async function main(): Promise<void> {
   const { JSONCredential } = await import('../src/vc/json-credential');
   await JSONCredential.parse(JSON.stringify(credential), { resolver, verifyProof: true });
 
-  const outDir = path.resolve(__dirname, '../../go-credential-sdk/credential/examples/interop');
+  const outDir = path.resolve(__dirname, 'out');
   const outFile = path.join(outDir, 'vc-from-ts.json');
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(
@@ -68,8 +68,6 @@ async function main(): Promise<void> {
   );
 
   console.log(`wrote ${outFile}`);
-  console.log('verify with Go:');
-  console.log('  (cd ../go-credential-sdk && go run ./credential/examples/verifyfromts)');
 }
 
 main().catch((err) => {

@@ -5,8 +5,6 @@
  *
  *   import { vc, vp, signer, didv2 } from '@pilacorp/credential-sdk';
  *
- * Or use the named sub-modules directly via deep imports
- * (`@pilacorp/credential-sdk/dist/vc/credential`).
  */
 export * as vc from './vc/credential';
 export * as vp from './vp/presentation';

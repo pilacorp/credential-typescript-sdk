@@ -82,6 +82,7 @@ export function serializeCredentialContents(
   if (vcc.validUntil) {
     vcJSON.validUntil = formatRFC3339(vcc.validUntil);
   }
+  requireCredentialProperties(vcJSON);
   return vcJSON;
 }
 

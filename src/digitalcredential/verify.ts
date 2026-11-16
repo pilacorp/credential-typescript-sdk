@@ -1,13 +1,16 @@
-import { reconstruct } from '../common/sdjwt';
+import { parseDisclosures, reconstruct } from '../common/sdjwt';
 import type { JSONMap } from '../common/util/json';
 import { Credential } from './credential';
 import { Code, DigitalCredentialError, neverDisclosable, PolicyError, TypDCSDJWT, TypKBJWT } from './errors';
-import { peekHeader, verifyCompactJWS } from './jws-compact';
+import { decodeJSONSegment, peekHeader, p256FromJWK, typIs, verifyCompactJWS } from './jws-compact';
 import { ErrIssuerNotSupported, ErrNoUsableKey, selectKey, type Resolver } from './issuerkey';
 import { sdHash, splitSDJWT } from './split';
 import { ErrIndexOutOfBounds, refFromStatus, type Checker, type Ref } from './statuslist';
 import * as typemeta from './typemeta';
 import { wellFormed } from './typemeta';
+import { checkAkaVCTs } from './aka';
+
+export { checkAkaVCTs };
 
 export interface StatusChecker {
   status(ref: Ref, iss: string, signal?: AbortSignal): Promise<number>;
@@ -29,6 +32,10 @@ export interface VerifyOptions {
   types?: typemeta.Resolver;
   typesOptional?: boolean;
   allowedAlgs?: string[];
+  rejectFutureIAT?: boolean;
+  iatCheck?: (iat: Date) => void | Promise<void>;
+  maxKBAgeSeconds?: number;
+  extendedVCTMatch?: boolean;
 }
 
 export interface Result {
@@ -43,22 +50,59 @@ export interface Result {
   typeMetadataSkipped?: unknown;
 }
 
+function dropUndisclosedElements(v: unknown): unknown {
+  if (Array.isArray(v)) {
+    return v
+      .filter((e) => !(e && typeof e === 'object' && !Array.isArray(e) && Object.keys(e).length === 1 && '...' in e))
+      .map(dropUndisclosedElements);
+  }
+  if (v && typeof v === 'object') {
+    for (const k of Object.keys(v)) (v as JSONMap)[k] = dropUndisclosedElements((v as JSONMap)[k]);
+  }
+  return v;
+}
+
 export async function verifyCredential(
   c: Credential,
   resolver: Resolver,
   opts: VerifyOptions = {},
 ): Promise<Result> {
   if (opts.status && opts.skipStatus) throw new PolicyError('WithStatus and WithoutStatusCheck are both passed');
-  const algs = opts.allowedAlgs?.length ? opts.allowedAlgs : ['ES256'];
+  const algs = opts.allowedAlgs?.length ? opts.allowedAlgs : ['ES256', 'ES256K'];
   const { issuerJWT, disclosures, kbJWT } = splitSDJWT(c.compact);
-  const header = peekHeader(issuerJWT);
-  if (header.typ !== TypDCSDJWT) {
+  let header: Record<string, unknown>;
+  try {
+    header = peekHeader(issuerJWT);
+  } catch (err) {
+    throw new DigitalCredentialError(Code.Malformed, (err as Error).message, err);
+  }
+  if (!typIs(header.typ, TypDCSDJWT)) {
     throw new DigitalCredentialError(Code.TypInvalid, `typ ${JSON.stringify(header.typ)} is not ${TypDCSDJWT}`);
   }
   if (header.alg && !algs.includes(String(header.alg))) {
     throw new DigitalCredentialError(Code.AlgNotAllowed, `alg ${String(header.alg)} is not allowed`);
   }
-  const payload = JSON.parse(Buffer.from(issuerJWT.split('.')[1], 'base64url').toString('utf8')) as JSONMap;
+  if (header.crit !== undefined || header.b64 !== undefined) {
+    throw new DigitalCredentialError(
+      Code.Malformed,
+      'the Issuer-signed JWT header uses crit or b64, which this SDK does not implement',
+    );
+  }
+  let payload: JSONMap;
+  try {
+    payload = decodeJSONSegment(issuerJWT.split('.')[1], 'Issuer-signed JWT payload');
+  } catch (err) {
+    throw new DigitalCredentialError(Code.Malformed, (err as Error).message, err);
+  }
+  if (payload.iss !== undefined && typeof payload.iss !== 'string') {
+    throw new DigitalCredentialError(Code.Malformed, 'iss is not a string');
+  }
+  for (const k of ['iat', 'nbf', 'exp'] as const) {
+    const v = payload[k];
+    if (v !== undefined && (typeof v !== 'number' || !Number.isFinite(v))) {
+      throw new DigitalCredentialError(Code.Malformed, `${k} is not a NumericDate`);
+    }
+  }
   const iss = typeof payload.iss === 'string' ? payload.iss : '';
   if (opts.acceptedIssuers && !opts.acceptedIssuers.includes(iss)) {
     throw new DigitalCredentialError(Code.IssuerNotAccepted, 'iss is not an issuer in WithAcceptedIssuers');
@@ -68,7 +112,7 @@ export async function verifyCredential(
     keys = await resolver.keys(iss);
   } catch (err) {
     const cause = (err as { cause?: unknown }).cause;
-    if (cause === ErrIssuerNotSupported || (err as Error).message.includes('not supported')) {
+    if (cause === ErrIssuerNotSupported) {
       throw new DigitalCredentialError(Code.IssuerNotSupported, (err as Error).message, err);
     }
     if (cause === ErrNoUsableKey) {
@@ -88,9 +132,26 @@ export async function verifyCredential(
     throw new DigitalCredentialError(Code.SignatureInvalid, 'Issuer-signed JWT signature invalid');
   }
 
+  if ('_sd_alg' in payload && payload._sd_alg !== 'sha-256') {
+    throw new DigitalCredentialError(Code.Malformed, '_sd_alg must be "sha-256"');
+  }
+  try {
+    for (const d of parseDisclosures(disclosures)) {
+      if (d.fieldName === '_sd' || d.fieldName === '...') {
+        throw new DigitalCredentialError(
+          Code.DisclosureInvalid,
+          `disclosure claim name ${JSON.stringify(d.fieldName)} is reserved`,
+        );
+      }
+    }
+  } catch (err) {
+    if (err instanceof DigitalCredentialError) throw err;
+    throw new DigitalCredentialError(Code.DisclosureInvalid, (err as Error).message, err);
+  }
+
   let claims: JSONMap;
   try {
-    claims = reconstruct(payload, disclosures, true);
+    claims = dropUndisclosedElements(reconstruct(payload, disclosures, true)) as JSONMap;
   } catch (err) {
     throw new DigitalCredentialError(Code.DisclosureInvalid, (err as Error).message, err);
   }
@@ -102,6 +163,12 @@ export async function verifyCredential(
       );
     }
   }
+  if (claims.status !== undefined && JSON.stringify(payload.status) !== JSON.stringify(claims.status)) {
+    throw new DigitalCredentialError(
+      Code.DisclosureInvalid,
+      'status or one of its sub-claims came in a Disclosure, which draft-ietf-oauth-sd-jwt-vc-19 §2.2.2.3 forbids',
+    );
+  }
 
   const now = Math.floor((opts.now ?? new Date()).getTime() / 1000);
   const skew = opts.clockSkewSeconds ?? 60;
@@ -110,6 +177,19 @@ export async function verifyCredential(
   }
   if (typeof claims.nbf === 'number' && now < claims.nbf - skew) {
     throw new DigitalCredentialError(Code.NotYetValid, 'credential is not yet valid');
+  }
+  if (typeof claims.iat === 'number') {
+    if (opts.rejectFutureIAT && claims.iat > now + skew) {
+      throw new DigitalCredentialError(Code.NotYetValid, 'credential iat is in the future');
+    }
+    if (opts.iatCheck) {
+      try {
+        await opts.iatCheck(new Date(claims.iat * 1000));
+      } catch (err) {
+        if (err instanceof DigitalCredentialError) throw err;
+        throw new DigitalCredentialError(Code.IATCheckFailed, (err as Error).message, err);
+      }
+    }
   }
   if (claims.aud !== undefined) {
     if (!opts.credentialAudience) {
@@ -126,10 +206,7 @@ export async function verifyCredential(
   }
   let akaVcts: string[] | undefined;
   if (claims.aka_vcts !== undefined) {
-    if (!Array.isArray(claims.aka_vcts) || claims.aka_vcts.some((x) => typeof x !== 'string')) {
-      throw new DigitalCredentialError(Code.Malformed, 'aka_vcts is not an array of strings');
-    }
-    akaVcts = claims.aka_vcts as string[];
+    akaVcts = checkAkaVCTs(claims.aka_vcts, vct);
   }
   if (claims['vct#integrity'] !== undefined) {
     if (typeof claims['vct#integrity'] !== 'string' || !wellFormed(claims['vct#integrity'] as string)) {
@@ -154,7 +231,6 @@ export async function verifyCredential(
     } else {
       const cnf = payload.cnf as { jwk?: { kty?: string; crv?: string; x?: string; y?: string } };
       if (!cnf?.jwk) throw new DigitalCredentialError(Code.KBUnsupported, 'no cnf.jwk to check Key Binding');
-      const { p256FromJWK } = await import('./jws-compact');
       let kbPayload: Record<string, unknown>;
       try {
         kbPayload = verifyCompactJWS(kbJWT, p256FromJWK(cnf.jwk), algs);
@@ -162,7 +238,10 @@ export async function verifyCredential(
         throw new DigitalCredentialError(Code.KBInvalid, (err as Error).message, err);
       }
       const kbHeader = peekHeader(kbJWT);
-      if (kbHeader.typ !== TypKBJWT) {
+      if (kbHeader.crit !== undefined || kbHeader.b64 !== undefined) {
+        throw new DigitalCredentialError(Code.Malformed, 'the KB-JWT header uses crit or b64, which this SDK does not implement');
+      }
+      if (!typIs(kbHeader.typ, TypKBJWT)) {
         throw new DigitalCredentialError(Code.KBInvalid, 'KB JWT typ must be kb+jwt');
       }
       const presented = c.compact.endsWith(kbJWT) ? c.compact.slice(0, -kbJWT.length) : `${issuerJWT}~`;
@@ -170,11 +249,25 @@ export async function verifyCredential(
       if (kbPayload.sd_hash !== expectedHash) {
         throw new DigitalCredentialError(Code.KBSDHashMismatch, 'sd_hash mismatch');
       }
-      if (opts.audience && kbPayload.aud !== opts.audience) {
+      if (!opts.audience || !opts.nonce) {
+        throw new PolicyError('this credential has a Key Binding JWT: pass audience and nonce to check it');
+      }
+      if (kbPayload.aud !== opts.audience) {
         throw new DigitalCredentialError(Code.KBAudienceMismatch, 'KB aud mismatch');
       }
-      if (opts.nonce && kbPayload.nonce !== opts.nonce) {
+      if (kbPayload.nonce !== opts.nonce) {
         throw new DigitalCredentialError(Code.KBNonceMismatch, 'KB nonce mismatch');
+      }
+      const maxAge = opts.maxKBAgeSeconds ?? 300;
+      const iat = kbPayload.iat;
+      if (typeof iat !== 'number' || iat > now + skew || iat < now - maxAge - skew) {
+        throw new DigitalCredentialError(Code.KBInvalid, 'KB JWT iat is missing or outside the accepted window');
+      }
+      if (typeof kbPayload.exp === 'number' && now >= kbPayload.exp + skew) {
+        throw new DigitalCredentialError(Code.KBInvalid, 'KB JWT is expired');
+      }
+      if (typeof kbPayload.nbf === 'number' && now < kbPayload.nbf - skew) {
+        throw new DigitalCredentialError(Code.KBInvalid, 'KB JWT is not yet valid');
       }
       keyBound = true;
     }
@@ -194,7 +287,7 @@ export async function verifyCredential(
     const integrityVal = typeof claims['vct#integrity'] === 'string' ? (claims['vct#integrity'] as string) : '';
     try {
       const m = await typemeta.load(opts.types, { vct, integrity: integrityVal || undefined });
-      m.validateClaims(claims);
+      m.validateClaims(claims, { issued: payload });
       res.typeMetadata = m;
     } catch (err) {
       const cause = (err as { cause?: unknown }).cause;
@@ -215,7 +308,8 @@ export async function verifyCredential(
   }
 
   if (opts.acceptedVCTs && opts.types) {
-    const types = [vct, ...(akaVcts ?? []), ...(res.typeMetadata?.chain ?? [])];
+    const chain = opts.extendedVCTMatch ? (res.typeMetadata?.chain ?? []) : [];
+    const types = [vct, ...(akaVcts ?? []), ...chain];
     if (!types.some((t) => opts.acceptedVCTs!.includes(t))) {
       throw new DigitalCredentialError(Code.VCTNotAccepted, 'neither vct nor aka_vcts is a type in WithAcceptedVCTs');
     }
@@ -271,5 +365,5 @@ export async function verifyCredential(
 }
 
 function claimCameFromDisclosure(issued: JSONMap, reconstructed: JSONMap, name: string): boolean {
-  return !(name in issued) && name in reconstructed;
+  return !Object.prototype.hasOwnProperty.call(issued, name) && Object.prototype.hasOwnProperty.call(reconstructed, name);
 }

@@ -53,13 +53,29 @@ export function metadataURL(iss: string): string {
   const slash = rest.indexOf('/');
   const authority = slash < 0 ? rest : rest.slice(0, slash);
   const path = slash < 0 ? '' : rest.slice(slash);
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(path);
+  } catch {
+    throw Object.assign(new Error('issuermeta: iss path has an invalid percent-encoding'), { cause: ErrIssuerNotSupported });
+  }
+  if (hasDotSegment(decoded)) {
+    throw Object.assign(new Error('issuermeta: iss path has a "." or ".." segment'), { cause: ErrIssuerNotSupported });
+  }
   return `https://${authority}${wellKnown}${path.replace(/\/+$/, '')}`;
+}
+
+function hasDotSegment(path: string): boolean {
+  return path.split(/[/\\]/).some((s) => {
+    const seg = s.split(';')[0];
+    return seg === '.' || seg === '..';
+  });
 }
 
 export class IssuerMetaResolver implements Resolver {
   private trusted;
   private redirects: Redirects | undefined;
-  private cache = new Map<string, { keys: PublicKey[]; expires: number }>();
+  private cache = new Map<string, { keys: PublicKey[]; expires: number; size: number }>();
   private used = 0;
 
   constructor(private readonly cfg: ResolverConfig) {
@@ -141,8 +157,22 @@ export class IssuerMetaResolver implements Resolver {
     const keys = signingKeys(set);
     if (!this.cfg.disableCache && freshMs > 0) {
       const size = 222 + iss.length + keys.length * 250;
+      const old = this.cache.get(iss);
+      if (old) {
+        this.used -= old.size;
+        this.cache.delete(iss);
+      }
+      if (this.used + size > maxCacheBytes) {
+        const now = Date.now();
+        for (const [k, e] of this.cache) {
+          if (e.expires <= now) {
+            this.used -= e.size;
+            this.cache.delete(k);
+          }
+        }
+      }
       if (this.used + size <= maxCacheBytes) {
-        this.cache.set(iss, { keys, expires: Date.now() + freshMs });
+        this.cache.set(iss, { keys, expires: Date.now() + freshMs, size });
         this.used += size;
       }
     }

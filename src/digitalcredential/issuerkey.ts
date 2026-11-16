@@ -4,6 +4,7 @@ export interface SigningKey {
   signer: SignerProvider;
   publicKey: Uint8Array;
   kid?: string;
+  alg?: 'ES256' | 'ES256K';
 }
 
 export interface PublicKey {

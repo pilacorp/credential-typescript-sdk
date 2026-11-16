@@ -14,7 +14,7 @@ describe('typemeta', () => {
     const m = await load(r, { vct: 'https://credentials.example/identity_credential', integrity: integrity(doc) });
     expect(m.vct).toBe('https://credentials.example/identity_credential');
     expect(m.chain).toEqual(['https://credentials.example/identity_credential']);
-    m.validateClaims({ given_name: 'Erika' });
+    m.validateClaims({ given_name: 'Erika' }, { issued: {} });
     try {
       m.validateClaims({ family_name: 'Mustermann' });
       throw new Error('expected violation');
@@ -50,5 +50,9 @@ describe('issuermeta.metadataURL', () => {
   it('inserts /.well-known/jwt-vc-issuer between host and path', () => {
     expect(metadataURL('https://example.com/issuer')).toBe('https://example.com/.well-known/jwt-vc-issuer/issuer');
     expect(metadataURL('https://example.com/')).toBe('https://example.com/.well-known/jwt-vc-issuer');
+  });
+
+  it('refuses an iss path with a dot segment', () => {
+    expect(() => metadataURL('https://example.com/a/../b')).toThrow(/"\." or "\.\."/);
   });
 });

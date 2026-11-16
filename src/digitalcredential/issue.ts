@@ -1,9 +1,11 @@
 import { buildDisclosures } from '../common/sdjwt';
-import type { JSONMap } from '../common/util/json';
+import { hasOwn, type JSONMap } from '../common/util/json';
 import { neverDisclosable, TypDCSDJWT } from './errors';
 import { Credential } from './credential';
 import { encodeJWKFromP256Uncompressed, signCompactJWS } from './jws-compact';
 import type { SigningKey } from './issuerkey';
+import { checkAkaVCTs } from './aka';
+import { wellFormed } from './typemeta';
 
 export type Path = Array<string | number | null>;
 
@@ -25,10 +27,34 @@ export interface IssueRequest {
   minDigests?: number;
 }
 
+const owned: Record<string, keyof IssueRequest> = {
+  iss: 'issuer',
+  vct: 'vct',
+  iat: 'issuedAt',
+  nbf: 'notBefore',
+  exp: 'expiry',
+  cnf: 'holderKey',
+  status: 'status',
+};
+
 export async function issue(req: IssueRequest, key: SigningKey): Promise<Credential> {
   if (!req.vct) throw new Error('VCT is required');
   if ((req.minDigests ?? 0) > 0 && !(req.disclose && req.disclose.length)) {
     throw new Error('MinDigests requires at least one Disclose path');
+  }
+  for (const [claim, field] of Object.entries(owned)) {
+    if (req.claims && hasOwn(req.claims, claim)) {
+      throw new Error(`claims holds ${claim}, which only IssueRequest.${field} may set`);
+    }
+  }
+  if (req.claims) {
+    if (hasOwn(req.claims, 'aka_vcts')) checkAkaVCTs(req.claims.aka_vcts, req.vct);
+    if (hasOwn(req.claims, 'vct#integrity')) {
+      const v = req.claims['vct#integrity'];
+      if (typeof v !== 'string' || !wellFormed(v)) {
+        throw new Error('claims vct#integrity is not integrity metadata');
+      }
+    }
   }
   for (const p of req.disclose ?? []) {
     const first = p[0];
@@ -40,7 +66,14 @@ export async function issue(req: IssueRequest, key: SigningKey): Promise<Credent
   const concealable: JSONMap = { ...(req.claims ?? {}) };
   if (req.issuedAt) concealable.iat = Math.floor(req.issuedAt.getTime() / 1000);
 
-  const paths = (req.disclose ?? []).map((p) => p.filter((seg) => typeof seg === 'string').join('.'));
+  const paths = [...(req.disclose ?? [])]
+    .sort((a, b) => b.length - a.length)
+    .map((p) =>
+      p
+        .map((seg) => (typeof seg === 'number' ? `[${seg}]` : String(seg)))
+        .join('.')
+        .replace(/\.\[/g, '['),
+    );
   const { processedVC, disclosures } = buildDisclosures({
     vc: concealable,
     selectivePaths: paths,
@@ -61,7 +94,7 @@ export async function issue(req: IssueRequest, key: SigningKey): Promise<Credent
     throw new Error('a credential with cnf needs iss or sub');
   }
 
-  const header: Record<string, unknown> = { alg: 'ES256', typ: TypDCSDJWT };
+  const header: Record<string, unknown> = { alg: key.alg ?? 'ES256', typ: TypDCSDJWT };
   if (key.kid) header.kid = key.kid;
   const issuerJWT = await signCompactJWS(header, payload, key.signer);
   let compact = issuerJWT + '~';

@@ -1,8 +1,8 @@
 import { deflateSync, inflateSync } from 'node:zlib';
 import type { SigningKey } from './issuerkey';
 import { selectKey, type Resolver } from './issuerkey';
-import { peekHeader, signCompactJWS, verifyCompactJWS } from './jws-compact';
-import { JsonIntError, nonNegativeInt } from './internal/jsonint';
+import { base64urlStrict, peekHeader, signCompactJWS, typIs, verifyCompactJWS } from './jws-compact';
+import { nonNegativeInt } from './internal/jsonint';
 import { checkURI } from './internal/uri';
 import { allows, get, StatusError } from './internal/safehttp';
 import { parseURL } from './internal/url';
@@ -32,6 +32,7 @@ export const ErrTooOld = Object.assign(new Error('statuslist: token is older tha
 export { StatusError };
 
 const maxListBytes = 16 << 20;
+const maxCacheBytes = 32 << 20;
 const typStatusList = 'statuslist+jwt';
 const maxTokenBytes = 1 << 20;
 const defaultClockSkewMs = 60_000;
@@ -115,10 +116,17 @@ export class List {
 
 export function decodeList(lst: string, bits: number): List {
   if (!validBits(bits)) throw new Error(`statuslist: bits ${bits}, want 1, 2, 4 or 8`);
-  const raw = Buffer.from(lst, 'base64url');
+  const raw = base64urlStrict(lst);
   if (raw.length >= 2 && (raw[1] & 0x20) !== 0) throw new Error('statuslist: lst uses a preset dictionary');
-  const b = inflateSync(raw);
-  if (b.length > maxListBytes) throw new Error(`statuslist: lst inflates past ${maxListBytes} bytes`);
+  let b: Buffer;
+  try {
+    b = inflateSync(raw, { maxOutputLength: maxListBytes });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE') {
+      throw new Error(`statuslist: lst inflates past ${maxListBytes} bytes`);
+    }
+    throw err;
+  }
   return new List(bits, Buffer.from(b));
 }
 
@@ -153,10 +161,12 @@ interface cacheEntry {
   list: List;
   iat: number;
   expires: number;
+  size: number;
 }
 
 export class Checker {
   private cache = new Map<string, cacheEntry>();
+  private cacheBytes = 0;
   private skew: number;
   private maxAge: number;
   private algs: string[];
@@ -167,7 +177,26 @@ export class Checker {
     if ((cfg.maxAgeMs ?? 0) < 0) throw new Error('statuslist: MaxAge is negative');
     this.skew = cfg.clockSkewMs ?? defaultClockSkewMs;
     this.maxAge = cfg.maxAgeMs ?? 0;
-    this.algs = cfg.allowedAlgs?.length ? cfg.allowedAlgs : ['ES256'];
+    this.algs = cfg.allowedAlgs?.length ? cfg.allowedAlgs : ['ES256', 'ES256K'];
+  }
+
+  private remember(key: string, e: Omit<cacheEntry, 'size'>): void {
+    const size = Math.ceil((e.list.entries() * e.list.bits) / 8);
+    const old = this.cache.get(key);
+    if (old) {
+      this.cache.delete(key);
+      this.cacheBytes -= old.size;
+    }
+    const now = Date.now();
+    for (const [k, v] of this.cache) {
+      if (now >= v.expires) {
+        this.cache.delete(k);
+        this.cacheBytes -= v.size;
+      }
+    }
+    if (this.cacheBytes + size > maxCacheBytes) return;
+    this.cache.set(key, { ...e, size });
+    this.cacheBytes += size;
   }
 
   async status(ref: Ref, iss: string, signal?: AbortSignal): Promise<number> {
@@ -215,7 +244,7 @@ export class Checker {
     );
     const token = body.toString('utf8');
     const header = peekHeader(token);
-    if (header.typ !== typStatusList) throw ErrTokenType;
+    if (!typIs(header.typ, typStatusList)) throw ErrTokenType;
     const keys = await this.cfg.issuers.keys(iss);
     const pub = selectKey(keys, typeof header.kid === 'string' ? header.kid : undefined);
     const claims = verifyCompactJWS(token, pub.publicKey, this.algs) as Record<string, unknown>;
@@ -234,12 +263,12 @@ export class Checker {
     if (this.maxAge > 0 && iat < now - this.maxAge / 1000 - skew) throw ErrTooOld;
     let ttl = 0;
     if (claims.ttl !== undefined) {
-      const f = Number(claims.ttl);
-      if (!(f > 0)) throw new Error('statuslist: token ttl is not a positive number');
-      ttl = Math.min(maxCacheLifetimeMs, f * 1000);
+      if (typeof claims.ttl !== 'number' || !(claims.ttl > 0)) throw new Error('statuslist: token ttl is not a positive number');
+      ttl = Math.min(maxCacheLifetimeMs, claims.ttl * 1000);
     }
     const sl = claims.status_list as Record<string, unknown> | undefined;
     if (!sl || typeof sl !== 'object') throw new Error('statuslist: token status_list is not an object');
+    if (typeof sl.bits !== 'number') throw new Error('statuslist: token status_list bits is not 1, 2, 4 or 8');
     let bits: number;
     try {
       bits = nonNegativeInt(String(sl.bits));
@@ -252,7 +281,7 @@ export class Checker {
       let expires = fetched + ttl;
       if (exp !== undefined) expires = Math.min(expires, exp * 1000);
       if (this.maxAge > 0) expires = Math.min(expires, iat * 1000 + this.maxAge + this.skew);
-      this.cache.set(key, { list, iat, expires });
+      this.remember(key, { list, iat, expires });
     }
     return list;
   }
@@ -260,9 +289,8 @@ export class Checker {
 
 function numericDate(v: unknown): number | undefined {
   if (v === undefined) return undefined;
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new Error('statuslist: date claim is not a number');
-  return n;
+  if (typeof v !== 'number' || !Number.isFinite(v)) throw new Error('statuslist: date claim is not a number');
+  return v;
 }
 
 export function refFromStatus(status: unknown): Ref | undefined {
@@ -273,15 +301,10 @@ export function refFromStatus(status: unknown): Ref | undefined {
   if (typeof sl !== 'object' || sl === null) throw new Error('status.status_list is not an object');
   const rec = sl as { uri?: unknown; idx?: unknown };
   if (typeof rec.uri !== 'string') throw new Error('status.status_list is not a JSON object with a string uri');
-  let idx: number;
-  try {
-    idx = nonNegativeInt(String(rec.idx));
-  } catch (err) {
-    if (err instanceof JsonIntError && err.kind === 'too-large') {
-      throw Object.assign(new Error('status_list idx is past every status list'), { cause: ErrIndexOutOfBounds });
-    }
-    throw new Error('status.status_list.idx is absent or not a non-negative integer');
+  if (typeof rec.idx !== 'number' || !Number.isInteger(rec.idx) || rec.idx < 0) {
+    throw new Error('status_list idx is not a non-negative integer');
   }
+  const idx = rec.idx;
   const r = { uri: rec.uri, index: idx };
   validateRef(r);
   return r;

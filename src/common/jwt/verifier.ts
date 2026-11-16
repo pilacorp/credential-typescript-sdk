@@ -245,10 +245,8 @@ function jwtIssuedAt(payloadB64: string): Date | null {
   const body = decodePayload(payloadB64);
   const raw = body.iat;
   if (raw === undefined || raw === null) return null;
-  let sec: number;
-  if (typeof raw === 'number') sec = Math.floor(raw);
-  else if (typeof raw === 'string') sec = parseInt(raw, 10);
-  else throw new Error(`invalid iat type: ${typeof raw}`);
+  if (typeof raw !== 'number') throw new Error(`invalid iat type: ${typeof raw}`);
+  const sec = Math.floor(raw);
   if (!Number.isFinite(sec) || sec <= 0) {
     throw new Error(`invalid iat value: ${raw}`);
   }

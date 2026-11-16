@@ -341,9 +341,7 @@ export class JOSEPresentation implements SignablePresentation {
       await verifyCredentials(this.payloadData, options);
     }
     if (options.checkExpiration) {
-      // The vp+jwt payload is flat: exp/nbf/iat and validFrom/validUntil all sit
-      // at the top level of payloadData.
-      checkJwtTimeClaims(this.payloadData, options.clockSkewLeewayMs);
+      // validFrom/validUntil only; exp and nbf belong to proof verification below.
       checkExpiration(this.payloadData, options.clockSkewLeewayMs);
     }
     if (options.verifyProof) {
