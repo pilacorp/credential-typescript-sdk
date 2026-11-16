@@ -93,7 +93,12 @@ export function normalizeCredentialData(cd: CredentialData): JSONMap {
 function normalizeMap(input: JSONMap): JSONMap {
   const out: JSONMap = {};
   for (const [k, v] of Object.entries(input)) {
-    out[k] = normalizeValue(v);
+    Object.defineProperty(out, k, {
+      value: normalizeValue(v),
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return out;
 }

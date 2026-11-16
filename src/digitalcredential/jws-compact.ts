@@ -73,25 +73,15 @@ export function decodeJSONSegment(segment: string, what = 'JWS segment'): Record
   throw new Error(`${what} is not a JSON object`);
 }
 
-export function encodeJWKFromP256Uncompressed(pub: Uint8Array): { kty: string; crv: string; x: string; y: string } {
-  let uncompressed: Uint8Array;
-  let crv: 'P-256' | 'secp256k1';
-  if (pub.length === 65) {
-    uncompressed = pub;
-    try {
-      p256.ProjectivePoint.fromHex(pub);
-      crv = 'P-256';
-    } catch {
-      secp256k1.ProjectivePoint.fromHex(pub);
-      crv = 'secp256k1';
-    }
-  } else {
-    uncompressed = p256.ProjectivePoint.fromHex(pub).toRawBytes(false);
-    crv = 'P-256';
-  }
+export function encodeJWKFromP256Uncompressed(
+  pub: Uint8Array,
+  alg: 'ES256' | 'ES256K' = 'ES256',
+): { kty: string; crv: string; x: string; y: string } {
+  const curve = alg === 'ES256K' ? secp256k1 : p256;
+  const uncompressed = curve.ProjectivePoint.fromHex(pub).toRawBytes(false);
   return {
     kty: 'EC',
-    crv,
+    crv: alg === 'ES256K' ? 'secp256k1' : 'P-256',
     x: Buffer.from(uncompressed.subarray(1, 33)).toString('base64url'),
     y: Buffer.from(uncompressed.subarray(33)).toString('base64url'),
   };

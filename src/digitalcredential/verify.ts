@@ -33,7 +33,7 @@ export interface VerifyOptions {
   typesOptional?: boolean;
   allowedAlgs?: string[];
   rejectFutureIAT?: boolean;
-  iatCheck?: (iat: Date) => void | Promise<void>;
+  iatCheck?: (iat: Date | undefined) => void | Promise<void>;
   maxKBAgeSeconds?: number;
   extendedVCTMatch?: boolean;
 }
@@ -48,6 +48,14 @@ export interface Result {
   statusSkipped?: boolean;
   typeMetadata?: typemeta.Metadata;
   typeMetadataSkipped?: unknown;
+}
+
+function errorIs(err: unknown, target: unknown): boolean {
+  for (let e = err, i = 0; e !== undefined && e !== null && i < 16; i++) {
+    if (e === target) return true;
+    e = (e as { cause?: unknown }).cause;
+  }
+  return false;
 }
 
 function dropUndisclosedElements(v: unknown): unknown {
@@ -123,18 +131,20 @@ export async function verifyCredential(
   try {
     keys = await resolver.keys(iss);
   } catch (err) {
-    const cause = (err as { cause?: unknown }).cause;
-    if (cause === ErrIssuerNotSupported) {
+    if (errorIs(err, ErrIssuerNotSupported)) {
       throw new DigitalCredentialError(Code.IssuerNotSupported, (err as Error).message, err);
     }
-    if (cause === ErrNoUsableKey) {
+    if (errorIs(err, ErrNoUsableKey)) {
       throw new DigitalCredentialError(Code.IssuerKeyNotFound, (err as Error).message, err);
     }
     throw new DigitalCredentialError(Code.IssuerKeyUnavailable, (err as Error).message, err);
   }
   let pub;
   try {
-    pub = selectKey(keys, typeof header.kid === 'string' ? header.kid : undefined);
+    if (header.kid !== undefined && (typeof header.kid !== 'string' || header.kid === '')) {
+      throw new Error('kid is not a non-empty string');
+    }
+    pub = selectKey(keys, header.kid as string | undefined);
   } catch (err) {
     throw new DigitalCredentialError(Code.IssuerKeyNotFound, (err as Error).message, err);
   }
@@ -168,12 +178,13 @@ export async function verifyCredential(
     throw new DigitalCredentialError(Code.DisclosureInvalid, (err as Error).message, err);
   }
 
-  let claims: JSONMap;
+  let reconstructed: JSONMap;
   try {
-    claims = dropUndisclosedElements(reconstruct(payload, disclosures, true)) as JSONMap;
+    reconstructed = reconstruct(payload, disclosures, true) as JSONMap;
   } catch (err) {
     throw new DigitalCredentialError(Code.DisclosureInvalid, (err as Error).message, err);
   }
+  const claims = dropUndisclosedElements(reconstructed) as JSONMap;
   for (const name of neverDisclosable) {
     if (claimCameFromDisclosure(payload, claims, name)) {
       throw new DigitalCredentialError(
@@ -197,17 +208,16 @@ export async function verifyCredential(
   if (typeof claims.nbf === 'number' && now < claims.nbf - skew) {
     throw new DigitalCredentialError(Code.NotYetValid, 'credential is not yet valid');
   }
-  if (typeof claims.iat === 'number') {
-    if (opts.rejectFutureIAT && claims.iat > now + skew) {
-      throw new DigitalCredentialError(Code.NotYetValid, 'credential iat is in the future');
-    }
-    if (opts.iatCheck) {
-      try {
-        await opts.iatCheck(new Date(claims.iat * 1000));
-      } catch (err) {
-        if (err instanceof DigitalCredentialError) throw err;
-        throw new DigitalCredentialError(Code.IATCheckFailed, (err as Error).message, err);
-      }
+  const iatClaim = typeof claims.iat === 'number' ? claims.iat : undefined;
+  if (iatClaim !== undefined && opts.rejectFutureIAT && iatClaim > now + skew) {
+    throw new DigitalCredentialError(Code.NotYetValid, 'credential iat is in the future');
+  }
+  if (opts.iatCheck) {
+    try {
+      await opts.iatCheck(iatClaim === undefined ? undefined : new Date(iatClaim * 1000));
+    } catch (err) {
+      if (err instanceof DigitalCredentialError) throw err;
+      throw new DigitalCredentialError(Code.IATCheckFailed, (err as Error).message, err);
     }
   }
   if (claims.aud !== undefined) {
@@ -281,6 +291,11 @@ export async function verifyCredential(
       if (kbPayload.nonce !== opts.nonce) {
         throw new DigitalCredentialError(Code.KBNonceMismatch, 'KB nonce mismatch');
       }
+      for (const name of ['exp', 'nbf'] as const) {
+        if (kbPayload[name] !== undefined && typeof kbPayload[name] !== 'number') {
+          throw new DigitalCredentialError(Code.KBInvalid, `KB JWT ${name} is not a number`);
+        }
+      }
       const maxAge = opts.maxKBAgeSeconds ?? 300;
       const iat = kbPayload.iat;
       if (typeof iat !== 'number' || iat > now + skew || iat < now - maxAge - skew) {
@@ -306,11 +321,17 @@ export async function verifyCredential(
     keyBound,
   };
 
+  if (opts.types && claims['vct#integrity'] === '') {
+    throw new DigitalCredentialError(
+      Code.TypeMetadataInvalid,
+      'vct#integrity is present and empty, so no hash can check the Type Metadata document',
+    );
+  }
   if (opts.types) {
     const integrityVal = typeof claims['vct#integrity'] === 'string' ? (claims['vct#integrity'] as string) : '';
     try {
       const m = await typemeta.load(opts.types, { vct, integrity: integrityVal || undefined });
-      m.validateClaims(claims, { issued: payload });
+      m.validateClaims(reconstructed, { issued: payload });
       res.typeMetadata = m;
     } catch (err) {
       const cause = (err as { cause?: unknown }).cause;

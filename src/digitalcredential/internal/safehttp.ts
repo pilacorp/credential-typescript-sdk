@@ -126,6 +126,7 @@ async function oneRequest(
   const ac = signal ?? AbortSignal.timeout(limits.timeoutMs);
   const lib = u.protocol === 'http:' ? http : https;
   const addrs = await dns.lookup(u.hostname, { all: true });
+  if (ac.aborted) throw ac.reason ?? new Error('aborted');
   const usable = addrs.filter((a) => !blockedAddress(a.address));
   if (!usable.length) throw ErrAddressBlocked;
   const chosen = usable[0];

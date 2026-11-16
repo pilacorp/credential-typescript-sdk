@@ -255,7 +255,7 @@ export async function toRDFNQuads(doc: unknown): Promise<string[]> {
     budget.limitInline(doc);
     return (await jsonld.toRDF(doc, ldOptions(budget, { safe: true, format: 'application/n-quads' }))) as string;
   });
-  return splitNQuadsKeepNL(nq);
+  return splitNQuadsKeepNL(nq.replace(/\t/g, '\\t'));
 }
 
 /** Go Canonicalize: native JSON types, fail on empty / undefined terms. */

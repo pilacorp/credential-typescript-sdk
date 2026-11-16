@@ -237,6 +237,7 @@ describe('PR #11 review: ES256K KB-JWT', () => {
         vct: 'https://credentials.example/id',
         issuedAt: new Date(),
         holderKey: holdPub,
+        holderKeyAlg: 'ES256K',
         claims: { given_name: 'Erika' },
       },
       key,
@@ -259,24 +260,9 @@ describe('PR #11 review: ES256K KB-JWT', () => {
 
 describe('PR #11 review: JwtProof2020 proof set', () => {
   const resolver = { resolveDocument: async () => ({ id: 'did:ex:1', verificationMethod: [] }) };
-  it('allows a one-element proof array', async () => {
-    try {
-      await verifyProof({ proof: [{ type: 'JwtProof2020', jwt: 'a.b.c' }] }, resolver as never);
-    } catch (err) {
-      expect((err as Error).message).not.toMatch(/only proof/);
-    }
-  });
-  it('refuses JwtProof2020 when another proof is present', async () => {
+  it('refuses JwtProof2020 when proof is an array, including a one-element array', async () => {
     await expect(
-      verifyProof(
-        {
-          proof: [
-            { type: 'JwtProof2020', jwt: 'a.b.c' },
-            { type: 'DataIntegrityProof', cryptosuite: 'ecdsa-rdfc-2019' },
-          ],
-        },
-        resolver as never,
-      ),
+      verifyProof({ proof: [{ type: 'JwtProof2020', jwt: 'a.b.c' }] }, resolver as never),
     ).rejects.toThrow(/only proof/);
   });
 });

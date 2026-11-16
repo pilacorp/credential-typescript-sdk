@@ -6,7 +6,7 @@
  * placeholders, optionally adds decoy hashes and shuffles the resulting arrays.
  */
 import { randomBytes } from 'crypto';
-import { deepCopyMap, JSONMap } from '../util/json';
+import { deepCopyMap, hasOwn, JSONMap } from '../util/json';
 import {
   DefaultHashAlgorithm,
   hashDisclosure,
@@ -18,9 +18,11 @@ import { DecoyConfig, PathSegment, ResolvedTarget, TargetKind } from './types';
 export interface BuildDisclosuresInput {
   vc: JSONMap;
   selectivePaths?: string[];
+  selectivePathSegments?: Array<Array<string | number>>;
   hashAlgorithm?: string;
   shuffle?: boolean;
   decoys?: DecoyConfig[];
+  minDigests?: number;
 }
 
 export interface SDJWTResult {
@@ -42,16 +44,20 @@ export function buildDisclosures(input: BuildDisclosuresInput): SDJWTResult {
     processedVC._sd_alg = sdAlg;
   }
 
-  if (selectivePaths.length === 0 && decoys.length === 0) {
+  const segmentPaths = input.selectivePathSegments ?? [];
+  if (selectivePaths.length === 0 && decoys.length === 0 && segmentPaths.length === 0) {
     return { processedVC, disclosures: [] };
   }
 
-  if (selectivePaths.length > 0) {
+  if (selectivePaths.length > 0 || segmentPaths.length > 0) {
     processedVC._sd_alg = sdAlg;
   }
 
-  const disclosures = processSelectivePaths(processedVC, selectivePaths, sdAlg);
+  const fromSegments = processSelectivePathSegments(processedVC, segmentPaths, sdAlg);
+  const fromStrings = processSelectivePaths(processedVC, selectivePaths, sdAlg);
+  const disclosures = [...fromSegments, ...fromStrings];
   processDecoys(processedVC, decoys, sdAlg);
+  padMinDigests(processedVC, input.minDigests ?? 0, sdAlg);
 
   if (input.shuffle) {
     shuffleSDArrays(processedVC);
@@ -72,6 +78,39 @@ function processSelectivePaths(
     out.push(processSinglePath(vc, path, sdAlg));
   }
   return out;
+}
+
+function processSelectivePathSegments(
+  vc: JSONMap,
+  paths: Array<Array<string | number>>,
+  sdAlg: string,
+): string[] {
+  const out: string[] = [];
+  for (const path of paths) {
+    if (!path.length) throw new Error('empty path');
+    const resolved = resolvePathSegments(vc, path);
+    if (!resolved) throw new Error(`path ${JSON.stringify(path)} not found`);
+    out.push(buildAndApplyDisclosure(resolved, JSON.stringify(path), sdAlg));
+  }
+  return out;
+}
+
+function padMinDigests(vc: JSONMap, min: number, sdAlg: string): void {
+  if (min <= 0) return;
+  const walk = (n: unknown): void => {
+    if (Array.isArray(n)) {
+      n.forEach(walk);
+      return;
+    }
+    if (n && typeof n === 'object') {
+      const o = n as JSONMap;
+      if (Array.isArray(o._sd)) {
+        while (o._sd.length < min) o._sd.push(hashDisclosure(sdAlg, randomSalt()));
+      }
+      for (const v of Object.values(o)) walk(v);
+    }
+  };
+  walk(vc);
 }
 
 function processSinglePath(vc: JSONMap, path: string, sdAlg: string): string {
@@ -220,6 +259,45 @@ function generateDecoyHashes(sdAlg: string, count: number): string[] {
     out.push(hashDisclosure(sdAlg, randomSalt()));
   }
   return out;
+}
+
+export function resolvePathSegments(root: JSONMap, path: Array<string | number>): ResolvedTarget | null {
+  if (!path.length) return null;
+  let current: unknown = root;
+  for (let i = 0; i < path.length; i++) {
+    const last = i === path.length - 1;
+    const seg = path[i];
+    if (typeof seg === 'string') {
+      if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+        throw new Error(`segment ${JSON.stringify(seg)} expects object`);
+      }
+      const m = current as JSONMap;
+      if (!hasOwn(m, seg)) return null;
+      const val = m[seg];
+      if (last) {
+        if (Array.isArray(val)) {
+          return { parent: m, kind: TargetKind.ArrayContainer, fieldName: seg, index: 0, value: val };
+        }
+        return { parent: m, kind: TargetKind.ObjectField, fieldName: seg, index: 0, value: val };
+      }
+      current = val;
+      continue;
+    }
+    if (!Number.isInteger(seg) || seg < 0) throw new Error(`invalid index ${seg}`);
+    if (!Array.isArray(current)) throw new Error(`segment [${seg}] expects array`);
+    if (seg >= current.length) throw new Error(`index ${seg} out of range (len ${current.length})`);
+    if (last) {
+      return {
+        parent: current,
+        kind: TargetKind.ArrayElem,
+        fieldName: '',
+        index: seg,
+        value: current[seg],
+      };
+    }
+    current = current[seg];
+  }
+  return null;
 }
 
 export function resolvePath(root: JSONMap, path: string): ResolvedTarget | null {

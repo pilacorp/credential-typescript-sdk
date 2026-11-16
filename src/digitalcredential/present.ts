@@ -66,43 +66,37 @@ function selectDisclosures(payload: JSONMap, disclosures: string[], reveal: Path
     picked.add(d.disclosure);
     return d.value;
   };
-  for (const path of reveal) {
-    let node: unknown = payload;
-    for (const seg of path) {
-      if (typeof seg === 'string') {
-        if (!node || typeof node !== 'object' || Array.isArray(node)) {
-          throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+  const notIn = (path: Path) => new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
+  const walk = (node: unknown, path: Path, at: number): number => {
+    if (at === path.length) return 1;
+    const seg = path[at];
+    if (typeof seg === 'string') {
+      if (!node || typeof node !== 'object' || Array.isArray(node)) throw notIn(path);
+      const obj = node as JSONMap;
+      if (hasOwn(obj, seg)) return walk(obj[seg], path, at + 1);
+      for (const h of Array.isArray(obj._sd) ? obj._sd : []) {
+        const d = typeof h === 'string' ? byDigest.get(h) : undefined;
+        if (d && d.fieldName === seg) {
+          picked.add(d.disclosure);
+          return walk(d.value, path, at + 1);
         }
-        const obj = node as JSONMap;
-        if (hasOwn(obj, seg)) {
-          node = obj[seg];
-          continue;
-        }
-        const sd = obj._sd;
-        if (!Array.isArray(sd)) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
-        let found: (typeof decoded)[number] | undefined;
-        for (const h of sd) {
-          const d = typeof h === 'string' ? byDigest.get(h) : undefined;
-          if (d && d.fieldName === seg) {
-            found = d;
-            break;
-          }
-        }
-        if (!found) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
-        picked.add(found.disclosure);
-        node = found.value;
-      } else if (typeof seg === 'number') {
-        if (!Array.isArray(node)) throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
-        const el = node[seg];
-        if (el && typeof el === 'object' && !Array.isArray(el) && hasOwn(el as object, '...')) {
-          node = openDigest((el as JSONMap)['...'], path);
-        } else {
-          node = el;
-        }
-      } else {
-        throw new Error(`reveal path ${JSON.stringify(path)} is not in the credential`);
       }
+      return 0;
     }
+    if (seg !== null && (!Number.isInteger(seg) || (seg as number) < 0)) throw notIn(path);
+    if (!Array.isArray(node)) throw notIn(path);
+    let n = 0;
+    const indexes = seg === null ? [...node.keys()] : [seg as number];
+    for (const i of indexes) {
+      if (i >= node.length) continue;
+      const el = node[i];
+      const concealed = el && typeof el === 'object' && !Array.isArray(el) && hasOwn(el as object, '...');
+      n += walk(concealed ? openDigest((el as JSONMap)['...'], path) : el, path, at + 1);
+    }
+    return n;
+  };
+  for (const path of reveal) {
+    if (path.length === 0 || walk(payload, path, 0) === 0) throw notIn(path);
   }
   return [...picked];
 }

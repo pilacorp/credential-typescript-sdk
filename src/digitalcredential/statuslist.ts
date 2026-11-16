@@ -181,8 +181,9 @@ export class Checker {
   }
 
   private remember(key: string, e: Omit<cacheEntry, 'size'>): void {
-    const size = Math.ceil((e.list.entries() * e.list.bits) / 8);
+    const size = Math.ceil((e.list.entries() * e.list.bits) / 8) + 2 * key.length + 256;
     const old = this.cache.get(key);
+    if (old && old.iat > e.iat && Date.now() < old.expires) return;
     if (old) {
       this.cache.delete(key);
       this.cacheBytes -= old.size;
@@ -295,7 +296,9 @@ function numericDate(v: unknown): number | undefined {
 
 export function refFromStatus(status: unknown): Ref | undefined {
   if (status === undefined) return undefined;
-  if (typeof status !== 'object' || status === null) throw new Error('status is not an object');
+  if (typeof status !== 'object' || status === null || Array.isArray(status) || Object.keys(status as object).length === 0) {
+    throw new Error('status is not a JSON object holding a status mechanism');
+  }
   const sl = (status as { status_list?: unknown }).status_list;
   if (sl === undefined) return undefined;
   if (typeof sl !== 'object' || sl === null) throw new Error('status.status_list is not an object');

@@ -413,23 +413,27 @@ export function newHTTPResolver(cfg: HTTPResolverConfig = {}): Resolver {
   let cacheBytes = 0;
   const cache = new Map<string, { doc: Buffer; expires: number }>();
   const rank = (e: { expires: number }, now: number) => (e.expires !== 0 && now >= e.expires ? 0 : e.expires === 0 ? 1 : 2);
+  const cost = (key: string, d: Buffer) => d.length + 2 * key.length + 256;
   const remember = (ck: string, doc: Buffer, expires: number): void => {
-    if (doc.length > maxCacheBytes) return;
+    const size = cost(ck, doc);
+    if (size > maxCacheBytes) return;
     const old = cache.get(ck);
     if (old) {
       cache.delete(ck);
-      cacheBytes -= old.doc.length;
+      cacheBytes -= cost(ck, old.doc);
     }
-    const now = Date.now();
-    const victims = [...cache].sort(([, a], [, b]) => rank(a, now) - rank(b, now));
-    for (const [k, v] of victims) {
-      if (cacheBytes + doc.length <= maxCacheBytes) break;
-      cache.delete(k);
-      cacheBytes -= v.doc.length;
+    if (cacheBytes + size > maxCacheBytes) {
+      const now = Date.now();
+      const victims = [...cache].sort(([, a], [, b]) => rank(a, now) - rank(b, now));
+      for (const [k, v] of victims) {
+        if (cacheBytes + size <= maxCacheBytes) break;
+        cache.delete(k);
+        cacheBytes -= cost(k, v.doc);
+      }
     }
-    if (cacheBytes + doc.length > maxCacheBytes) return;
+    if (cacheBytes + size > maxCacheBytes) return;
     cache.set(ck, { doc, expires });
-    cacheBytes += doc.length;
+    cacheBytes += size;
   };
   return {
     async metadata(ref, signal) {

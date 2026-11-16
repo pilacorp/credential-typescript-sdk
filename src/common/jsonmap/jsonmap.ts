@@ -620,7 +620,7 @@ async function verifyOneProof(
   proof: Proof,
   raw: unknown = proof,
 ): Promise<boolean> {
-  if (proof.type === JwtProof2020 && rawProofList(m).length !== 1) {
+  if (proof.type === JwtProof2020 && Array.isArray(m[PROOF_FIELD])) {
     throw new Error('JwtProof2020 must be the only proof of the document');
   }
   // JwtProof2020 reads the single proof it is handed.
