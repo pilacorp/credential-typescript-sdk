@@ -1,0 +1,1228 @@
+{
+ "generator": "go-credential-sdk 98f256d: processor.Canonicalize (new) and processor.CanonicalizeDocument (legacy), json-gold v0.7.0",
+ "cases": [
+  {
+   "name": "num 1e-7",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 1e-07
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"1.0E-7\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"1e-07\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "num 2e-10",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 2e-10
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"2.0E-10\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"2e-10\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "num 5e-324",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 5e-324
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"4.940656458412465E-324\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"5e-324\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "num 100000000000000000000",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 100000000000000000000
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"1.0E20\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"1e+20\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "num 9223372036854780000",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 9223372036854780000
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"9.22337203685478E18\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"9.22337203685478e+18\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "num -1e-7",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": -1e-07
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"-1.0E-7\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"-1e-07\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "num 1000000",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 1000000
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"1000000\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#n> \"1e+06\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "legacy num 1e-7",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "issuanceDate": "2024-01-01T00:00:00Z",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 1e-07
+    }
+   },
+   "new": "ERR failed to canonicalize document: expand: invalid property: Dropping property that did not expand into an absolute IRI or keyword.",
+   "legacy": "<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "legacy num 1000000",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "issuanceDate": "2024-01-01T00:00:00Z",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "n": 1000000
+    }
+   },
+   "new": "ERR failed to canonicalize document: expand: invalid property: Dropping property that did not expand into an absolute IRI or keyword.",
+   "legacy": "<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "A3 legacy undefined type",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential",
+     "IdentityCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "issuanceDate": "2024-01-01T00:00:00Z",
+    "credentialSubject": {
+     "id": "did:example:subject"
+    }
+   },
+   "new": "ERR failed to canonicalize document: json-ld: type \"IdentityCredential\" is not defined by @context and would be dropped, leaving it unsigned",
+   "legacy": "<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <IdentityCredential> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "A5 tab",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "s": "a\tb"
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> \"a\\tb\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> \"a\\tb\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "A6 sort emoji vs fullwidth",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "s": [
+      "😀",
+      "Ａ"
+     ]
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> \"Ａ\" .\n<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> \"😀\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> \"Ａ\" .\n<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> \"😀\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "A6 sort ids",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "s": [
+      {
+       "id": "urn:x:😀"
+      },
+      {
+       "id": "urn:x:Ａ"
+      }
+     ]
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:Ａ> .\n<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:😀> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:Ａ> .\n<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:😀> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "A6 sort bnodes",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "s": [
+      {
+       "name": "😀"
+      },
+      {
+       "name": "Ａ"
+      }
+     ]
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> _:c14n0 .\n<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> _:c14n1 .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <https://schema.org/name> \"😀\" .\n_:c14n1 <https://schema.org/name> \"Ａ\" .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> _:c14n0 .\n<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> _:c14n1 .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <https://schema.org/name> \"😀\" .\n_:c14n1 <https://schema.org/name> \"Ａ\" .\n"
+  },
+  {
+   "name": "B10 iri quote",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "s": {
+      "id": "urn:x:a\"b"
+     }
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:a\\\"b> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:a\\\"b> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "B10 iri backslash",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "s": {
+      "id": "urn:x:a\\b"
+     }
+    }
+   },
+   "new": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:a\\\\b> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://www.w3.org/ns/credentials/examples#s> <urn:x:a\\\\b> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "vc with id",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     {
+      "@context": [
+       "https://www.w3.org/ns/credentials/v2",
+       "https://www.w3.org/ns/credentials/examples/v2"
+      ],
+      "id": "urn:uuid:vc1",
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "credentialSubject": {
+       "id": "did:example:subject",
+       "name": "x"
+      }
+     }
+    ]
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n",
+   "legacy": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n"
+  },
+  {
+   "name": "vc without id",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     {
+      "@context": [
+       "https://www.w3.org/ns/credentials/v2",
+       "https://www.w3.org/ns/credentials/examples/v2"
+      ],
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "credentialSubject": {
+       "id": "did:example:subject",
+       "name": "x"
+      }
+     }
+    ]
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> _:c14n1 .\n_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n_:c14n1 <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n_:c14n1 <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://schema.org/name> \"x\" .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> _:c14n1 .\n_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n_:c14n1 <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n_:c14n1 <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "two vcs",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     {
+      "@context": [
+       "https://www.w3.org/ns/credentials/v2",
+       "https://www.w3.org/ns/credentials/examples/v2"
+      ],
+      "id": "urn:uuid:vc1",
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "credentialSubject": {
+       "id": "did:example:subject",
+       "name": "x"
+      }
+     },
+     {
+      "@context": [
+       "https://www.w3.org/ns/credentials/v2",
+       "https://www.w3.org/ns/credentials/examples/v2"
+      ],
+      "id": "urn:uuid:vc2",
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "credentialSubject": {
+       "id": "did:example:subject",
+       "name": "x"
+      }
+     }
+    ]
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n<urn:uuid:vc2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc2> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc2> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc2> .\n",
+   "legacy": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n<urn:uuid:vc2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc2> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc2> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc2> .\n"
+  },
+  {
+   "name": "vc with proof",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     {
+      "@context": [
+       "https://www.w3.org/ns/credentials/v2",
+       "https://www.w3.org/ns/credentials/examples/v2"
+      ],
+      "id": "urn:uuid:vc1",
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "credentialSubject": {
+       "id": "did:example:subject",
+       "name": "x"
+      },
+      "proof": {
+       "type": "DataIntegrityProof",
+       "cryptosuite": "ecdsa-rdfc-2019",
+       "created": "2024-01-01T00:00:00Z",
+       "verificationMethod": "did:example:issuer#key-1",
+       "proofPurpose": "assertionMethod",
+       "proofValue": "z123"
+      }
+     }
+    ]
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://w3id.org/security#proof> _:c14n2 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n_:c14n1 <http://purl.org/dc/terms/created> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> _:c14n2 .\n_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#DataIntegrityProof> _:c14n2 .\n_:c14n1 <https://w3id.org/security#cryptosuite> \"ecdsa-rdfc-2019\"^^<https://w3id.org/security#cryptosuiteString> _:c14n2 .\n_:c14n1 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#assertionMethod> _:c14n2 .\n_:c14n1 <https://w3id.org/security#proofValue> \"z123\"^^<https://w3id.org/security#multibase> _:c14n2 .\n_:c14n1 <https://w3id.org/security#verificationMethod> <did:example:issuer#key-1> _:c14n2 .\n",
+   "legacy": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://w3id.org/security#proof> _:c14n2 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n_:c14n1 <http://purl.org/dc/terms/created> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> _:c14n2 .\n_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#DataIntegrityProof> _:c14n2 .\n_:c14n1 <https://w3id.org/security#cryptosuite> \"ecdsa-rdfc-2019\"^^<https://w3id.org/security#cryptosuiteString> _:c14n2 .\n_:c14n1 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#assertionMethod> _:c14n2 .\n_:c14n1 <https://w3id.org/security#proofValue> \"z123\"^^<https://w3id.org/security#multibase> _:c14n2 .\n_:c14n1 <https://w3id.org/security#verificationMethod> <did:example:issuer#key-1> _:c14n2 .\n"
+  },
+  {
+   "name": "jwt string",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     "eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2ln"
+    ]
+   },
+   "new": "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> \"eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2ln\" .\n",
+   "legacy": "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> \"eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2ln\" .\n"
+  },
+  {
+   "name": "mixed",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     {
+      "@context": [
+       "https://www.w3.org/ns/credentials/v2",
+       "https://www.w3.org/ns/credentials/examples/v2"
+      ],
+      "id": "urn:uuid:vc1",
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "credentialSubject": {
+       "id": "did:example:subject",
+       "name": "x"
+      }
+     },
+     "eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2ln"
+    ]
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> \"eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2ln\" .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n",
+   "legacy": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n0 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> \"eyJhbGciOiJFUzI1NksifQ.eyJzdWIiOiJ4In0.c2ln\" .\n_:c14n0 <https://www.w3.org/2018/credentials#verifiableCredential> <urn:uuid:vc1> .\n"
+  },
+  {
+   "name": "v1 vp with vc",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "type": [
+     "VerifiablePresentation"
+    ],
+    "holder": "did:example:h",
+    "verifiableCredential": [
+     {
+      "@context": [
+       "https://www.w3.org/2018/credentials/v1"
+      ],
+      "id": "urn:uuid:vc1",
+      "type": [
+       "VerifiableCredential"
+      ],
+      "issuer": "did:example:issuer",
+      "issuanceDate": "2024-01-01T00:00:00Z",
+      "credentialSubject": {
+       "id": "did:example:subject"
+      }
+     }
+    ]
+   },
+   "new": "<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> _:c14n0 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> _:c14n0 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> _:c14n0 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> _:c14n0 .\n_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n1 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n1 <https://www.w3.org/2018/credentials#verifiableCredential> _:c14n0 .\n",
+   "legacy": "<urn:uuid:vc1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> _:c14n0 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> _:c14n0 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> _:c14n0 .\n<urn:uuid:vc1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> _:c14n0 .\n_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiablePresentation> .\n_:c14n1 <https://www.w3.org/2018/credentials#holder> <did:example:h> .\n_:c14n1 <https://www.w3.org/2018/credentials#verifiableCredential> _:c14n0 .\n"
+  },
+  {
+   "name": "nested graph object value",
+   "doc": {
+    "@context": {
+     "@vocab": "https://ex.org/"
+    },
+    "@id": "urn:s",
+    "p": {
+     "@graph": [
+      {
+       "@id": "urn:a",
+       "q": "v"
+      }
+     ]
+    }
+   },
+   "new": "<urn:a> <https://ex.org/q> \"v\" _:c14n0 .\n<urn:s> <https://ex.org/p> _:c14n0 .\n",
+   "legacy": "<urn:a> <https://ex.org/q> \"v\" _:c14n0 .\n<urn:s> <https://ex.org/p> _:c14n0 .\n"
+  },
+  {
+   "name": "subject type",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "issuanceDate": "2024-01-01T00:00:00Z",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "type": "Person"
+    }
+   },
+   "new": "ERR failed to canonicalize document: json-ld: type \"Person\" is not defined by @context and would be dropped, leaving it unsigned",
+   "legacy": "<did:example:subject> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <Person> .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  },
+  {
+   "name": "type in bnode",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "issuanceDate": "2024-01-01T00:00:00Z",
+    "credentialSubject": {
+     "type": "Person"
+    }
+   },
+   "new": "ERR failed to canonicalize document: json-ld: type \"Person\" is not defined by @context and would be dropped, leaving it unsigned",
+   "legacy": "<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> _:c14n0 .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <Person> .\n"
+  },
+  {
+   "name": "relative issuer",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/2018/credentials/v1"
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "abc",
+    "issuanceDate": "2024-01-01T00:00:00Z",
+    "credentialSubject": {
+     "id": "did:example:subject"
+    }
+   },
+   "new": "ERR failed to canonicalize document: json-ld: id \"abc\" is not an absolute IRI and would be dropped, leaving the node unsigned",
+   "legacy": "<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuanceDate> \"2024-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .\n"
+  },
+  {
+   "name": "fuzz 0",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:𠀀Z😀Z",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -3600539941152489500,
+      9147391385328943000,
+      3193562309200969700
+     ],
+     "s": [
+      "",
+      "中𠀀\\中",
+      "�"
+     ],
+     "r": [
+      {
+       "id": "urn:x:0"
+      },
+      {
+       "id": "urn:x:__Zé"
+      }
+     ],
+     "b": [
+      {
+       "name": "\\\"\\~",
+       "v": 419.27
+      },
+      {
+       "name": " 0\"\\Ａ",
+       "v": 467.5345
+      },
+      {
+       "name": "\n",
+       "v": 307.869
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-3600539941152489472\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"3193562309200969728\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"9147391385328943104\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:__Zé> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"中𠀀\\\\中\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"�\" .\n<urn:x:𠀀Z😀Z> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:𠀀Z😀Z> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:𠀀Z😀Z> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \" 0\\\"\\\\Ａ\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"4.675345E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"\\n\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"3.07869E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n2 <https://schema.org/name> \"\\\\\\\"\\\\~\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"4.1927E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-3.6005399411524895e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"3.1935623092009697e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"9.147391385328943e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:__Zé> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"中𠀀\\\\中\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"�\" .\n<urn:x:𠀀Z😀Z> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:𠀀Z😀Z> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:𠀀Z😀Z> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"\\\\\\\"\\\\~\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"419.27\" .\n_:c14n1 <https://schema.org/name> \" 0\\\"\\\\Ａ\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"467.5345\" .\n_:c14n2 <https://schema.org/name> \"\\n\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"307.869\" .\n"
+  },
+  {
+   "name": "fuzz 15",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:é",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      179.462,
+      3173030029063880700,
+      4510440788718518300
+     ],
+     "s": [
+      "ＡaＡ0a",
+      "é",
+      "𠀀a"
+     ],
+     "r": [
+      {
+       "id": "urn:x:a"
+      },
+      {
+       "id": "urn:x:Ａ"
+      }
+     ],
+     "b": [
+      {
+       "name": "𠀀é",
+       "v": -4637893977587057000
+      },
+      {
+       "name": "𠀀",
+       "v": -301386
+      },
+      {
+       "name": "~\tZa",
+       "v": 0.003946582078933716
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1.79462E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"3173030029063880704\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"4510440788718518272\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:a> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:Ａ> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"é\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"ＡaＡ0a\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀a\" .\n<urn:x:é> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:é> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:é> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"~\\tZa\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"3.946582078933716E-3\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"𠀀\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-301386\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n2 <https://schema.org/name> \"𠀀é\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"-4637893977587056640\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"179.462\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"3.1730300290638807e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"4.5104407887185183e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:a> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:Ａ> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"é\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"ＡaＡ0a\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀a\" .\n<urn:x:é> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:é> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:é> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"𠀀\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-301386\" .\n_:c14n1 <https://schema.org/name> \"𠀀é\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-4.637893977587057e+18\" .\n_:c14n2 <https://schema.org/name> \"~\\tZa\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"0.003946582078933716\" .\n"
+  },
+  {
+   "name": "fuzz 30",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:Z",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -1226960418598027300,
+      -181607842.44537354,
+      -102500
+     ],
+     "s": [
+      "0",
+      "𠀀\n\\0",
+      "0😀"
+     ],
+     "r": [
+      {
+       "id": "urn:x:_"
+      },
+      {
+       "id": "urn:x:0-"
+      }
+     ],
+     "b": [
+      {
+       "name": "a𠀀",
+       "v": 40.346
+      },
+      {
+       "name": "Ａ\\",
+       "v": 461.573
+      },
+      {
+       "name": "é",
+       "v": 944
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1.816078424453735E8\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-102500\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1226960418598027264\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0-> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:_> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"0\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"0😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀\\n\\\\0\" .\n<urn:x:Z> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:Z> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:Z> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"é\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"944\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n1 <https://schema.org/name> \"a𠀀\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"4.0346E1\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n2 <https://schema.org/name> \"Ａ\\\\\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"4.61573E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1.2269604185980273e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1.8160784244537354e+08\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-102500\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0-> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:_> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"0\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"0😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀\\n\\\\0\" .\n<urn:x:Z> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:Z> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:Z> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"a𠀀\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"40.346\" .\n_:c14n1 <https://schema.org/name> \"Ａ\\\\\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"461.573\" .\n_:c14n2 <https://schema.org/name> \"é\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"944\" .\n"
+  },
+  {
+   "name": "fuzz 45",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:a𠀀_",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      6948077858707210000,
+      765,
+      1e-07
+     ],
+     "s": [
+      "😀�!𠀀",
+      "!😀",
+      "Ａé\t\\�"
+     ],
+     "r": [
+      {
+       "id": "urn:x:"
+      },
+      {
+       "id": "urn:x:ＡＡa"
+      }
+     ],
+     "b": [
+      {
+       "name": "\n中\tZ",
+       "v": 586.18
+      },
+      {
+       "name": "!a\"\t",
+       "v": 42.57381
+      },
+      {
+       "name": "0",
+       "v": 85
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1.0E-7\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"6948077858707210240\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"765\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:ＡＡa> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"Ａé\\t\\\\�\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"😀�!𠀀\" .\n<urn:x:a𠀀_> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:a𠀀_> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:a𠀀_> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"0\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"85\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n1 <https://schema.org/name> \"!a\\\"\\t\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"4.257381E1\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n2 <https://schema.org/name> \"\\n中\\tZ\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"5.861799999999999E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1e-07\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"6.94807785870721e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"765\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:ＡＡa> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"Ａé\\t\\\\�\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"😀�!𠀀\" .\n<urn:x:a𠀀_> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:a𠀀_> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:a𠀀_> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"0\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"85\" .\n_:c14n1 <https://schema.org/name> \"\\n中\\tZ\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"586.18\" .\n_:c14n2 <https://schema.org/name> \"!a\\\"\\t\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"42.57381\" .\n"
+  },
+  {
+   "name": "fuzz 60",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:\\",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -1000000,
+      -902290,
+      329
+     ],
+     "s": [
+      "𠀀",
+      "Z",
+      ""
+     ],
+     "r": [
+      {
+       "id": "urn:x:00𠀀\""
+      },
+      {
+       "id": "urn:x:0\""
+      }
+     ],
+     "b": [
+      {
+       "name": "中\\00\"",
+       "v": 584.8
+      },
+      {
+       "name": "Ａ! Ａ",
+       "v": 632.0366
+      },
+      {
+       "name": "!",
+       "v": 176462820165025800
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1000000\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-902290\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"329\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:00𠀀\\\"> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0\\\"> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"Z\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀\" .\n<urn:x:\\\\> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:\\\\> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:\\\\> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"中\\\\00\\\"\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"5.848E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"!\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"176462820165025792\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n2 <https://schema.org/name> \"Ａ! Ａ\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"6.320366E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1e+06\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-902290\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"329\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:00𠀀\\\"> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0\\\"> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"Z\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀\" .\n<urn:x:\\\\> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:\\\\> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:\\\\> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"中\\\\00\\\"\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"584.8\" .\n_:c14n1 <https://schema.org/name> \"!\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"1.764628201650258e+17\" .\n_:c14n2 <https://schema.org/name> \"Ａ! Ａ\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"632.0366\" .\n"
+  },
+  {
+   "name": "fuzz 75",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:😀",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -973589,
+      30.126464366912842,
+      1765030622906024000
+     ],
+     "s": [
+      "0 \té",
+      "😀ＡZ",
+      "Z0"
+     ],
+     "r": [
+      {
+       "id": "urn:x:0a𠀀"
+      },
+      {
+       "id": "urn:x:\"00"
+      }
+     ],
+     "b": [
+      {
+       "name": "é",
+       "v": -4.9275147914886476e-11
+      },
+      {
+       "name": "Za \\😀",
+       "v": -491555929183959.94
+      },
+      {
+       "name": "中\n",
+       "v": 7654001707134747000
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-973589\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1765030622906023936\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"3.012646436691284E1\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0a𠀀> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\"00> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"0 \\té\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"Z0\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"😀ＡZ\" .\n<urn:x:😀> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:😀> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:😀> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"Za \\\\😀\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-4.915559291839599E14\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"é\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-4.927514791488648E-11\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n2 <https://schema.org/name> \"中\\n\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"7654001707134746624\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-973589\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1.765030622906024e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"30.126464366912842\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:0a𠀀> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\"00> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"0 \\té\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"Z0\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"😀ＡZ\" .\n<urn:x:😀> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:😀> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:😀> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"é\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-4.9275147914886476e-11\" .\n_:c14n1 <https://schema.org/name> \"Za \\\\😀\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-4.9155592918395994e+14\" .\n_:c14n2 <https://schema.org/name> \"中\\n\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"7.654001707134747e+18\" .\n"
+  },
+  {
+   "name": "fuzz 90",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:_0a",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      674.31808,
+      14484289288520812,
+      717317
+     ],
+     "s": [
+      "𠀀",
+      "~\\😀",
+      "\n𠀀\t"
+     ],
+     "r": [
+      {
+       "id": "urn:x:\\a𠀀"
+      },
+      {
+       "id": "urn:x:𠀀\"-"
+      }
+     ],
+     "b": [
+      {
+       "name": "Ａa\"",
+       "v": -6026176941235634000
+      },
+      {
+       "name": "",
+       "v": -4213759899.1394043
+      },
+      {
+       "name": "~",
+       "v": -322951
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"14484289288520812\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"6.7431808E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"717317\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\\a𠀀> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:𠀀\\\"-> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\n𠀀\\t\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"~\\\\😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀\" .\n<urn:x:_0a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:_0a> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:_0a> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-4.213759899139404E9\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"~\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-322951\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n2 <https://schema.org/name> \"Ａa\\\"\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"-6026176941235634176\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1.4484289288520812e+16\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"674.31808\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"717317\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\\a𠀀> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:𠀀\\\"-> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\n𠀀\\t\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"~\\\\😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀\" .\n<urn:x:_0a> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:_0a> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:_0a> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"~\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-322951\" .\n_:c14n1 <https://schema.org/name> \"\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-4.2137598991394043e+09\" .\n_:c14n2 <https://schema.org/name> \"Ａa\\\"\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"-6.026176941235634e+18\" .\n"
+  },
+  {
+   "name": "fuzz 105",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:\\\\Z😀",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -1e-10,
+      512,
+      165
+     ],
+     "s": [
+      "𠀀�\\\n",
+      "\n中0~\t",
+      "!a😀"
+     ],
+     "r": [
+      {
+       "id": "urn:x:\"Ａ"
+      },
+      {
+       "id": "urn:x:a"
+      }
+     ],
+     "b": [
+      {
+       "name": "\tＡ!",
+       "v": -1e-10
+      },
+      {
+       "name": "!中Z\"Z",
+       "v": 928782
+      },
+      {
+       "name": "\tZ\\𠀀",
+       "v": 302.8947
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1.0E-10\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"165\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"512\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\"Ａ> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:a> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\n中0~\\t\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!a😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀�\\\\\\n\" .\n<urn:x:\\\\\\\\Z😀> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:\\\\\\\\Z😀> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:\\\\\\\\Z😀> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"\\tZ\\\\𠀀\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"3.028947E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"!中Z\\\"Z\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"928782\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n2 <https://schema.org/name> \"\\tＡ!\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"-1.0E-10\"^^<http://www.w3.org/2001/XMLSchema#double> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1e-10\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"165\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"512\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\"Ａ> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:a> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\n中0~\\t\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!a😀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"𠀀�\\\\\\n\" .\n<urn:x:\\\\\\\\Z😀> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:\\\\\\\\Z😀> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:\\\\\\\\Z😀> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"\\tＡ!\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-1e-10\" .\n_:c14n1 <https://schema.org/name> \"\\tZ\\\\𠀀\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"302.8947\" .\n_:c14n2 <https://schema.org/name> \"!中Z\\\"Z\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"928782\" .\n"
+  },
+  {
+   "name": "fuzz 120",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:Ａ",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -2300149738005069800,
+      642.96,
+      487.74254322052
+     ],
+     "s": [
+      "!0ZＡ",
+      "\n𠀀",
+      "!"
+     ],
+     "r": [
+      {
+       "id": "urn:x:__0Z"
+      },
+      {
+       "id": "urn:x:_𠀀\\a"
+      }
+     ],
+     "b": [
+      {
+       "name": "😀!",
+       "v": -27984.619140625
+      },
+      {
+       "name": "~😀~😀",
+       "v": -8753027350771270000
+      },
+      {
+       "name": "a中😀é0",
+       "v": 10000000000000000000
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-2300149738005069824\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"4.8774254322052E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"6.4296E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:__0Z> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:_𠀀\\\\a> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\n𠀀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!0ZＡ\" .\n<urn:x:Ａ> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:Ａ> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:Ａ> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"😀!\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-2.7984619140625E4\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n1 <https://schema.org/name> \"a中😀é0\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"1.0E19\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n2 <https://schema.org/name> \"~😀~😀\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"-8753027350771269632\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-2.3001497380050698e+18\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"487.74254322052\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"642.96\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:__0Z> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:_𠀀\\\\a> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\n𠀀\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"!0ZＡ\" .\n<urn:x:Ａ> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:Ａ> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:Ａ> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"😀!\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-27984.619140625\" .\n_:c14n1 <https://schema.org/name> \"~😀~😀\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-8.75302735077127e+18\" .\n_:c14n2 <https://schema.org/name> \"a中😀é0\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"1e+19\" .\n"
+  },
+  {
+   "name": "fuzz 135",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "id": "urn:x:😀_",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:i",
+    "credentialSubject": {
+     "id": "did:example:s",
+     "n": [
+      -17398262.02392578,
+      -2103271484.375,
+      146.9
+     ],
+     "s": [
+      "�\\ 0",
+      "\t",
+      "�"
+     ],
+     "r": [
+      {
+       "id": "urn:x:-\\aa"
+      },
+      {
+       "id": "urn:x:\\\"0"
+      }
+     ],
+     "b": [
+      {
+       "name": "\t\t",
+       "v": -2434721165151830000
+      },
+      {
+       "name": "Z\"\"\n�",
+       "v": -1.1993855237960815e-07
+      },
+      {
+       "name": "é",
+       "v": 327049970626831040
+      }
+     ]
+    }
+   },
+   "new": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1.739826202392578E7\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-2.103271484375E9\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"1.469E2\"^^<http://www.w3.org/2001/XMLSchema#double> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:-\\\\aa> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\\\\\"0> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\t\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"�\\\\ 0\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"�\" .\n<urn:x:😀_> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:😀_> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:😀_> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"\\t\\t\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-2434721165151830016\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n_:c14n1 <https://schema.org/name> \"Z\\\"\\\"\\n�\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"-1.199385523796082E-7\"^^<http://www.w3.org/2001/XMLSchema#double> .\n_:c14n2 <https://schema.org/name> \"é\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"327049970626831040\"^^<http://www.w3.org/2001/XMLSchema#integer> .\n",
+   "legacy": "<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n0 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n1 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#b> _:c14n2 .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-1.739826202392578e+07\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"-2.103271484375e+09\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#n> \"146.9\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:-\\\\aa> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#r> <urn:x:\\\\\\\"0> .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"\\t\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"�\\\\ 0\" .\n<did:example:s> <https://www.w3.org/ns/credentials/examples#s> \"�\" .\n<urn:x:😀_> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:x:😀_> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:s> .\n<urn:x:😀_> <https://www.w3.org/2018/credentials#issuer> <did:example:i> .\n_:c14n0 <https://schema.org/name> \"\\t\\t\" .\n_:c14n0 <https://www.w3.org/ns/credentials/examples#v> \"-2.43472116515183e+18\" .\n_:c14n1 <https://schema.org/name> \"é\" .\n_:c14n1 <https://www.w3.org/ns/credentials/examples#v> \"3.2704997062683104e+17\" .\n_:c14n2 <https://schema.org/name> \"Z\\\"\\\"\\n�\" .\n_:c14n2 <https://www.w3.org/ns/credentials/examples#v> \"-1.1993855237960815e-07\" .\n"
+  },
+  {
+   "name": "B11 import examples",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     {
+      "@version": 1.1,
+      "@import": "https://www.w3.org/ns/credentials/examples/v2"
+     }
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "name": "x"
+    }
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "ERR failed to normalize document: invalid @version value: unsupported JSON-LD version: map[@type:http://www.w3.org/2001/XMLSchema#string @value:1.1]"
+  },
+  {
+   "name": "B11 import with override",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     {
+      "@version": 1.1,
+      "@import": "https://www.w3.org/ns/credentials/examples/v2",
+      "nick": "https://ex.org/nick"
+     }
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "name": "x",
+     "nick": "n"
+    }
+   },
+   "new": "<did:example:subject> <https://ex.org/nick> \"n\" .\n<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "ERR failed to normalize document: invalid @version value: unsupported JSON-LD version: map[@type:http://www.w3.org/2001/XMLSchema#string @value:1.1]"
+  },
+  {
+   "name": "B11 import no version",
+   "doc": {
+    "@context": [
+     "https://www.w3.org/ns/credentials/v2",
+     {
+      "@import": "https://www.w3.org/ns/credentials/examples/v2"
+     }
+    ],
+    "id": "urn:uuid:1",
+    "type": [
+     "VerifiableCredential"
+    ],
+    "issuer": "did:example:issuer",
+    "credentialSubject": {
+     "id": "did:example:subject",
+     "name": "x"
+    }
+   },
+   "new": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n",
+   "legacy": "<did:example:subject> <https://schema.org/name> \"x\" .\n<urn:uuid:1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#credentialSubject> <did:example:subject> .\n<urn:uuid:1> <https://www.w3.org/2018/credentials#issuer> <did:example:issuer> .\n"
+  }
+ ]
+}

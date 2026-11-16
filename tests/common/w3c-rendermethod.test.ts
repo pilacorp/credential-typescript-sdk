@@ -68,7 +68,9 @@ describe('W3C v2 renderMethod context', () => {
   it('still canonicalizes when examples/v2 is omitted (terms may drop)', async () => {
     const nquads = Buffer.from(await canonicalizeDocument(v2OnlyContext)).toString('utf8');
     expect(nquads).toContain(`<${RENDER_IRI}>`);
-    expect(nquads).not.toContain('SuiteRenderMethod');
+    // Like Go's legacy canonicalizer, the undefined type stays as a relative IRI.
+    expect(nquads).toContain('<https://example.com/render-method> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <SuiteRenderMethod> .');
+    expect(nquads).not.toContain('renderSuite');
 
     // getSigningInput now uses the native, safe-mode canonicalizer (Go's
     // DocumentDigest), so a credential whose example-specific terms
