@@ -119,7 +119,7 @@ function consistentProof(proof: ProofResponse, subDID: string): boolean {
 }
 
 function chainEntry(proof: ProofResponse, code: string): ChainProof {
-  const entry = proof.chains.find((e) => e.chain === code);
+  const entry = proof.chains.find((e) => e && e.chain === code);
   if (!entry) {
     throw wrapSentinel(`chain ${code}`, undefined, ErrNotAnchored);
   }

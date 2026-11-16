@@ -81,6 +81,10 @@ export async function verifyCredential(
       'WithExtendedVCTMatch needs WithAcceptedVCTs, the types it matches, and WithTypeMetadata or WithOptionalTypeMetadata, the extends chain it matches them on',
     );
   }
+  const skew = opts.clockSkewSeconds ?? 60;
+  if (!(skew >= 0)) throw new PolicyError(`clockSkewSeconds ${skew} is negative or not a number`);
+  const maxAge = opts.maxKBAgeSeconds ?? 300;
+  if (!(maxAge > 0)) throw new PolicyError(`maxKBAgeSeconds ${maxAge} is not positive`);
   const algs = opts.allowedAlgs?.length ? opts.allowedAlgs : ['ES256', 'ES256K'];
   const { issuerJWT, disclosures, kbJWT } = splitSDJWT(c.compact);
   let header: Record<string, unknown>;
@@ -201,7 +205,6 @@ export async function verifyCredential(
   }
 
   const now = Math.floor((opts.now ?? new Date()).getTime() / 1000);
-  const skew = opts.clockSkewSeconds ?? 60;
   if (typeof claims.exp === 'number' && now >= claims.exp + skew) {
     throw new DigitalCredentialError(Code.Expired, 'credential is expired');
   }
@@ -296,7 +299,6 @@ export async function verifyCredential(
           throw new DigitalCredentialError(Code.KBInvalid, `KB JWT ${name} is not a number`);
         }
       }
-      const maxAge = opts.maxKBAgeSeconds ?? 300;
       const iat = kbPayload.iat;
       if (typeof iat !== 'number' || iat > now + skew || iat < now - maxAge - skew) {
         throw new DigitalCredentialError(Code.KBInvalid, 'KB JWT iat is missing or outside the accepted window');

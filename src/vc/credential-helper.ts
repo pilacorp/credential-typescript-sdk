@@ -105,7 +105,7 @@ function normalizeMap(input: JSONMap): JSONMap {
 
 function normalizeValue(v: unknown): unknown {
   if (Array.isArray(v)) return v.map(normalizeValue);
-  if (v && typeof v === 'object' && (v as object).constructor === Object) {
+  if (Object.prototype.toString.call(v) === '[object Object]') {
     return normalizeMap(v as JSONMap);
   }
   return v;

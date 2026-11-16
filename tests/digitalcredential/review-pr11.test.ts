@@ -1,4 +1,5 @@
 import { deflateSync } from 'node:zlib';
+import { createContext, runInContext } from 'node:vm';
 import { p256 } from '@noble/curves/nist';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { P256Provider } from '../../src/common/signer/p256-provider';
@@ -16,6 +17,7 @@ import { verifyProof } from '../../src/common/jsonmap/jsonmap';
 import { load, staticResolver, integrity, ErrViolated } from '../../src/digitalcredential/typemeta';
 import { decodeList } from '../../src/digitalcredential/statuslist';
 import { get, ErrBodyTooLarge } from '../../src/digitalcredential/internal/safehttp';
+import { normalizeCredentialData } from '../../src/vc/credential-helper';
 
 function issuer() {
   const priv = p256.utils.randomPrivateKey();
@@ -320,5 +322,24 @@ describe('PR #11 review: status-list inflate and fetch cap', () => {
         fetch: (async () => ({ status: 200, headers: new Headers(), body: null }) as never),
       }),
     ).rejects.toBe(ErrBodyTooLarge);
+  });
+});
+
+describe('PR #11 review: verify option numbers', () => {
+  it('refuses NaN clockSkewSeconds and non-positive maxKBAgeSeconds', async () => {
+    const ctx = issuer();
+    const cred = await issue({ issuer: ctx.iss, vct: 'https://example/t', claims: { n: 'x' } }, ctx.key);
+    await expect(cred.verify(ctx.resolver, { clockSkewSeconds: Number.NaN })).rejects.toBeInstanceOf(PolicyError);
+    await expect(cred.verify(ctx.resolver, { maxKBAgeSeconds: 0 })).rejects.toBeInstanceOf(PolicyError);
+  });
+});
+
+describe('PR #11 review: cross-realm credential maps', () => {
+  it('deep-copies objects from another JavaScript realm', () => {
+    const foreign = runInContext('({ inner: { secret: "S" } })', createContext({}));
+    const copy = normalizeCredentialData({ credentialSubject: foreign } as never);
+    expect(copy.credentialSubject).not.toBe(foreign);
+    (copy.credentialSubject as { inner: { secret: string } }).inner.secret = 'X';
+    expect(foreign.inner.secret).toBe('S');
   });
 });
