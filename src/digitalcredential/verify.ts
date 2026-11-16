@@ -1,8 +1,9 @@
-import { parseDisclosures, reconstructIssued } from '../common/sdjwt';
+import { anyDisclosed, isArrayPlaceholder, parseDisclosures, reconstructIssued } from '../common/sdjwt';
 import { hasOwn, type JSONMap } from '../common/util/json';
 import { Credential } from './credential';
 import { Code, DigitalCredentialError, neverDisclosable, PolicyError, TypDCSDJWT, TypKBJWT } from './errors';
-import { decodeJSONSegment, isUnsupportedHeader, peekHeader, p256FromJWK, typIs, verifyCompactJWS } from './jws-compact';
+import { decodeJSONSegment, isNumericDate, JSONDepthError, isUnsupportedHeader, peekHeader, typIs, verifyCompactJWS } from './jws-compact';
+import { CnfError, cnfKey } from './cnf';
 import { ErrIssuerNotSupported, ErrNoUsableKey, selectKey, type Resolver } from './issuerkey';
 import { sdHash, splitSDJWT } from './split';
 import { ErrIndexOutOfBounds, refFromStatus, type Checker, type Ref } from './statuslist';
@@ -33,6 +34,12 @@ export interface VerifyOptions {
   typesOptional?: boolean;
   allowedAlgs?: string[];
   rejectFutureIAT?: boolean;
+  /**
+   * Asked about iat after the checks above; undefined when the credential
+   * shows none. Throwing refuses the credential as IAT_CHECK_FAILED. An iat
+   * outside the dates a Date holds (±8.64e12 s) is IAT_CHECK_FAILED without
+   * a call.
+   */
   iatCheck?: (iat: Date | undefined) => void | Promise<void>;
   maxKBAgeSeconds?: number;
   extendedVCTMatch?: boolean;
@@ -50,18 +57,26 @@ export interface Result {
   typeMetadataSkipped?: unknown;
 }
 
-function errorIs(err: unknown, target: unknown): boolean {
+// Follows cause, and the errors of an AggregateError, as Go's errors.Is
+// follows Unwrap() error and Unwrap() []error.
+function errorIs(err: unknown, target: unknown, depth = 0): boolean {
   for (let e = err, i = 0; e !== undefined && e !== null && i < 16; i++) {
     if (e === target) return true;
+    const errors = (e as { errors?: unknown }).errors;
+    if (depth < 4 && Array.isArray(errors) && errors.slice(0, 16).some((x) => errorIs(x, target, depth + 1))) {
+      return true;
+    }
     e = (e as { cause?: unknown }).cause;
   }
   return false;
 }
 
+const maxDateSeconds = 8.64e12;
+
 function dropUndisclosedElements(v: unknown): unknown {
   if (Array.isArray(v)) {
     return v
-      .filter((e) => !(e && typeof e === 'object' && !Array.isArray(e) && Object.keys(e).length === 1 && hasOwn(e as object, '...')))
+      .filter((e) => !isArrayPlaceholder(e))
       .map(dropUndisclosedElements);
   }
   if (v && typeof v === 'object') {
@@ -110,7 +125,7 @@ export async function verifyCredential(
   }
   let payload: JSONMap;
   try {
-    payload = decodeJSONSegment(issuerJWT.split('.')[1], 'Issuer-signed JWT payload');
+    payload = decodeJSONSegment(issuerJWT.split('.')[1], 'Issuer-signed JWT payload', false);
   } catch (err) {
     throw new DigitalCredentialError(Code.Malformed, (err as Error).message, err);
   }
@@ -158,6 +173,8 @@ export async function verifyCredential(
         err,
       );
     }
+    // Raised only once the signature has passed.
+    if (err instanceof JSONDepthError) throw new DigitalCredentialError(Code.Malformed, err.message, err);
     throw new DigitalCredentialError(Code.SignatureInvalid, 'Issuer-signed JWT signature invalid');
   }
 
@@ -166,7 +183,7 @@ export async function verifyCredential(
   }
   try {
     for (const d of parseDisclosures(disclosures)) {
-      if (d.fieldName === '_sd' || d.fieldName === '...') {
+      if (d.fieldName === '_sd' || d.fieldName === '...' || d.fieldName === '_sd_alg') {
         throw new DigitalCredentialError(
           Code.DisclosureInvalid,
           `disclosure claim name ${JSON.stringify(d.fieldName)} is reserved`,
@@ -181,38 +198,50 @@ export async function verifyCredential(
   let reconstructed: JSONMap;
   let issued;
   try {
-    ({ claims: reconstructed, issued } = reconstructIssued(payload, disclosures, true));
+    ({ claims: reconstructed, issued } = reconstructIssued(payload, disclosures, true, true));
   } catch (err) {
     throw new DigitalCredentialError(Code.DisclosureInvalid, (err as Error).message, err);
   }
   const claims = dropUndisclosedElements(reconstructed) as JSONMap;
+  // Read on how each value was issued, so a decoy digest inside one of these
+  // claims is not taken for a Disclosure.
   for (const name of neverDisclosable) {
-    if (claimCameFromDisclosure(payload, claims, name)) {
+    if (issued.fields && hasOwn(issued.fields, name) && anyDisclosed(issued.fields[name])) {
       throw new DigitalCredentialError(
         Code.DisclosureInvalid,
-        `claim ${JSON.stringify(name)} came in a Disclosure, which draft-ietf-oauth-sd-jwt-vc-19 §2.2.2.3 forbids`,
+        `claim ${JSON.stringify(name)}, or a sub-claim of it, came in a Disclosure, which draft-ietf-oauth-sd-jwt-vc-19 §2.2.2.3 forbids`,
       );
     }
   }
-  if (claims.status !== undefined && JSON.stringify(payload.status) !== JSON.stringify(claims.status)) {
-    throw new DigitalCredentialError(
-      Code.DisclosureInvalid,
-      'status or one of its sub-claims came in a Disclosure, which draft-ietf-oauth-sd-jwt-vc-19 §2.2.2.3 forbids',
-    );
-  }
 
-  const now = Math.floor((opts.now ?? new Date()).getTime() / 1000);
-  if (typeof claims.exp === 'number' && now >= claims.exp + skew) {
+  // Not rounded: a NumericDate may carry a fraction (RFC 7519 §2).
+  const now = (opts.now ?? new Date()).getTime() / 1000;
+  // Read on the claims as disclosed: iat may come in a Disclosure. A value
+  // that is not a NumericDate is malformed, never read as an absent claim.
+  const date = (name: 'exp' | 'nbf' | 'iat'): number | undefined => {
+    if (!hasOwn(claims, name)) return undefined;
+    const v = claims[name];
+    if (!isNumericDate(v)) throw new DigitalCredentialError(Code.Malformed, `${name} is not a NumericDate`);
+    return v;
+  };
+  const exp = date('exp');
+  if (exp !== undefined && now >= exp + skew) {
     throw new DigitalCredentialError(Code.Expired, 'credential is expired');
   }
-  if (typeof claims.nbf === 'number' && now < claims.nbf - skew) {
+  const nbf = date('nbf');
+  if (nbf !== undefined && now < nbf - skew) {
     throw new DigitalCredentialError(Code.NotYetValid, 'credential is not yet valid');
   }
-  const iatClaim = typeof claims.iat === 'number' ? claims.iat : undefined;
+  const iatClaim = date('iat');
   if (iatClaim !== undefined && opts.rejectFutureIAT && iatClaim > now + skew) {
     throw new DigitalCredentialError(Code.NotYetValid, 'credential iat is in the future');
   }
   if (opts.iatCheck) {
+    // A Date holds ±8.64e15 ms; past that the function would get an Invalid
+    // Date, which compares false with everything.
+    if (iatClaim !== undefined && Math.abs(iatClaim) > maxDateSeconds) {
+      throw new DigitalCredentialError(Code.IATCheckFailed, 'iat is outside the dates a Date holds, so iatCheck cannot be asked');
+    }
     try {
       await opts.iatCheck(iatClaim === undefined ? undefined : new Date(iatClaim * 1000));
     } catch (err) {
@@ -250,19 +279,34 @@ export async function verifyCredential(
     }
   }
 
-  const hasCnf = Boolean(payload.cnf);
+  const hasCnf = hasOwn(payload, 'cnf');
   let keyBound = false;
+  // The credential first: when its cnf gives no key, no presentation of it
+  // passes, whatever the Holder sent.
+  let holder: Uint8Array | undefined;
+  if (hasCnf || opts.requireKeyBinding) {
+    if (!hasCnf) {
+      throw new DigitalCredentialError(
+        Code.KBUnsupported,
+        'Key Binding is required and the credential has no cnf claim, the key a Key Binding JWT is checked with',
+      );
+    }
+    try {
+      holder = cnfKey(payload.cnf);
+    } catch (err) {
+      const code = err instanceof CnfError && err.unsupported ? Code.KBUnsupported : Code.Malformed;
+      throw new DigitalCredentialError(code, (err as Error).message, err);
+    }
+  }
   if (kbJWT) {
-    if (!hasCnf && !opts.requireKeyBinding) {
+    if (!holder) {
       if (!opts.ignoreUncheckedKBJWT) {
         throw new DigitalCredentialError(Code.KBUnexpected, 'unexpected Key Binding JWT');
       }
     } else {
-      const cnf = payload.cnf as { jwk?: { kty?: string; crv?: string; x?: string; y?: string } };
-      if (!cnf?.jwk) throw new DigitalCredentialError(Code.KBUnsupported, 'no cnf.jwk to check Key Binding');
       let kbPayload: Record<string, unknown>;
       try {
-        kbPayload = verifyCompactJWS(kbJWT, p256FromJWK(cnf.jwk), algs);
+        kbPayload = verifyCompactJWS(kbJWT, holder, algs);
       } catch (err) {
         if (isUnsupportedHeader(err)) {
           throw new DigitalCredentialError(
@@ -292,8 +336,8 @@ export async function verifyCredential(
         throw new DigitalCredentialError(Code.KBNonceMismatch, 'KB nonce mismatch');
       }
       for (const name of ['exp', 'nbf'] as const) {
-        if (kbPayload[name] !== undefined && typeof kbPayload[name] !== 'number') {
-          throw new DigitalCredentialError(Code.KBInvalid, `KB JWT ${name} is not a number`);
+        if (kbPayload[name] !== undefined && !isNumericDate(kbPayload[name])) {
+          throw new DigitalCredentialError(Code.KBInvalid, `KB JWT ${name} is not a NumericDate`);
         }
       }
       const iat = kbPayload.iat;
@@ -308,7 +352,7 @@ export async function verifyCredential(
       }
       keyBound = true;
     }
-  } else if (hasCnf || opts.requireKeyBinding) {
+  } else if (holder) {
     throw new DigitalCredentialError(Code.KBMissing, 'Key Binding JWT is required');
   }
 
@@ -405,8 +449,4 @@ export async function verifyCredential(
     res.status = v;
   }
   return res;
-}
-
-function claimCameFromDisclosure(issued: JSONMap, reconstructed: JSONMap, name: string): boolean {
-  return !Object.prototype.hasOwnProperty.call(issued, name) && Object.prototype.hasOwnProperty.call(reconstructed, name);
 }

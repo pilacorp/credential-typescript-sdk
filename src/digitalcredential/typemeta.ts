@@ -6,7 +6,7 @@ import { httpsURL, parseURL } from './internal/url';
 import { validURI } from './internal/uri';
 import type { Limits } from './internal/safehttp';
 import { StatusError } from './internal/safehttp';
-import { hasOwn } from '../common/util/json';
+import { hasOwn, setOwn } from '../common/util/json';
 import type { IssuedNode } from '../common/sdjwt';
 
 export const ErrNotFound = Object.assign(new Error('typemeta: no Type Metadata for the type'), { name: 'TypeMetaError' });
@@ -73,16 +73,47 @@ export class Metadata {
     opts: { allDisclosures?: boolean; issued?: IssuedNode } = {},
   ): void {
     const issued = opts.issued ?? inTheClear(claims);
+    const budget = { left: maxClaimVisits };
     for (const [i, c] of this.claims.entries()) {
       try {
-        checkClaim(c, issued, Boolean(opts.allDisclosures));
+        checkClaim(c, issued, Boolean(opts.allDisclosures), budget);
       } catch (err) {
+        if (err === errBudget) {
+          throw Object.assign(
+            new Error(
+              `typemeta: checking the payload against the claim metadata needs over ${maxClaimVisits} units (one per value read, one more per 64 bytes of a key), the SDK's limit`,
+            ),
+            { cause: ErrClaims },
+          );
+        }
         throw Object.assign(
           new Error(`typemeta: claims[${i}] with path ${JSON.stringify(c.path)}: ${(err as Error).message}`),
           { cause: ErrViolated },
         );
       }
     }
+  }
+
+  /**
+   * Checks payload, the claims an issuer is about to sign with nothing
+   * concealed yet, as validateClaims with allDisclosures checks the
+   * credential it becomes: each path in disclose is made a disclosure and the
+   * rest stays in the clear (SD-JWT VC draft 19 §5.6).
+   */
+  validateIssuance(payload: Record<string, unknown>, disclose: PathEl[][]): void {
+    const root = inTheClear(payload);
+    disclose.forEach((path, i) => {
+      if (!path.length) throw new Error(`typemeta: disclose[${i}] is an empty path`);
+      let n: IssuedNode | undefined = root;
+      for (const el of path) {
+        if (typeof el === 'string') n = n.fields && hasOwn(n.fields, el) ? n.fields[el] : undefined;
+        else if (typeof el === 'number') n = n.elems?.[el];
+        else throw new Error(`typemeta: disclose[${i}] ${JSON.stringify(path)} has an element that is not a string or an index`);
+        if (!n) throw new Error(`typemeta: disclose[${i}] ${JSON.stringify(path)} names no claim of the payload`);
+      }
+      n.disclosed = true;
+    });
+    this.validateClaims(payload, { allDisclosures: true, issued: root });
   }
 }
 
@@ -282,7 +313,7 @@ function inTheClear(v: unknown): IssuedNode {
   if (Array.isArray(v)) n.elems = v.map(inTheClear);
   else if (v && typeof v === 'object') {
     n.fields = {};
-    for (const [k, child] of Object.entries(v)) n.fields[k] = inTheClear(child);
+    for (const [k, child] of Object.entries(v)) setOwn(n.fields, k, inTheClear(child));
   }
   return n;
 }
@@ -292,12 +323,24 @@ function elemsOf(n: IssuedNode, all: boolean): IssuedNode[] {
   return all ? list.filter((e) => !e.hidden) : list;
 }
 
-function checkClaim(c: Claim, root: IssuedNode, all: boolean): void {
+// Bounds the work of one validateClaims call, one unit per value read and one
+// more per 64 bytes of a key looked up: claims times the values a path selects
+// has no bound the other limits give.
+const maxClaimVisits = 1 << 20;
+const errBudget = new Error('over the budget');
+
+function checkClaim(c: Claim, root: IssuedNode, all: boolean, budget: { left: number }): void {
   let sel: IssuedNode[] = [root];
   for (const el of c.path) {
     const next: IssuedNode[] = [];
     for (const n of sel) {
       if (n.hidden) continue;
+      // Charged before the read: null and, with all, an index read the whole array.
+      let cost = 1;
+      if (typeof el === 'string') cost += Math.floor(Buffer.byteLength(el) / 64);
+      else if (el === null || all) cost = n.elems?.length ?? 0;
+      budget.left -= cost;
+      if (budget.left < 0) throw errBudget;
       if (typeof el === 'string') {
         if (!n.fields) {
           throw new Error('a key is selected in a value that is not an object (§5.6.1.2)');
@@ -311,7 +354,7 @@ function checkClaim(c: Claim, root: IssuedNode, all: boolean): void {
         next.push(n.fields[el]);
       } else if (el === null) {
         if (!n.elems) throw new Error('every element is selected in a value that is not an array (§5.6.1.2)');
-        next.push(...elemsOf(n, all));
+        for (const e of elemsOf(n, all)) next.push(e);
       } else {
         if (!n.elems) throw new Error('an index is selected in a value that is not an array (§5.6.1.2)');
         const es = elemsOf(n, all);
