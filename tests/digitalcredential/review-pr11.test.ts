@@ -17,7 +17,7 @@ import { verifyProof } from '../../src/common/jsonmap/jsonmap';
 import { load, staticResolver, integrity, ErrViolated } from '../../src/digitalcredential/typemeta';
 import type { IssuedNode } from '../../src/common/sdjwt';
 import { decodeList } from '../../src/digitalcredential/statuslist';
-import { get, ErrBodyTooLarge } from '../../src/digitalcredential/internal/safehttp';
+import { get } from '../../src/digitalcredential/internal/safehttp';
 import { normalizeCredentialData } from '../../src/vc/credential-helper';
 
 function issuer() {
@@ -344,15 +344,18 @@ describe('PR #11 review: status-list inflate and fetch cap', () => {
     expect(() => decodeList(raw.toString('base64url'), 1)).toThrow(/inflates past/);
   });
 
-  it('refuses a custom fetch with no readable body', async () => {
-    await expect(
-      get('https://example.invalid/x', ['application/json'], {
-        timeoutMs: 1000,
-        maxRedirects: 0,
-        maxBytes: 16,
-        fetch: (async () => ({ status: 200, headers: new Headers(), body: null }) as never),
-      }),
-    ).rejects.toBe(ErrBodyTooLarge);
+  it('reads a null body from a custom fetch as empty and refuses a body it cannot stream', async () => {
+    const limits = (body: unknown) => ({
+      timeoutMs: 1000,
+      maxRedirects: 0,
+      maxBytes: 16,
+      fetch: (async () => ({ status: 200, headers: new Headers({ 'content-type': 'application/json' }), body })) as never,
+    });
+    const got = await get('https://example.invalid/x', ['application/json'], limits(null));
+    expect(got.body.length).toBe(0);
+    await expect(get('https://example.invalid/x', ['application/json'], limits('{}'))).rejects.toThrow(
+      /not a ReadableStream/,
+    );
   });
 });
 

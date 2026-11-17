@@ -33,6 +33,33 @@ describe('parseDisclosure', () => {
     expect(() => parseDisclosure(encodeDisclosure(['only-one']))).toThrow(/invalid disclosure structure/);
     expect(() => parseDisclosure(encodeDisclosure([1, 'name', 'Alice']))).toThrow(/salt must be a string/);
   });
+
+  it('refuses a disclosure that is not valid UTF-8', () => {
+    // The digest covers the base64url text, so a lenient decode would hand the
+    // verifier "A\uFFFD" for a value the issuer never wrote.
+    const bytes = Buffer.concat([Buffer.from('["salt","name","A'), Buffer.from([0xff]), Buffer.from('"]')]);
+    expect(() => parseDisclosure(bytes.toString('base64url'))).toThrow(/not valid UTF-8/);
+  });
+
+  // RFC 9901 §4.2.1: a disclosure is base64url without padding. Each row is
+  // another spelling of ["s","a",1], ["s","a","x>?"] or ["s","a","x??"] that a lenient decoder
+  // reads as the same bytes.
+  it.each([
+    ['padding', 'WyJzIiwiYSIsMV0='],
+    ['the + of standard base64', 'WyJzIiwiYSIsIng+PyJd'],
+    ['the / of standard base64', 'WyJzIiwiYSIsIng/PyJd'],
+    ['a space', 'WyJz IiwiYSIsMV0'],
+    ['a line break', 'WyJzIiwiYSIsMV0\n'],
+    ['non-zero pad bits', 'WyJzIiwiYSIsMV1'],
+  ])('refuses a disclosure written with %s', (_what, disc) => {
+    expect(() => parseDisclosure(disc)).toThrow(/not base64url without padding/);
+  });
+
+  it('reads the strict spelling of the same disclosures', () => {
+    expect(parseDisclosure('WyJzIiwiYSIsMV0').value).toBe(1);
+    expect(parseDisclosure('WyJzIiwiYSIsIng-PyJd').value).toBe('x>?');
+    expect(parseDisclosure('WyJzIiwiYSIsIng_PyJd').value).toBe('x??');
+  });
 });
 
 describe('hashDisclosure', () => {

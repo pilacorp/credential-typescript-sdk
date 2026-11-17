@@ -7,6 +7,8 @@
 import { randomBytes } from 'crypto';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha384, sha512 } from '@noble/hashes/sha512';
+import { decodeBase64URLStrict } from '../util/base64url';
+import { parseJSONBytes } from '../util/json';
 import { DecodedDisclosure, DisclosureInfo, ParsedSDJWT } from './types';
 
 export const AlgSHA256 = 'sha-256';
@@ -113,14 +115,14 @@ export function parseDisclosures(disclosures: string[]): DecodedDisclosure[] {
 export function parseDisclosure(disc: string): DisclosureInfo {
   let decoded: Buffer;
   try {
-    decoded = Buffer.from(disc, 'base64url');
+    decoded = decodeBase64URLStrict(disc);
   } catch {
-    throw new Error(`failed to decode disclosure "${disc}"`);
+    throw new Error(`failed to decode disclosure "${disc}": not base64url without padding`);
   }
 
   let arr: unknown[];
   try {
-    arr = JSON.parse(decoded.toString('utf8'));
+    arr = parseJSONBytes(decoded) as unknown[];
   } catch (err) {
     throw new Error(
       `failed to unmarshal disclosure: ${(err as Error).message}`,

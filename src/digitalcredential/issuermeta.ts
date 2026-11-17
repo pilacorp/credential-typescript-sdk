@@ -1,10 +1,11 @@
 import { checkOriginEntry, follows, newOriginList, redirectsAny, redirectsTo, type Redirects } from './internal/allowlist';
 import { cachedGet } from './internal/httpcache';
-import { ErrIssuerNotSupported, type PublicKey, type Resolver } from './issuerkey';
+import { ErrIssuerNotSupported, ErrNoUsableKey, type PublicKey, type Resolver } from './issuerkey';
 import { p256FromJWK } from './jws-compact';
 import { httpsURL, parseURL } from './internal/url';
 import { validURI } from './internal/uri';
 import type { Limits } from './internal/safehttp';
+import { parseJSONBytes } from '../common/util/json';
 
 export {
   ErrAddressBlocked,
@@ -17,6 +18,26 @@ export {
 } from './internal/safehttp';
 
 const wellKnown = '/.well-known/jwt-vc-issuer';
+
+// contentFault is a fault in what the issuer published. It wraps ErrNoUsableKey,
+// so the verifier reports ISSUER_KEY_NOT_FOUND rather than a retryable failure
+// to reach the issuer: fetching again returns the same bad document.
+function contentFault(message: string): Error {
+  return Object.assign(new Error(`issuermeta: ${message}`), { cause: ErrNoUsableKey });
+}
+
+function parseObject(bytes: Uint8Array, what: string): Record<string, unknown> {
+  let v: unknown;
+  try {
+    v = parseJSONBytes(bytes);
+  } catch (err) {
+    throw contentFault(`${what} is not a JSON object: ${(err as Error).message}; the issuer must fix it`);
+  }
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) {
+    throw contentFault(`${what} is not a JSON object; the issuer must fix it`);
+  }
+  return v as Record<string, unknown>;
+}
 const maxCacheBytes = 4 << 20;
 const maxCacheLifetimeMs = 24 * 3600 * 1000;
 
@@ -53,12 +74,9 @@ export function metadataURL(iss: string): string {
   const slash = rest.indexOf('/');
   const authority = slash < 0 ? rest : rest.slice(0, slash);
   const path = slash < 0 ? '' : rest.slice(slash);
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(path);
-  } catch {
-    throw Object.assign(new Error('issuermeta: iss path has an invalid percent-encoding'), { cause: ErrIssuerNotSupported });
-  }
+  // Decode to octets, not UTF-8: RFC 3986 §2.1 lets %ff name any byte, and
+  // validURI has already refused a "%" not followed by two hex digits.
+  const decoded = path.replace(/%([0-9A-Fa-f]{2})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
   if (hasDotSegment(decoded)) {
     throw Object.assign(new Error('issuermeta: iss path has a "." or ".." segment'), { cause: ErrIssuerNotSupported });
   }
@@ -125,26 +143,34 @@ export class IssuerMetaResolver implements Resolver {
       fetch: this.cfg.fetch,
     };
     const { body, freshMs } = await cachedGet(meta, ['application/json'], limits, maxCacheLifetimeMs, signal);
-    const doc = JSON.parse(body.toString('utf8')) as Record<string, unknown>;
-    if (typeof doc.issuer !== 'string') throw new Error('issuermeta: the issuer metadata has no string issuer');
+    const doc = parseObject(body, 'the issuer metadata');
+    if (typeof doc.issuer !== 'string') throw contentFault('the issuer metadata has no string issuer');
     if (doc.issuer !== iss) {
-      throw new Error("issuermeta: the issuer metadata names another issuer than the credential's iss");
+      throw contentFault("the issuer metadata names another issuer than the credential's iss; it cannot be used");
     }
     const hasJWKS = Object.prototype.hasOwnProperty.call(doc, 'jwks');
     const hasURI = Object.prototype.hasOwnProperty.call(doc, 'jwks_uri');
     let set: Record<string, unknown>;
     if (hasJWKS === hasURI) {
-      throw new Error('issuermeta: the issuer metadata must have exactly one of jwks and jwks_uri');
+      throw contentFault(`the issuer metadata has ${hasJWKS ? 'both' : 'neither'} jwks ${hasJWKS ? 'and' : 'nor'} jwks_uri; it must have exactly one`);
     }
     if (hasJWKS) {
-      if (typeof doc.jwks !== 'object' || doc.jwks === null) throw new Error('issuermeta: jwks is not a JSON object');
+      if (typeof doc.jwks !== 'object' || doc.jwks === null || Array.isArray(doc.jwks)) {
+        throw contentFault('jwks is not a JSON object');
+      }
       set = doc.jwks as Record<string, unknown>;
     } else {
       if (typeof doc.jwks_uri !== 'string' || !validURI(doc.jwks_uri)) {
-        throw new Error('issuermeta: jwks_uri is not a URI');
+        throw contentFault('jwks_uri is not a URI');
       }
-      const ju = parseURL(doc.jwks_uri);
-      if (!httpsURL(ju)) throw new Error('issuermeta: jwks_uri is not an https URL with a host');
+      // An RFC 3986 URI can still be one the URL parser refuses, such as a host with "%20".
+      let ju: URL | undefined;
+      try {
+        ju = parseURL(doc.jwks_uri);
+      } catch {
+        ju = undefined;
+      }
+      if (!ju || !httpsURL(ju)) throw contentFault('jwks_uri is not an https URL with a host');
       const got = await cachedGet(
         doc.jwks_uri,
         ['application/jwk-set+json', 'application/json'],
@@ -152,7 +178,7 @@ export class IssuerMetaResolver implements Resolver {
         maxCacheLifetimeMs,
         signal,
       );
-      set = JSON.parse(got.body.toString('utf8')) as Record<string, unknown>;
+      set = parseObject(got.body, 'the JWK Set from jwks_uri');
     }
     const keys = signingKeys(set);
     if (!this.cfg.disableCache && freshMs > 0) {
@@ -182,10 +208,12 @@ export class IssuerMetaResolver implements Resolver {
 
 function signingKeys(set: Record<string, unknown>): PublicKey[] {
   const elems = set.keys;
-  if (!Array.isArray(elems)) throw new Error('issuermeta: the JWK Set has no keys array');
+  if (!Array.isArray(elems)) throw contentFault('the JWK Set has no keys array');
   const keys: PublicKey[] = [];
   for (const e of elems) {
-    if (typeof e !== 'object' || e === null) throw new Error('issuermeta: the JWK Set holds an element that is not a JWK object');
+    if (typeof e !== 'object' || e === null || Array.isArray(e)) {
+      throw contentFault('the JWK Set holds an element that is not a JWK object');
+    }
     const m = e as Record<string, unknown>;
     if (m.kid !== undefined && typeof m.kid !== 'string') continue;
     if (m.use !== undefined && m.use !== 'sig') continue;

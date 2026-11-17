@@ -100,11 +100,13 @@ async function oneRequest(
     });
     const chunks: Buffer[] = [];
     let n = 0;
-    const reader = res.body?.getReader?.();
-    if (!reader) {
-      throw ErrBodyTooLarge;
+    // The Fetch standard gives a response with no content, such as a 204, a
+    // null body. Any other body is read as a stream so maxBytes stops it early.
+    const reader = res.body == null ? undefined : res.body.getReader?.();
+    if (res.body != null && !reader) {
+      throw new Error('safehttp: the custom fetch returned a body that is not a ReadableStream; return a WHATWG Response');
     }
-    while (true) {
+    while (reader) {
       const { done, value } = await reader.read();
       if (done) break;
       n += value.length;
