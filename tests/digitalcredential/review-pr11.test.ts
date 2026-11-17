@@ -325,7 +325,7 @@ describe('PR #11 review: type metadata sd/mandatory', () => {
       code: Code.TypeMetadataViolated,
     });
     const mandatoryDoc = doc({ path: ['address', 'street'], mandatory: true });
-    const withheld = await cred.present({ reveal: [] });
+    const withheld = await cred.present({ reveal: [['address']] });
     await withheld.verify(ctx.resolver, { types: staticResolver(mandatoryDoc) });
   });
 });

@@ -479,7 +479,6 @@ addProof(priv, opts?)              // ký với in-memory key
 addProofByProvider(signer, opts?)  // ký qua external SignerProvider
 addCustomProof(proof, opts?)       // gắn proof do caller tự tạo
 getSigningInput()                  // bytes thực sự được ký (debug)
-addSelectiveDisclosures(paths)     // chỉ JWT
 ```
 
 Xem [`src/index.ts`](src/index.ts) để có public surface đầy đủ và [`examples/main.ts`](examples/main.ts) để có demo end-to-end.
