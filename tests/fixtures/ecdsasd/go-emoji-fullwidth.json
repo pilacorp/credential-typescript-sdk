@@ -1,0 +1,56 @@
+{
+  "source": "go-credential-sdk 20a302e ecdsasd.CreateBaseProof(mandatory /issuer) and DeriveProof(/credentialSubject/name)",
+  "pub": "0460fed4ba255a9d31c961eb74c6356d68c049b8923b61fa6ce669622e60f29fb67903fe1008b8bc99a41ae9e95628bc64f2f1b20c2d7e9f5177a3c294d4462299",
+  "document": {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "credentialSubject": {
+      "id": "did:example:h",
+      "name": [
+        "😀",
+        "ｆ"
+      ]
+    },
+    "id": "urn:uuid:t1",
+    "issuer": "did:example:issuer",
+    "type": [
+      "VerifiableCredential",
+      "ExampleCredential"
+    ],
+    "validFrom": "2026-01-01T00:00:00Z"
+  },
+  "proofConfig": {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "created": "2026-01-01T00:00:00Z",
+    "cryptosuite": "ecdsa-sd-2023",
+    "proofPurpose": "assertionMethod",
+    "type": "DataIntegrityProof",
+    "verificationMethod": "did:example:issuer#key-2"
+  },
+  "baseProof": "u2V0AhVhA2M6IqjcFEoYGJsHRp5iH2IAJSmdw8IRN-kbom-5tASwfj35DhZrW_FaXLLPzTY00wDZ862e4YysjweMR1X_nL1gjgCQDDXsCsIceQa62jeK_tZNezIxYvW1g3lprW77fBxPbrH5YIOlq2rH-7pkY37-UDpy8pXIHL-0S8OEE41h2Nq_oG0lWhFhAHkY1xmm4G3OSJx28aNhdsrda0ykey_iOUcqldcz_jEAHep6KtnIbPhEwdpi3ktksj5x4iBqg9MttBDvYfSgZoVhA9TG7b24FBurQwJ8-m8bv6794bAqadaGbCwOkkjZ3UNp6c4r2BLHGGaEYCq1cadTPd3OOf6k86a5M8ugsphPYC1hAO1jedjUQX64eHQnu072mRQ4taedReT5jGWzyQsXoaU0ldK2tOrknPYIX3m_Kniyf5LmIWh6a6sSZhljPQ1nCmFhAeopR9Qblr6h5AfirPjMaR25BqEGxTfVZOOEoUkuYdXh03Kq7FGarBNMZfG3apFemmd730vaKa4Y8wkCax1YDzYFnL2lzc3Vlcg",
+  "reveal": {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://www.w3.org/ns/credentials/examples/v2"
+    ],
+    "credentialSubject": {
+      "id": "did:example:h",
+      "name": [
+        "😀",
+        "ｆ"
+      ]
+    },
+    "id": "urn:uuid:t1",
+    "issuer": "did:example:issuer",
+    "type": [
+      "VerifiableCredential",
+      "ExampleCredential"
+    ]
+  },
+  "proofValue": "u2V0BhVhA2M6IqjcFEoYGJsHRp5iH2IAJSmdw8IRN-kbom-5tASwfj35DhZrW_FaXLLPzTY00wDZ862e4YysjweMR1X_nL1gjgCQDDXsCsIceQa62jeK_tZNezIxYvW1g3lprW77fBxPbrH6DWEAeRjXGabgbc5InHbxo2F2yt1rTKR7L-I5RyqV1zP-MQAd6noq2chs-ETB2mLeS2SyPnHiIGqD0y20EO9h9KBmhWED1MbtvbgUG6tDAnz6bxu_rv3hsCpp1oZsLA6SSNndQ2npzivYEscYZoRgKrVxp1M93c45_qTzprkzy6CymE9gLWEA7WN52NRBfrh4dCe7TvaZFDi1p51F5PmMZbPJCxehpTSV0ra06uSc9ghfeb8qeLJ_kuYhaHprqxJmGWM9DWcKYoIMCAwU"
+}

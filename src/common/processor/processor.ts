@@ -15,10 +15,16 @@ const jsonld = require('jsonld');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const rdfCanonize = require('rdf-canonize');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const ContextResolver = require('jsonld/lib/ContextResolver');
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ContextResolver: new (options: { sharedCache: Map<unknown, unknown> }) => any = require('jsonld/lib/ContextResolver');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const URDNA2015: new (options?: { canonicalIdMap?: Map<string, string> }) => any = require('rdf-canonize/lib/URDNA2015');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const ResolvedContext = require('jsonld/lib/ResolvedContext');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { prependBase }: { prependBase: (base: string, iri: string) => string } = require('jsonld/lib/url');
+
 import { randomUUID } from 'crypto';
 import {
   ContextBudget,
@@ -111,6 +117,52 @@ function newBudget(): ContextBudget {
   });
 }
 
+interface ResolveArgs {
+  base?: unknown;
+  documentLoader: (url: string) => Promise<{ document: unknown }>;
+}
+
+/**
+ * jsonld.js 8.3.3 copies an imported context's keys in after it has handled
+ * keywords, then fails on an imported @vocab or @base as a redefined keyword.
+ * Merge the import where contexts are resolved, as json-gold does: the target
+ * must be one context object with no @import of its own, and local definitions
+ * win over imported ones (JSON-LD 1.1 §4.1.2).
+ */
+class ImportResolver extends ContextResolver {
+  // One resolver serves one operation; a scoped @import is loaded once, not once per use.
+  private readonly merged = new Map<string, Promise<unknown>>();
+
+  async resolve(args: ResolveArgs): Promise<unknown[]> {
+    const resolved: { document: unknown }[] = await super.resolve(args);
+    return Promise.all(
+      resolved.map((r) => {
+        const ctx = r.document;
+        if (!ctx || typeof ctx !== 'object' || !('@import' in ctx)) return r;
+        const key = `${String(args.base ?? '')}\n${JSON.stringify(ctx)}`;
+        let out = this.merged.get(key);
+        if (!out) {
+          out = this.mergeImport(ctx as Record<string, unknown>, args);
+          this.merged.set(key, out);
+        }
+        return out;
+      }),
+    );
+  }
+
+  private async mergeImport(ctx: Record<string, unknown>, args: ResolveArgs): Promise<unknown> {
+    const { '@import': ref, ...local } = ctx;
+    if (typeof ref !== 'string') throw new Error('json-ld: @import must be a string');
+    const url = typeof args.base === 'string' && args.base ? prependBase(args.base, ref) : ref;
+    const remote = (await args.documentLoader(url)).document as Record<string, unknown> | null;
+    const imported = remote?.['@context'];
+    if (!imported || typeof imported !== 'object' || Array.isArray(imported) || '@import' in imported) {
+      throw new Error('json-ld: @import must reference a single context that has no @import');
+    }
+    return new ResolvedContext({ document: { ...imported, ...local } });
+  }
+}
+
 /**
  * jsonld options for one operation. A resolver of its own keeps jsonld's
  * process-wide resolved-context cache from skipping this operation's budget.
@@ -118,7 +170,7 @@ function newBudget(): ContextBudget {
 function ldOptions(budget: ContextBudget, extra: Record<string, unknown> = {}) {
   return {
     documentLoader: budget.loader,
-    contextResolver: new ContextResolver({ sharedCache: new Map() }),
+    contextResolver: new ImportResolver({ sharedCache: new Map() }),
     ...extra,
   };
 }
@@ -147,6 +199,13 @@ const ESCAPES: Record<string, string> = { '\\': '\\\\', '"': '\\"', '\n': '\\n',
 /** json-gold's escape, used for IRIs as well as literals (rdf-canonize leaves IRIs and TAB raw). */
 function goEscape(s: string): string {
   return s.replace(/[\\"\n\r\t]/g, (c) => ESCAPES[c]);
+}
+
+const UNESCAPES: Record<string, string> = { '\\\\': '\\', '\\"': '"', '\\n': '\n', '\\r': '\r', '\\t': '\t' };
+
+/** The inverse of goEscape. */
+function goUnescape(s: string): string {
+  return s.replace(/\\[\\"nrt]/g, (c) => UNESCAPES[c]);
 }
 
 function goTerm(t: Term): string {
@@ -290,35 +349,6 @@ function checkKeys(v: unknown, dropEmpty: boolean): unknown {
   return out;
 }
 
-/**
- * jsonld.js 8.3.3 merges an @import target together with its {"@context": …}
- * wrapper and then refuses the "@context" key, while json-gold imports it.
- * Resolve @import in the document's own contexts first; local definitions win
- * over imported ones (JSON-LD 1.1 §4.1.2).
- */
-async function inlineImports(v: unknown, budget: ContextBudget): Promise<unknown> {
-  if (Array.isArray(v)) return Promise.all(v.map((x) => inlineImports(x, budget)));
-  if (!v || typeof v !== 'object') return v;
-  const out: Record<string, unknown> = {};
-  for (const [k, x] of Object.entries(v as Record<string, unknown>)) {
-    out[k] = k === '@context' ? await importContexts(x, budget) : await inlineImports(x, budget);
-  }
-  return out;
-}
-
-async function importContexts(ctx: unknown, budget: ContextBudget): Promise<unknown> {
-  if (Array.isArray(ctx)) return Promise.all(ctx.map((c) => importContexts(c, budget)));
-  if (!ctx || typeof ctx !== 'object' || !('@import' in ctx)) return ctx;
-  const { '@import': url, ...local } = ctx as Record<string, unknown>;
-  if (typeof url !== 'string') throw new Error('json-ld: @import must be a string');
-  const remote = (await budget.loader(url)).document as Record<string, unknown> | null;
-  const imported = remote?.['@context'];
-  if (!imported || typeof imported !== 'object' || Array.isArray(imported) || '@import' in imported) {
-    throw new Error('json-ld: @import must reference a single context that has no @import');
-  }
-  return { ...imported, ...local };
-}
-
 /** jsonld.js's absolute-IRI test: anything else is dropped from the dataset. */
 const isJsonldAbsolute = (s: string) => /^([A-Za-z][A-Za-z0-9+-.]*|_):[^\s]*$/.test(s);
 
@@ -371,7 +401,7 @@ export async function canonicalizeDocument(
   const canonical = await guard('failed to normalize document', async () => {
     const standardized = standardizeToJSONLD(checkKeys(doc, true) as Record<string, unknown>);
     budget.limitInline(standardized);
-    const expanded = await jsonld.expand(await inlineImports(standardized, budget), ldOptions(budget, { safe: false }));
+    const expanded = await jsonld.expand(standardized, ldOptions(budget, { safe: false }));
     const [held, restore] = holdRelativeTypes(expanded);
     const dataset = await jsonld.toRDF(held, ldOptions(budget, { safe: false }));
     return normalizeDataset(restore(dataset));
@@ -465,7 +495,7 @@ export async function expandJSONLD(doc: Record<string, unknown>): Promise<unknow
   const out = await guard('expand', async () => {
     checkKeys(doc, false);
     budget.limitInline(doc);
-    return (await jsonld.expand(await inlineImports(doc, budget), ldOptions(budget, { safe: true }))) as unknown[];
+    return (await jsonld.expand(doc, ldOptions(budget, { safe: true }))) as unknown[];
   });
   checkExpandedTypes(out);
   rejectRelativeIDs(out);
@@ -476,10 +506,7 @@ export async function compactJSONLD(
   expanded: unknown,
   ctx: unknown,
 ): Promise<Record<string, unknown>> {
-  const budget = newBudget();
-  return guard('compact', async () =>
-    jsonld.compact(expanded, await importContexts(ctx, budget), ldOptions(budget, { safe: true })),
-  );
+  return guard('compact', () => jsonld.compact(expanded, ctx, ldOptions(newBudget(), { safe: true })));
 }
 
 export async function toRDFNQuads(doc: unknown): Promise<string[]> {
@@ -487,13 +514,11 @@ export async function toRDFNQuads(doc: unknown): Promise<string[]> {
   const nq = await guard('to rdf', async () => {
     checkKeys(doc, false);
     budget.limitInline(doc);
-    const expanded = await jsonld.expand(await inlineImports(doc, budget), ldOptions(budget, { safe: true }));
-    return (await jsonld.toRDF(
-      goNumbers(expanded),
-      ldOptions(budget, { safe: true, format: 'application/n-quads' }),
-    )) as string;
+    const expanded = await jsonld.expand(doc, ldOptions(budget, { safe: true }));
+    return (await jsonld.toRDF(goNumbers(expanded), ldOptions(budget, { safe: true }))) as Quad[];
   });
-  return splitNQuadsKeepNL(nq.replace(/\t/g, '\\t'));
+  // The same serializer as the canonical output: ecdsa-sd matches the two by string.
+  return nq.map((q) => goQuad(q.subject, q.predicate, q.object, q.graph)).sort(compareCodePoints);
 }
 
 /** Go Canonicalize: native JSON types, fail on empty / undefined terms. */
@@ -526,10 +551,22 @@ export async function canonicalizeWithIdMap(
   return canonicalizeDatasetWithIdMap(dataset);
 }
 
+/**
+ * Canonicalizes N-Quads written by toRDFNQuads: IRIs carry json-gold's escaping
+ * of `\ " \n \r \t`, which is undone here. N-Quads from another serializer
+ * that leave a backslash raw inside an IRI come out with that IRI changed.
+ */
 export async function canonicalizeNQuadsWithIdMap(
   nquads: string[],
 ): Promise<[string[], Map<string, string>]> {
-  const dataset = rdfCanonize.NQuads.parse(nquads.join(''));
+  const dataset: Quad[] = rdfCanonize.NQuads.parse(nquads.join(''));
+  // rdf-canonize reads an IRI as written; undo goEscape so it is not escaped twice.
+  for (const q of dataset) {
+    for (const t of [q.subject, q.predicate, q.object, q.graph]) {
+      if (t.termType === 'NamedNode') t.value = goUnescape(t.value);
+    }
+    if (q.object.datatype) q.object.datatype.value = goUnescape(q.object.datatype.value);
+  }
   return canonicalizeDatasetWithIdMap(dataset);
 }
 

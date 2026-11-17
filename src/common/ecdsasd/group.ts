@@ -2,6 +2,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 import {
   canonicalizeNQuadsWithIdMap,
   compactJSONLD,
+  compareCodePoints,
   expandJSONLD,
   toRDFNQuads,
 } from '../processor/processor';
@@ -105,7 +106,7 @@ async function labelReplacementCanonicalizeNQuads(
     c14nToNew[canonicalIDMap[input]] = newLabel;
   }
   const out = relabelBlankNodes(canonicalNQuads, c14nToNew);
-  out.sort();
+  out.sort(compareCodePoints);
   return { nquads: out, labelMap };
 }
 

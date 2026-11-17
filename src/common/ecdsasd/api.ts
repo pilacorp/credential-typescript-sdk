@@ -5,6 +5,7 @@ import type { SignerProvider } from '../signer/signer';
 import {
   canonicalizeNQuadsWithIdMap,
   canonicalizeRDF,
+  compareCodePoints,
 } from '../processor/processor';
 import {
   encodeP256PublicMultikeyBytes,
@@ -182,7 +183,7 @@ async function verifyDerivedProof(
   const { canonicalizeWithIdMap } = await import('../processor/processor');
   const [canonicalNQuads] = await canonicalizeWithIdMap(revealDoc);
   const relabeled = relabelBlankNodes(canonicalNQuads, dp.labelMap);
-  relabeled.sort();
+  relabeled.sort(compareCodePoints);
   const mandatorySet = new Set(dp.mandatoryIndexes);
   const mandatory: string[] = [];
   const nonMandatory: string[] = [];
