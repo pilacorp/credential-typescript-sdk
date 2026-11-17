@@ -6,7 +6,7 @@ import { httpsURL, parseURL } from './internal/url';
 import { validURI } from './internal/uri';
 import type { Limits } from './internal/safehttp';
 import { StatusError } from './internal/safehttp';
-import { hasOwn, setOwn } from '../common/util/json';
+import { hasOwn, parseJSONBytes, setOwn } from '../common/util/json';
 import type { IssuedNode } from '../common/sdjwt';
 
 export const ErrNotFound = Object.assign(new Error('typemeta: no Type Metadata for the type'), { name: 'TypeMetaError' });
@@ -139,7 +139,7 @@ export function staticResolver(...docs: Array<Buffer | string | Uint8Array>): Re
   const map = new Map<string, Buffer>();
   docs.forEach((d, i) => {
     const b = Buffer.from(typeof d === 'string' ? d : d);
-    const obj = JSON.parse(b.toString('utf8')) as { vct?: unknown };
+    const obj = parseJSONBytes(b) as { vct?: unknown };
     if (typeof obj.vct !== 'string' || !obj.vct) {
       throw new Error(`typemeta: Static document ${i} is not a JSON object with a non-empty string vct`);
     }
@@ -213,7 +213,12 @@ export async function load(r: Resolver, ref: Ref, signal?: AbortSignal): Promise
 }
 
 function readDocument(raw: Buffer): rawDoc {
-  const obj = JSON.parse(raw.toString('utf8')) as Record<string, unknown>;
+  let obj: Record<string, unknown>;
+  try {
+    obj = parseJSONBytes(raw) as Record<string, unknown>;
+  } catch (err) {
+    throw Object.assign(new Error(`typemeta: ${(err as Error).message}`), { cause: ErrInvalid });
+  }
   if (typeof obj !== 'object' || obj === null) {
     throw Object.assign(new Error('typemeta: document is not a JSON object'), { cause: ErrInvalid });
   }

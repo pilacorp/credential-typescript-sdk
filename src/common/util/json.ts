@@ -4,6 +4,24 @@
 
 export type JSONMap = Record<string, unknown>;
 
+// ignoreBOM keeps a leading U+FEFF in the text, so JSON.parse refuses it as before.
+const strictUTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+
+/**
+ * Parses JSON text received as bytes. RFC 8259 §8.1 requires UTF-8; a byte
+ * that is not UTF-8 is an error here, where Buffer.toString would silently
+ * turn it into U+FFFD and hand back a value the sender never wrote.
+ */
+export function parseJSONBytes(bytes: Uint8Array): unknown {
+  let text: string;
+  try {
+    text = strictUTF8.decode(bytes);
+  } catch {
+    throw new Error('JSON is not valid UTF-8');
+  }
+  return JSON.parse(text);
+}
+
 export function hasOwn(obj: object, key: PropertyKey): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key);
 }

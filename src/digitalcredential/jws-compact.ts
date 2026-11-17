@@ -3,6 +3,7 @@ import { secp256k1 } from '@noble/curves/secp256k1';
 import { sha256 } from '@noble/hashes/sha256';
 import type { SignerProvider } from '../common/signer/signer';
 import { P256Provider } from '../common/signer/p256-provider';
+import { decodeBase64URLStrict } from '../common/util/base64url';
 import { hasOwn } from '../common/util/json';
 
 const utf8 = new TextDecoder('utf-8', { fatal: true });
@@ -51,11 +52,7 @@ function checkHeaderExtensions(h: Record<string, unknown>): void {
   }
 }
 
-export function base64urlStrict(s: string): Buffer {
-  const b = Buffer.from(s, 'base64url');
-  if (!/^[A-Za-z0-9_-]*$/.test(s) || b.toString('base64url') !== s) throw new Error('invalid base64url');
-  return b;
-}
+export const base64urlStrict = decodeBase64URLStrict;
 
 /**
  * checkDepth false reads a segment before its signature is checked, when only
