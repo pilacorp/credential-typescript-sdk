@@ -15,27 +15,30 @@ describe('addECDSAProof signature length handling', () => {
     type: 'VerifiableCredential',
   };
 
-  it('accepts 64-byte signature', async () => {
+  it('issues a base58btc (multibase "z") proofValue for a 64-byte P-256 signature', async () => {
     const m = { ...baseDoc } as Record<string, unknown>;
     const sig = new Uint8Array(64).fill(0xab);
     await addECDSAProof(m, new StubSigner(sig), 'did:example:issuer#key-1', 'assertionMethod');
     const proof = m.proof as Record<string, unknown>;
-    expect((proof.proofValue as string).length).toBe(128);
+    // Go no longer issues hex proofValues; ecdsa-rdfc-2019 is multibase base58btc.
+    expect((proof.proofValue as string).startsWith('z')).toBe(true);
+    expect(proof.cryptosuite).toBe('ecdsa-rdfc-2019');
+    expect(proof.jws).toBeUndefined();
   });
 
-  it('accepts 65-byte signature', async () => {
+  it('rejects a 65-byte signature (misrouted secp256k1 signer)', async () => {
     const m = { ...baseDoc } as Record<string, unknown>;
     const sig = new Uint8Array(65).fill(0xcd);
-    await addECDSAProof(m, new StubSigner(sig), 'did:example:issuer#key-1', 'assertionMethod');
-    const proof = m.proof as Record<string, unknown>;
-    expect((proof.proofValue as string).length).toBe(130);
+    await expect(
+      addECDSAProof(m, new StubSigner(sig), 'did:example:issuer#key-1', 'assertionMethod'),
+    ).rejects.toThrow(/64-byte P-256 signature/);
   });
 
-  it('rejects invalid signature length', async () => {
+  it('rejects an invalid signature length', async () => {
     const m = { ...baseDoc } as Record<string, unknown>;
     const sig = new Uint8Array(66);
     await expect(
       addECDSAProof(m, new StubSigner(sig), 'did:example:issuer#key-1', 'assertionMethod'),
-    ).rejects.toThrow(/invalid signature length/);
+    ).rejects.toThrow(/64-byte P-256 signature/);
   });
 });

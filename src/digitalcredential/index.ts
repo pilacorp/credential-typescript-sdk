@@ -1,0 +1,10 @@
+export { Credential, parse } from './credential';
+export { issue, type IssueRequest, type Path, type StatusRef } from './issue';
+export { type PresentRequest, type KeyBinding } from './present';
+export { type VerifyOptions, type Result, type StatusChecker } from './verify';
+export { Code, DigitalCredentialError, PolicyError, TypDCSDJWT } from './errors';
+export { StaticResolver, ErrIssuerNotSupported, ErrNoUsableKey, type SigningKey, type PublicKey, type Resolver } from './issuerkey';
+export { P256Provider } from './jws-compact';
+export * as statuslist from './statuslist';
+export * as issuermeta from './issuermeta';
+export * as typemeta from './typemeta';

@@ -87,4 +87,29 @@ describe('didcomm', () => {
     expect(decrypted.plaintext).toBe('plain-text');
     expect(decrypted.json).toBeNull();
   });
+
+  it('authenticates the JWE tag field', () => {
+    const secret = new Uint8Array(32).fill(7);
+    const message = encryptJWE('authenticated', secret);
+    const tag = Buffer.from(message.tag, 'base64url');
+    const ciphertext = Buffer.from(message.ciphertext, 'base64url');
+    expect(tag).toHaveLength(16);
+    expect(ciphertext).toHaveLength(Buffer.byteLength('authenticated'));
+
+    const legacyMessage = {
+      ...message,
+      ciphertext: Buffer.concat([ciphertext, tag]).toString('base64url'),
+      tag: Buffer.from(secret.subarray(0, 16)).toString('base64url'),
+    };
+    expect(decryptJWE(legacyMessage, secret).plaintext).toBe('authenticated');
+
+    message.tag = Buffer.from(tag.map((byte, index) => index === 0 ? byte ^ 1 : byte)).toString('base64url');
+    expect(() => decryptJWE(message, secret)).toThrow();
+
+    const truncatedTagMessage = {
+      ...encryptJWE('authenticated', secret),
+    };
+    truncatedTagMessage.tag = Buffer.from(tag.subarray(0, 4)).toString('base64url');
+    expect(() => decryptJWE(truncatedTagMessage, secret)).toThrow(/16 bytes/);
+  });
 });

@@ -73,10 +73,15 @@ export interface CreateDID {
   type: DIDType;
   metadata?: Record<string, unknown>;
   hash?: string;
+  /** When true, also publish a P-256 Multikey at #key-2 (Go didv2 WithP256VerificationMethod). */
+  withP256?: boolean;
 }
 
 export interface Secret {
+  /** secp256k1 private key. With withP256 this is the shared P-256/secp256k1 scalar (Go GenerateDualCurveKeyPair). */
   privateKeyHex: string;
+  /** Same scalar as privateKeyHex when a P-256 VM was published; omitted otherwise. */
+  p256PrivateKeyHex?: string;
 }
 
 export interface GeneratedDID {

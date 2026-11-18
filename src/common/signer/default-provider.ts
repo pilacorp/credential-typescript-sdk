@@ -40,6 +40,10 @@ export class DefaultProvider implements SignerProvider {
     validateSignatureLength(combined);
     return combined;
   }
+
+  algorithm(): string {
+    return 'ES256K';
+  }
 }
 
 export function newDefaultProvider(privHex: string): DefaultProvider {

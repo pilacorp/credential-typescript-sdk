@@ -6,10 +6,11 @@
  * placeholders, optionally adds decoy hashes and shuffles the resulting arrays.
  */
 import { randomBytes } from 'crypto';
-import { deepCopyMap, JSONMap } from '../util/json';
+import { deepCopyMap, hasOwn, JSONMap } from '../util/json';
 import {
   DefaultHashAlgorithm,
   hashDisclosure,
+  isArrayPlaceholder,
   randomSalt,
   supportedHashAlgorithms,
 } from './helper';
@@ -18,10 +19,26 @@ import { DecoyConfig, PathSegment, ResolvedTarget, TargetKind } from './types';
 export interface BuildDisclosuresInput {
   vc: JSONMap;
   selectivePaths?: string[];
+  selectivePathSegments?: Array<Array<string | number>>;
   hashAlgorithm?: string;
   shuffle?: boolean;
   decoys?: DecoyConfig[];
+  /**
+   * Pads every object's _sd and every array's {"...": digest} placeholders
+   * with decoy digests up to this count, in the payload and in the values of
+   * the disclosures made from selectivePathSegments (RFC 9901 §4.2.5).
+   */
+  minDigests?: number;
+  /**
+   * Keeps minDigests decoys out of arrays. A receiver cannot tell an array
+   * decoy from a hidden element, so a decoy moves the index of every element
+   * after it.
+   */
+  noArrayDecoys?: boolean;
 }
+
+// The decoys minDigests may write: objects and arrays × minDigests.
+const maxDecoys = 20000;
 
 export interface SDJWTResult {
   processedVC: JSONMap;
@@ -37,21 +54,43 @@ export function buildDisclosures(input: BuildDisclosuresInput): SDJWTResult {
   const processedVC = deepCopyMap(input.vc);
   const decoys = input.decoys ?? [];
   const selectivePaths = input.selectivePaths ?? [];
+  // Read before _sd_alg is written, so no path can name it.
+  checkPathSegments(processedVC, input.selectivePathSegments ?? []);
 
   if (decoys.length > 0) {
     processedVC._sd_alg = sdAlg;
   }
 
-  if (selectivePaths.length === 0 && decoys.length === 0) {
+  const segmentPaths = input.selectivePathSegments ?? [];
+  if (selectivePaths.length === 0 && decoys.length === 0 && segmentPaths.length === 0) {
     return { processedVC, disclosures: [] };
   }
 
-  if (selectivePaths.length > 0) {
+  if (selectivePaths.length > 0 || segmentPaths.length > 0) {
     processedVC._sd_alg = sdAlg;
   }
 
-  const disclosures = processSelectivePaths(processedVC, selectivePaths, sdAlg);
+  const minDigests = input.minDigests ?? 0;
+  const noArrayDecoys = Boolean(input.noArrayDecoys);
+  if (minDigests > 0) {
+    const containers = countContainers(input.vc);
+    if (containers > Math.floor(maxDecoys / minDigests)) {
+      throw new Error(
+        `${containers} objects and arrays × minDigests ${minDigests} is over ${maxDecoys} decoy digests`,
+      );
+    }
+  }
+  // A concealed value is complete before it is hashed into its disclosure:
+  // nothing can pad it or reorder its _sd afterwards.
+  const finish = (value: unknown): void => {
+    padMinDigests(value, minDigests, sdAlg, noArrayDecoys);
+    if (input.shuffle) shuffleSDArrays(value);
+  };
+  const fromSegments = processSelectivePathSegments(processedVC, segmentPaths, sdAlg, finish);
+  const fromStrings = processSelectivePaths(processedVC, selectivePaths, sdAlg);
+  const disclosures = [...fromSegments, ...fromStrings];
   processDecoys(processedVC, decoys, sdAlg);
+  padMinDigests(processedVC, minDigests, sdAlg, noArrayDecoys);
 
   if (input.shuffle) {
     shuffleSDArrays(processedVC);
@@ -72,6 +111,67 @@ function processSelectivePaths(
     out.push(processSinglePath(vc, path, sdAlg));
   }
   return out;
+}
+
+function processSelectivePathSegments(
+  vc: JSONMap,
+  paths: Array<Array<string | number>>,
+  sdAlg: string,
+  finish: (value: unknown) => void,
+): string[] {
+  const out: string[] = [];
+  for (const path of paths) {
+    const resolved = resolvePathSegments(vc, path);
+    if (!resolved) throw new Error(`path ${JSON.stringify(path)} not found`);
+    finish(resolved.value);
+    out.push(buildAndApplyDisclosure(resolved, JSON.stringify(path), sdAlg));
+  }
+  return out;
+}
+
+// Every path is read on the claims as given, before anything is written: a
+// path then never names what this module adds, such as _sd or _sd_alg.
+function checkPathSegments(vc: JSONMap, paths: Array<Array<string | number>>): void {
+  const seen = new Set<string>();
+  for (const path of paths) {
+    if (!path.length) throw new Error('empty path');
+    const key = JSON.stringify(path);
+    if (seen.has(key)) throw new Error(`path ${key} given twice`);
+    seen.add(key);
+    if (!resolvePathSegments(vc, path)) throw new Error(`path ${key} does not exist in the claims`);
+  }
+}
+
+function countContainers(v: unknown): number {
+  if (!v || typeof v !== 'object') return 0;
+  let n = 1;
+  for (const child of Array.isArray(v) ? v : Object.values(v)) n += countContainers(child);
+  return n;
+}
+
+function padMinDigests(root: unknown, min: number, sdAlg: string, noArrayDecoys: boolean): void {
+  if (min <= 0) return;
+  const walk = (n: unknown): void => {
+    if (Array.isArray(n)) {
+      n.forEach(walk);
+      if (noArrayDecoys) return;
+      // A decoy goes at a random position: decoys at the end would mark the
+      // placeholders before them as real.
+      for (let count = n.filter(isArrayPlaceholder).length; count < min; count++) {
+        n.splice(randomInt(n.length + 1), 0, { '...': hashDisclosure(sdAlg, randomSalt()) });
+      }
+      return;
+    }
+    if (n && typeof n === 'object') {
+      const o = n as JSONMap;
+      if (isArrayPlaceholder(o)) return;
+      for (const [k, v] of Object.entries(o)) if (k !== '_sd') walk(v);
+      const sd: unknown[] = Array.isArray(o._sd) ? o._sd : [];
+      while (sd.length < min) sd.push(hashDisclosure(sdAlg, randomSalt()));
+      o._sd = sd;
+    }
+  };
+  walk(root);
 }
 
 function processSinglePath(vc: JSONMap, path: string, sdAlg: string): string {
@@ -222,6 +322,45 @@ function generateDecoyHashes(sdAlg: string, count: number): string[] {
   return out;
 }
 
+export function resolvePathSegments(root: JSONMap, path: Array<string | number>): ResolvedTarget | null {
+  if (!path.length) return null;
+  let current: unknown = root;
+  for (let i = 0; i < path.length; i++) {
+    const last = i === path.length - 1;
+    const seg = path[i];
+    if (typeof seg === 'string') {
+      if (typeof current !== 'object' || current === null || Array.isArray(current)) {
+        throw new Error(`segment ${JSON.stringify(seg)} expects object`);
+      }
+      const m = current as JSONMap;
+      if (!hasOwn(m, seg)) return null;
+      const val = m[seg];
+      if (last) {
+        if (Array.isArray(val)) {
+          return { parent: m, kind: TargetKind.ArrayContainer, fieldName: seg, index: 0, value: val };
+        }
+        return { parent: m, kind: TargetKind.ObjectField, fieldName: seg, index: 0, value: val };
+      }
+      current = val;
+      continue;
+    }
+    if (!Number.isInteger(seg) || seg < 0) throw new Error(`invalid index ${seg}`);
+    if (!Array.isArray(current)) throw new Error(`segment [${seg}] expects array`);
+    if (seg >= current.length) throw new Error(`index ${seg} out of range (len ${current.length})`);
+    if (last) {
+      return {
+        parent: current,
+        kind: TargetKind.ArrayElem,
+        fieldName: '',
+        index: seg,
+        value: current[seg],
+      };
+    }
+    current = current[seg];
+  }
+  return null;
+}
+
 export function resolvePath(root: JSONMap, path: string): ResolvedTarget | null {
   if (path === '') {
     return {
@@ -255,7 +394,7 @@ export function resolvePath(root: JSONMap, path: string): ResolvedTarget | null 
         throw new Error(`segment "${seg.key}" expects object`);
       }
       const m = current as JSONMap;
-      if (!(seg.key in m)) return null;
+      if (!hasOwn(m, seg.key)) return null;
       const val = m[seg.key];
       if (last) {
         if (Array.isArray(val)) {
@@ -316,7 +455,7 @@ function resolveArray(current: unknown, seg: PathSegment): unknown[] | null {
       throw new Error(`segment "${seg.key}" expects object`);
     }
     const m = current as JSONMap;
-    if (!(seg.key in m)) return null;
+    if (!hasOwn(m, seg.key)) return null;
     const raw = m[seg.key];
     if (!Array.isArray(raw)) {
       throw new Error(`segment "${seg.key}" expects array`);

@@ -4,6 +4,36 @@
 
 export type JSONMap = Record<string, unknown>;
 
+// ignoreBOM keeps a leading U+FEFF in the text, so JSON.parse refuses it as before.
+const strictUTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+
+/**
+ * Parses JSON text received as bytes. RFC 8259 §8.1 requires UTF-8; a byte
+ * that is not UTF-8 is an error here, where Buffer.toString would silently
+ * turn it into U+FFFD and hand back a value the sender never wrote.
+ */
+export function parseJSONBytes(bytes: Uint8Array): unknown {
+  let text: string;
+  try {
+    text = strictUTF8.decode(bytes);
+  } catch {
+    throw new Error('JSON is not valid UTF-8');
+  }
+  return JSON.parse(text);
+}
+
+export function hasOwn(obj: object, key: PropertyKey): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+/**
+ * Sets obj[key] as an own property. A plain assignment of the key "__proto__"
+ * would set the prototype of obj instead, and a JSON object may hold that key.
+ */
+export function setOwn(obj: object, key: string, value: unknown): void {
+  Object.defineProperty(obj, key, { value, enumerable: true, writable: true, configurable: true });
+}
+
 export function shallowCopyObj(obj: JSONMap): JSONMap {
   return { ...obj };
 }
@@ -12,14 +42,20 @@ export function deepCopyMap(src: JSONMap): JSONMap {
   return deepCopyValue(src) as JSONMap;
 }
 
+function isPlainObject(v: unknown): v is JSONMap {
+  if (v === null || typeof v !== 'object') return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+}
+
 function deepCopyValue(v: unknown): unknown {
   if (Array.isArray(v)) {
     return v.map(deepCopyValue);
   }
-  if (v && typeof v === 'object' && (v as object).constructor === Object) {
+  if (isPlainObject(v)) {
     const out: JSONMap = {};
-    for (const [k, val] of Object.entries(v as JSONMap)) {
-      out[k] = deepCopyValue(val);
+    for (const [k, val] of Object.entries(v)) {
+      setOwn(out, k, deepCopyValue(val));
     }
     return out;
   }

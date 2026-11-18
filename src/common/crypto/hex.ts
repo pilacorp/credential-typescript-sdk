@@ -11,15 +11,12 @@ export function hexToBytes(hex: string): Uint8Array {
   if (clean.length % 2 !== 0) {
     throw new Error(`hex string must be even length, got ${clean.length}`);
   }
-  const out = new Uint8Array(clean.length / 2);
-  for (let i = 0; i < out.length; i++) {
-    const b = parseInt(clean.substr(i * 2, 2), 16);
-    if (Number.isNaN(b)) {
-      throw new Error(`invalid hex character at position ${i * 2}`);
-    }
-    out[i] = b;
+  // Strict like Go's hex.DecodeString: parseInt would take "1g", "+1", " 1".
+  const bad = clean.search(/[^0-9a-fA-F]/);
+  if (bad >= 0) {
+    throw new Error(`invalid hex character at position ${bad}`);
   }
-  return out;
+  return new Uint8Array(Buffer.from(clean, 'hex'));
 }
 
 export function bytesToHex(bytes: Uint8Array): string {

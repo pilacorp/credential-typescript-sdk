@@ -7,6 +7,8 @@
 import { randomBytes } from 'crypto';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha384, sha512 } from '@noble/hashes/sha512';
+import { decodeBase64URLStrict } from '../util/base64url';
+import { parseJSONBytes } from '../util/json';
 import { DecodedDisclosure, DisclosureInfo, ParsedSDJWT } from './types';
 
 export const AlgSHA256 = 'sha-256';
@@ -21,6 +23,16 @@ export const supportedHashAlgorithms: Record<string, boolean> = {
 };
 
 const JWT_REGEX = /^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+(\.[A-Za-z0-9\-_]+)?$/;
+
+/**
+ * Reports whether el is {"...": "<digest>"}: an array element with exactly one
+ * key, "...", holding a string (RFC 9901 §4.2.4.2, §7.1 step 3.b.ii).
+ */
+export function isArrayPlaceholder(el: unknown): el is { '...': string } {
+  if (!el || typeof el !== 'object' || Array.isArray(el)) return false;
+  const keys = Object.keys(el);
+  return keys.length === 1 && keys[0] === '...' && typeof (el as Record<string, unknown>)['...'] === 'string';
+}
 
 export function isJWT(s: string): boolean {
   let trimmed = s.trim();
@@ -53,9 +65,12 @@ export function parse(raw: string): ParsedSDJWT {
   for (let i = 1; i < parts.length; i++) {
     const seg = parts[i].trim();
     if (seg === '') continue;
-    // Skip optional Key Binding JWT at the tail
+    // A trailing JWT after the disclosures is a key binding JWT. Skipping it
+    // would hand back a nil error for a binding nothing checked (go refuses too).
     if (i === parts.length - 1 && isJWT(seg) && i > 1) {
-      break;
+      throw new Error(
+        'SD-JWT carries a key binding JWT, which this SDK does not verify yet; present the credential without it',
+      );
     }
     disclosures.push(seg);
   }
@@ -70,14 +85,15 @@ export function buildSDJWTPresentation(
   selectedDisclosures: string[],
 ): string {
   let out = issuerSignedJWT;
-  let hasDisclosure = false;
   for (const sel of selectedDisclosures) {
     if (!sel) continue;
     out += '~' + sel;
-    hasDisclosure = true;
   }
-  if (hasDisclosure) out += '~';
-  return out;
+  return out + '~';
+}
+
+export function decodeDisclosures(disclosures: string[]): DecodedDisclosure[] {
+  return parseDisclosures(disclosures);
 }
 
 export function parseDisclosures(disclosures: string[]): DecodedDisclosure[] {
@@ -99,14 +115,14 @@ export function parseDisclosures(disclosures: string[]): DecodedDisclosure[] {
 export function parseDisclosure(disc: string): DisclosureInfo {
   let decoded: Buffer;
   try {
-    decoded = Buffer.from(disc, 'base64url');
+    decoded = decodeBase64URLStrict(disc);
   } catch {
-    throw new Error(`failed to decode disclosure "${disc}"`);
+    throw new Error(`failed to decode disclosure "${disc}": not base64url without padding`);
   }
 
   let arr: unknown[];
   try {
-    arr = JSON.parse(decoded.toString('utf8'));
+    arr = parseJSONBytes(decoded) as unknown[];
   } catch (err) {
     throw new Error(
       `failed to unmarshal disclosure: ${(err as Error).message}`,

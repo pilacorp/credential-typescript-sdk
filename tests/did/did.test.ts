@@ -1,9 +1,11 @@
-import { JsonRpcProvider } from 'ethers';
+import { Interface, JsonRpcProvider, Transaction } from 'ethers';
 import { secp256k1 } from '@noble/curves/secp256k1';
 import { p256 } from '@noble/curves/nist';
 import {
   DIDGenerator,
   buildDidDocument,
+  buildMixedCurveDidDocument,
+  generateP256KeyPair,
   createDidFromPublicKey,
   createDidFromPublicKeyWithTransaction,
   parsePublicKeyToDid,
@@ -56,7 +58,7 @@ describe('parsePublicKeyToDid', () => {
     );
 
     expect(parsed.curve).toBe('hash');
-    expect(parsed.did.startsWith('did:nda:testnet:0x')).toBe(true);
+    expect(parsed.did.startsWith('did:nda:0x')).toBe(true);
   });
 });
 
@@ -79,10 +81,35 @@ describe('DID document helpers', () => {
     });
     expect(document.authentication).toEqual([`${did}#key-1`]);
     expect(document.assertionMethod).toEqual([`${did}#key-1`]);
-    expect(document.didDocumentMetadata).toEqual({
-      type: 'people',
-      hash: '',
-    });
+    expect(document.didDocumentMetadata).toEqual({ type: 'people' });
+  });
+
+  it('uses Multikey publicKeyMultibase when the input is a P-256 public key', () => {
+    const priv = hexToBytes(
+      '1111111111111111111111111111111111111111111111111111111111111111',
+    );
+    const pub = Buffer.from(p256.getPublicKey(priv, false)).toString('hex');
+    const did = 'did:nda:testnet:0xp256';
+    const document = buildDidDocument(pub, did, 'people');
+    expect(document.verificationMethod[0].type).toBe('Multikey');
+    expect(document.verificationMethod[0].publicKeyMultibase?.startsWith('z')).toBe(true);
+    expect(document.verificationMethod[0].publicKeyHex).toBeUndefined();
+    expect(document['@context']).toContain('https://www.w3.org/ns/cid/v1');
+  });
+
+  it('builds a mixed-curve DID document like Go didv2', () => {
+    const secpPriv = hexToBytes(
+      '4646464646464646464646464646464646464646464646464646464646464646',
+    );
+    const secpPub = Buffer.from(secp256k1.getPublicKey(secpPriv, false)).toString('hex');
+    const p256Pair = generateP256KeyPair();
+    const did = 'did:nda:testnet:0xmixed';
+    const document = buildMixedCurveDidDocument(secpPub, p256Pair.publicKeyHex, did, 'people');
+    expect(document.verificationMethod).toHaveLength(2);
+    expect(document.verificationMethod[0].type).toBe('EcdsaSecp256k1VerificationKey2019');
+    expect(document.verificationMethod[1].type).toBe('Multikey');
+    expect(document.verificationMethod[1].id).toBe(`${did}#key-2`);
+    expect(document.authentication).toEqual([`${did}#key-1`, `${did}#key-2`]);
   });
 
   it('supports caller-provided DID identifiers for registration parity', () => {
@@ -250,7 +277,6 @@ describe('DIDGenerator', () => {
     expect(generated.document.didDocumentMetadata).toEqual({
       name: 'User 1',
       type: 'people',
-      hash: '',
     });
     expect(generated.transaction.txHash.startsWith('0x')).toBe(true);
     expect(generated.transaction.txHex.length).toBeGreaterThan(0);
@@ -282,5 +308,34 @@ describe('DIDGenerator', () => {
 
     expect(tx.txHash.startsWith('0x')).toBe(true);
     expect(tx.txHex.length).toBeGreaterThan(0);
+  });
+});
+
+describe('DIDGenerator Go parity (did v1)', () => {
+  it('defaults to the did:nda method', async () => {
+    const generated = await new DIDGenerator().generateDID({ type: 'people' });
+    expect(generated.did).toMatch(/^did:nda:0x[0-9a-f]{40}$/);
+  });
+
+  it('keeps a metadata hash and writes hash only when given, like generateDIDDocument', async () => {
+    const generator = new DIDGenerator();
+    const kept = await generator.generateDID({ type: 'people', metadata: { hash: '0xabc', name: 'x' } });
+    expect(kept.document.didDocumentMetadata).toEqual({ hash: '0xabc', name: 'x', type: 'people' });
+    const set = await generator.generateDID({ type: 'item', hash: '0xdef' });
+    expect(set.document.didDocumentMetadata).toEqual({ type: 'item', hash: '0xdef' });
+  });
+
+  it('encodes the bytes32 attribute name right-padded, as Go copy() does', async () => {
+    const generator = new DIDGenerator();
+    const tx = await generator.generateSetAttributeTx(
+      '0x' + '11'.repeat(32),
+      '0x' + '22'.repeat(20),
+      'people',
+    );
+    const parsed = Transaction.from('0x' + tx.txHex);
+    const [, name] = new Interface([
+      'function setAttribute(address identity, bytes32 name, bytes value, uint256 validity)',
+    ]).decodeFunctionData('setAttribute', parsed.data);
+    expect(name).toBe('0x74797065' + '0'.repeat(56));
   });
 });
